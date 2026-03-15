@@ -6,12 +6,10 @@
 
 ## 📝 DESCRIPCIÓN
 Vimorte es un juego desarrollado en C++ con SFML 3.0.2.  
-*[Aquí pondrás la descripción de tu juego cuando la tengas]*
+*[Aquí pondremos la descripcion proximamente]*
 
 ## ✨ CARACTERÍSTICAS (PRÓXIMAMENTE)
 - [ ] Movimiento del jugador
-- [ ] Sistema de colisiones
-- [ ] Enemigos
 - [ ] Niveles
 - [ ] Música y efectos
 
