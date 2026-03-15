@@ -26,4 +26,4 @@ Vimorte es un juego desarrollado en C++ con SFML 3.0.2.
 ### 🔹 PRIMERA VEZ
 1. Clona el repositorio:
    ```bash
-   git clone https://github.com/TU_USUARIO/Vimorte.git
+   git clone https://github.com/Jesus2345-hub/Vimorte.git
