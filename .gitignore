@@ -1,0 +1,17 @@
+# Compilados
+x64/
+Debug/
+Release/
+*.exe
+*.pdb
+*.ilk
+*.obj
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Otros
+.DS_Store
+*.log
