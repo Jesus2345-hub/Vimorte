@@ -1,17 +1,40 @@
-# Compilados
-x64/
-Debug/
-Release/
+# === CARPETAS DE COMPILACIÓN ===
+build/
+cmake-build-*/
+out/
+
+# === ARCHIVOS GENERADOS POR CMAKE ===
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
+CTestTestfile.cmake
+*.cmake
+
+# === SFML DESCARGADO AUTOMÁTICAMENTE ===
+_deps/
+SFML-src/
+SFML-build/
+
+# === ARCHIVOS COMPILADOS ===
 *.exe
+*.dll
 *.pdb
 *.ilk
 *.obj
+*.lib
+*.exp
 
-# Visual Studio
+# === VISUAL STUDIO ===
 .vs/
+*.sln
+*.vcxproj
+*.vcxproj.filters
 *.user
 *.suo
 
-# Otros
-.DS_Store
+# === ARCHIVOS TEMPORALES ===
 *.log
+*.tmp
+.DS_Store
+Thumbs.db
