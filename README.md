@@ -42,3 +42,31 @@ Vimorte es un juego desarrollado en C++ con SFML 3.0.2.
    pacman -S mingw-w64-ucrt-x86_64-cmake
    pacman -S mingw-w64-ucrt-x86_64-toolchain
    pacman -S make
+4. Clonar el repositorio y compilar:
+   ```bash
+   git clone https://github.com/Jesus2345-hub/Vimorte.git
+   cd Vimorte
+   mkdir build
+   cd build
+   cmake .. -G "MSYS Makefiles"
+   make
+   ./Vimorte.exe
+
+### 🔹 PRIMERA VEZ (Linux/Mac)
+
+```bash
+# Instalar CMake (si no lo tienes)
+# Ubuntu/Debian:
+sudo apt install cmake build-essential
+
+# macOS:
+brew install cmake
+
+# Clonar y compilar
+git clone https://github.com/Jesus2345-hub/Vimorte.git
+cd Vimorte
+mkdir build
+cd build
+cmake ..
+make
+./Vimorte
