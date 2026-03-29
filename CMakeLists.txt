@@ -59,5 +59,13 @@ if(WIN32)
     )
 endif()
 
+# Copiar assets al directorio de ejecutable después de compilar
+add_custom_command(TARGET Vimorte POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_CURRENT_SOURCE_DIR}/assets
+        $<TARGET_FILE_DIR:Vimorte>/assets
+    COMMENT "Copiando assets a la carpeta de ejecutable..."
+)
+
 # 10. MENSAJE DE ÉXITO AL TERMINAR
 message(STATUS "Proyecto Vimorte configurado correctamente")
