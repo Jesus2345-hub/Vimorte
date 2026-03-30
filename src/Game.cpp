@@ -36,22 +36,65 @@ void Game::run()
         // 1. Limpiamos con el color de fondo
         window->clear(sf::Color::Cyan); 
         sf::Texture::bind(nullptr);
-        if (!states.empty()) {
-    window->setView(window->getDefaultView());
-    states.top()->draw();
-}
-        // 2. 🚨 EL EXORCISMO 🚨
-        // Resetamos la cámara y forzamos a SFML a usar texturas nulas
-        window->setView(window->getDefaultView());
         
-        // Esto le dice a la tarjeta de video: "Olvida cualquier imagen que tuvieras cargada"
-        sf::Texture::bind(nullptr); 
-
-        // 3. Dibujamos
-        if (!states.empty()) {
-            states.top()->draw();
+        // ========== DIBUJAR TODOS LOS ESTADOS ==========
+        // Como no podemos copiar la pila directamente, usamos un vector temporal
+        std::vector<State*> estadosParaDibujar;
+        std::stack<std::unique_ptr<State>> temp;
+        
+        // Extraer punteros sin mover los unique_ptr
+        while (!states.empty()) {
+            estadosParaDibujar.push_back(states.top().get());
+            temp.push(std::move(states.top()));
+            states.pop();
         }
+        
+        // Restaurar la pila original
+        while (!temp.empty()) {
+            states.push(std::move(temp.top()));
+            temp.pop();
+        }
+        
+        // Dibujar desde el fondo (primero en el vector) hasta la cima (último)
+        for (int i = estadosParaDibujar.size() - 1; i >= 0; --i) {
+            window->setView(window->getDefaultView());
+            estadosParaDibujar[i]->draw();
+        }
+        // ========== FIN DIBUJAR TODOS ==========
+
+        // 2. 🚨 EL EXORCISMO 🚨
+        window->setView(window->getDefaultView());
+        sf::Texture::bind(nullptr); 
 
         window->display(); 
     }
+}
+
+void Game::popState() 
+{
+    if (!states.empty()) {
+        states.pop();
+    }
+}
+
+void Game::pushState(std::unique_ptr<State> state) 
+{
+    states.push(std::move(state));
+}
+
+void Game::clearStates() 
+{
+    while (!states.empty()) {
+        states.pop();
+    }
+}
+
+void Game::returnToMenu() 
+{
+    // Vaciar toda la pila
+    while (!states.empty()) {
+        states.pop();
+    }
+    // Agregar el menú
+    states.push(std::make_unique<MenuState>(window.get(), this));
 }

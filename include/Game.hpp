@@ -12,8 +12,12 @@ class Game
 
     public:
         Game();
+        int getStateCount() const { return states.size(); }
+        std::stack<std::unique_ptr<State>>& getStates() { return states; }
         void pushState(std::unique_ptr<State> state);
         void popState();
         void changeState(std::unique_ptr<State> state); // <--- IMPORTANTE
         void run();
+        void clearStates();
+        void returnToMenu();
 };

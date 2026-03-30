@@ -5,6 +5,8 @@
 
 MenuState::MenuState(sf::RenderWindow* window, Game* game) : State(window, game) 
 {
+    window->setView(window->getDefaultView());
+
     miMenu = std::make_unique<Menu>(static_cast<float>(window->getSize().x), static_cast<float>(window->getSize().y));
     mostrarConfig = false;
 }
@@ -51,8 +53,12 @@ void MenuState::update(float deltaTiempo)
 
 void MenuState::draw()
 {
+    if (!window) return;
+    
+    window->setView(window->getDefaultView());
+    
     miMenu->dibujar(*window);
-
+    
     if (mostrarConfig) {
         sf::RectangleShape cuadroConfig({600.f, 400.f});
         cuadroConfig.setFillColor(sf::Color(40, 40, 40, 240));
