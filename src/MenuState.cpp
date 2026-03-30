@@ -56,7 +56,6 @@ void MenuState::draw()
     if (!window) return;
     
     window->setView(window->getDefaultView());
-    
     miMenu->dibujar(*window);
     
     if (mostrarConfig) {

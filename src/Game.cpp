@@ -2,6 +2,7 @@
 #include "MenuState.hpp" 
 #include "State.hpp" 
 #include <optional>
+#include <iostream>
 
 Game::Game() 
 {
@@ -91,10 +92,13 @@ void Game::clearStates()
 
 void Game::returnToMenu() 
 {
-    // Vaciar toda la pila
+    // Restaurar vista por defecto
+    window->setView(window->getDefaultView());
+    // Vaciar la pila
     while (!states.empty()) {
         states.pop();
     }
+    
     // Agregar el menú
     states.push(std::make_unique<MenuState>(window.get(), this));
 }
