@@ -11,6 +11,7 @@ public:
     bool verificarClick(sf::Vector2i mousePos);
     bool verificarClickSalir(sf::Vector2i mousePos);
     bool verificarClickConfig(sf::Vector2i mousePos);
+    const sf::Font& getFuente() const { return fuente; }
 
 private:
     sf::Texture texturaFondo;

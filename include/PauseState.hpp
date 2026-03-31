@@ -15,6 +15,9 @@ private:
     std::unique_ptr<sf::Text> m_resumeText;
     std::unique_ptr<sf::Text> m_menuText;
     std::unique_ptr<sf::Text> m_exitText;
+    bool mostrarConfig;
+    int seleccionConfig;
+    std::unique_ptr<sf::Text> m_configBtn;
     
 public:
     PauseState(sf::RenderWindow* window, Game* game);

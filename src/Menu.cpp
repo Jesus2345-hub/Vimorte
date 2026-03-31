@@ -4,13 +4,13 @@
 Menu::Menu(float ancho, float alto)
 {
     // 1. CARGAR ARCHIVOS
-    if (!texturaFondo.loadFromFile("assets/images/a.png")) {
+    if (!texturaFondo.loadFromFile("assets/images/menu/fondo_menu.png")) {
         std::cerr << "ERROR: fondo\n";
     }
-    if (!texturaConfig.loadFromFile("assets/images/config.png")) {
+    if (!texturaConfig.loadFromFile("assets/images/menu/simbolo_configuracion.png")) {
         std::cerr << "ERROR: config.png\n";
     }
-    if (!fuente.openFromFile("assets/fonts/VCR_OSD_MONO.ttf")) {
+    if (!fuente.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf")) {
         std::cerr << "ERROR: fuente\n";
     }
 

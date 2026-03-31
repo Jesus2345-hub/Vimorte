@@ -1,17 +1,25 @@
-#pragma once
+#ifndef MENUSTATE_HPP
+#define MENUSTATE_HPP
+
 #include "State.hpp"
 #include "Menu.hpp"
+#include <SFML/Audio.hpp>
 #include <memory>
 
-class MenuState : public State 
-{
+class MenuState : public State {
 private:
     std::unique_ptr<Menu> miMenu;
-    bool mostrarConfig; // Para controlar la visibilidad de la configuración
+    bool mostrarConfig;
+	int seleccionConfig;
+    // Objeto de música para el menú
+    sf::Music m_menuMusic;
 
 public:
     MenuState(sf::RenderWindow* window, Game* game);
-    void update(float dt) override;
-    void draw() override;
     ~MenuState() override = default;
+
+    void update(float deltaTiempo) override;
+    void draw() override;
 };
+
+#endif

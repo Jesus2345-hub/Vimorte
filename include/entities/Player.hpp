@@ -6,7 +6,7 @@
 class Player {
 private:
     sf::Texture m_texture;
-    std::unique_ptr<sf::Sprite> m_sprite;  // Puntero para evitar constructor por defecto
+    std::unique_ptr<sf::Sprite> m_sprite; 
     sf::Vector2f m_position;
     float m_speed;
 
@@ -18,6 +18,15 @@ public:
     void update(float dt);
     void draw(sf::RenderWindow& window);
     void move(sf::Vector2f direction, float dt);
+    
+    // Hitbox para colisiones con paredes (solo pies)
+    sf::FloatRect getHitbox() const;
+
+    // Hurtbox para recibir daño o interactuar (todo el cuerpo)
+    sf::FloatRect getHurtbox() const;
+    
+    // Por compatibilidad
     sf::FloatRect getBounds() const;
+    
     sf::Vector2f getPosition() const;
 };

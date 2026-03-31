@@ -1,99 +1,110 @@
 #include "PauseState.hpp"
 #include "Game.hpp"
+#include <iostream>
+#include <algorithm>
 
 PauseState::PauseState(sf::RenderWindow* window, Game* game) 
-    : State(window, game)
+    : State(window, game), mostrarConfig(false), seleccionConfig(0) 
 {
-    // Cargar fuente (usa la misma que el menú)
-    if (!m_font.openFromFile("assets/fonts/VCR_OSD_MONO.ttf")) {
-        // Fallback a arial si no existe
-        m_font.openFromFile("assets/fonts/arial.ttf");
+    if (!m_font.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf")) {
+        std::cerr << "Error cargando fuente en pausa" << std::endl;
     }
     
-    // Fondo semi-transparente oscuro
-    m_background.setSize(sf::Vector2f(1280, 720));
+    m_background.setSize({1280.f, 720.f});
     m_background.setFillColor(sf::Color(0, 0, 0, 180));
     
-    // Panel central
-    m_panel.setSize(sf::Vector2f(500, 380));
+    // Panel central un poco más grande para que quepan todos los botones
+    m_panel.setSize({500.f, 500.f});
     m_panel.setFillColor(sf::Color(30, 30, 50, 240));
     m_panel.setOutlineThickness(4);
     m_panel.setOutlineColor(sf::Color::White);
-    m_panel.setPosition(sf::Vector2f(390, 170));
+    m_panel.setPosition({390.f, 110.f});
     
-    // Título
-    m_title = std::make_unique<sf::Text>(m_font, "PAUSA", 56);
+    // Inicialización del Título (Esto faltaba en tu constructor)
+    m_title = std::make_unique<sf::Text>(m_font, "PAUSA", 50);
     m_title->setFillColor(sf::Color::Yellow);
-    sf::FloatRect titleBounds = m_title->getLocalBounds();
-    m_title->setPosition(sf::Vector2f(640 - titleBounds.size.x / 2, 210));
-    
-    // Botón "Continuar"
-    m_resumeText = std::make_unique<sf::Text>(m_font, "CONTINUAR", 32);
-    m_resumeText->setFillColor(sf::Color::White);
-    sf::FloatRect resumeBounds = m_resumeText->getLocalBounds();
-    m_resumeText->setPosition(sf::Vector2f(640 - resumeBounds.size.x / 2, 310));
-    
-    // Botón "Menú Principal"
-    m_menuText = std::make_unique<sf::Text>(m_font, "MENU PRINCIPAL", 32);
-    m_menuText->setFillColor(sf::Color::White);
-    sf::FloatRect menuBounds = m_menuText->getLocalBounds();
-    m_menuText->setPosition(sf::Vector2f(640 - menuBounds.size.x / 2, 390));
-    
-    // Botón "Salir" (opcional)
-    m_exitText = std::make_unique<sf::Text>(m_font, "SALIR", 32);
-    m_exitText->setFillColor(sf::Color::White);
-    sf::FloatRect exitBounds = m_exitText->getLocalBounds();
-    m_exitText->setPosition(sf::Vector2f(640 - exitBounds.size.x / 2, 470));
+    m_title->setPosition({640.f - m_title->getGlobalBounds().size.x / 2.f, 140.f});
+
+    // Botón Continuar
+    m_resumeText = std::make_unique<sf::Text>(m_font, "CONTINUAR", 35);
+    m_resumeText->setPosition({640.f - m_resumeText->getGlobalBounds().size.x / 2.f, 230.f});
+
+    // Botón Ajustes
+    m_configBtn = std::make_unique<sf::Text>(m_font, "AJUSTES", 35);
+    m_configBtn->setPosition({640.f - m_configBtn->getGlobalBounds().size.x / 2.f, 305.f});
+
+    // Botón Menú Principal
+    m_menuText = std::make_unique<sf::Text>(m_font, "MENU PRINCIPAL", 35);
+    m_menuText->setPosition({640.f - m_menuText->getGlobalBounds().size.x / 2.f, 380.f});
+
+    // Botón Salir
+    m_exitText = std::make_unique<sf::Text>(m_font, "SALIR DEL JUEGO", 35);
+    m_exitText->setPosition({640.f - m_exitText->getGlobalBounds().size.x / 2.f, 455.f});
 }
 
-void PauseState::update(float dt) 
-{
-    sf::Vector2i mousePos = sf::Mouse::getPosition(*window);
-    sf::Vector2f mouseF(static_cast<float>(mousePos.x), static_cast<float>(mousePos.y));
+void PauseState::update(float dt) {
+    sf::Vector2f mouseF = window->mapPixelToCoords(sf::Mouse::getPosition(*window));
     
-    // Detectar hover en botones
-    sf::FloatRect resumeBounds = m_resumeText->getGlobalBounds();
-    sf::FloatRect menuBounds = m_menuText->getGlobalBounds();
-    sf::FloatRect exitBounds = m_exitText->getGlobalBounds();
-    
-    bool resumeHover = resumeBounds.contains(mouseF);
-    bool menuHover = menuBounds.contains(mouseF);
-    bool exitHover = exitBounds.contains(mouseF);
-    
-    // Cambiar color al hacer hover
-    m_resumeText->setFillColor(resumeHover ? sf::Color(200, 200, 100) : sf::Color::White);
-    m_menuText->setFillColor(menuHover ? sf::Color(200, 200, 100) : sf::Color::White);
-    m_exitText->setFillColor(exitHover ? sf::Color(200, 200, 100) : sf::Color::White);
-    
-    // Detectar clic
+    bool resumeHover = !mostrarConfig && m_resumeText->getGlobalBounds().contains(mouseF);
+    bool configHover = !mostrarConfig && m_configBtn->getGlobalBounds().contains(mouseF);
+    bool menuHover   = !mostrarConfig && m_menuText->getGlobalBounds().contains(mouseF);
+    bool exitHover   = !mostrarConfig && m_exitText->getGlobalBounds().contains(mouseF);
+
+    m_resumeText->setFillColor(resumeHover ? sf::Color::Yellow : sf::Color::White);
+    m_configBtn->setFillColor(configHover ? sf::Color::Yellow : sf::Color::White);
+    m_menuText->setFillColor(menuHover ? sf::Color::Yellow : sf::Color::White);
+    m_exitText->setFillColor(exitHover ? sf::Color::Red : sf::Color::White);
+
+    if (mostrarConfig) {
+        static bool teclaNavegacionPresionada = false;
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down) && !teclaNavegacionPresionada) {
+            seleccionConfig = (seleccionConfig + 1) % 3;
+            teclaNavegacionPresionada = true;
+        } else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up) && !teclaNavegacionPresionada) {
+            seleccionConfig = (seleccionConfig - 1 + 3) % 3;
+            teclaNavegacionPresionada = true;
+        } else if (!sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down) && !sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up)) {
+            teclaNavegacionPresionada = false;
+        }
+
+        float mod = 0.f;
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right)) mod = 0.5f;
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left)) mod = -0.5f;
+
+        if (mod != 0.f) {
+            if (seleccionConfig == 0) game->setVolGeneral(std::clamp(game->getVolGeneral() + mod, 0.f, 100.f));
+            if (seleccionConfig == 1) game->setVolMusica(std::clamp(game->getVolMusica() + mod, 0.f, 100.f));
+            if (seleccionConfig == 2) game->setVolEfectos(std::clamp(game->getVolEfectos() + mod, 0.f, 100.f));
+        }
+
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape)) {
+            mostrarConfig = false;
+        }
+    }
+
     static bool clickProcesado = false;
     if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
         if (!clickProcesado) {
             clickProcesado = true;
-            
-            if (resumeHover) {
-                game->popState();  // Volver al juego
-            }
-            else if (menuHover) {
-                game->returnToMenu();
-            }
-            else if (exitHover) {
-                window->close();
+            if (!mostrarConfig) {
+                if (resumeHover) game->popState();
+                if (configHover) mostrarConfig = true; 
+                if (menuHover)   game->returnToMenu();
+                if (exitHover)   window->close();
             }
         }
     } else {
         clickProcesado = false;
     }
-    
-    // ESC para cerrar pausa (volver al juego)
-    static bool escapeProcesado = false;
+
+    static bool escPausaPresionado = false;
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape)) {
-        if (!escapeProcesado) {
-            escapeProcesado = true;
+        if (!escPausaPresionado && !mostrarConfig) {
+            escPausaPresionado = true;
             game->popState();
         }
     } else {
-        escapeProcesado = false;
+        escPausaPresionado = false;
     }
 }
 
@@ -101,15 +112,43 @@ void PauseState::draw()
 {
     if (!window) return;
     
-    // Fondo oscuro
     window->draw(m_background);
-    
-    // Panel
     window->draw(m_panel);
     
-    // Textos
+    // Dibujar textos (ahora todos están inicializados)
     if (m_title) window->draw(*m_title);
     if (m_resumeText) window->draw(*m_resumeText);
+    if (m_configBtn) window->draw(*m_configBtn);
     if (m_menuText) window->draw(*m_menuText);
     if (m_exitText) window->draw(*m_exitText);
+
+    if (mostrarConfig) {
+        sf::RectangleShape fondoAjustes({500.f, 350.f});
+        fondoAjustes.setPosition({390.f, 185.f});
+        fondoAjustes.setFillColor(sf::Color(20, 20, 20, 255)); 
+        fondoAjustes.setOutlineThickness(3);
+        fondoAjustes.setOutlineColor(sf::Color::Red);
+        window->draw(fondoAjustes);
+
+        auto drawBar = [&](std::string name, float val, float y, bool sel) {
+            sf::Text t(m_font, name + ": " + std::to_string((int)val), 20);
+            t.setPosition({420.f, y});
+            t.setFillColor(sel ? sf::Color::Yellow : sf::Color::White);
+            window->draw(t);
+
+            sf::RectangleShape fondoBarra({300.f, 10.f});
+            fondoBarra.setPosition({420.f, y + 40.f});
+            fondoBarra.setFillColor(sf::Color(100, 100, 100));
+            window->draw(fondoBarra);
+
+            sf::RectangleShape progreso({(val / 100.f) * 300.f, 10.f});
+            progreso.setPosition({420.f, y + 40.f});
+            progreso.setFillColor(sel ? sf::Color::Yellow : sf::Color::Red);
+            window->draw(progreso);
+        };
+
+        drawBar("GENERAL", game->getVolGeneral(), 220.f, seleccionConfig == 0);
+        drawBar("MUSICA", game->getVolMusica(), 300.f, seleccionConfig == 1);
+        drawBar("EFECTOS", game->getVolEfectos(), 380.f, seleccionConfig == 2);
+    }
 }

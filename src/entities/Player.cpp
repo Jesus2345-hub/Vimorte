@@ -3,7 +3,6 @@
 #include <cmath>
 
 Player::Player() : m_speed(300.0f), m_position(600, 300), m_sprite(nullptr) {
-    
 }
 
 void Player::loadTexture(const std::string& path) {
@@ -11,10 +10,8 @@ void Player::loadTexture(const std::string& path) {
         std::cerr << "Error: No se pudo cargar textura del jugador: " << path << std::endl;
         return;
     }
-    // Crear sprite con la textura
     m_sprite = std::make_unique<sf::Sprite>(m_texture);
     
-    // Ejemplo: si quieres que el jugador mida 50x50 px
     float anchoDeseado = 100.0f;
     float altoDeseado = 150.0f;
     
@@ -24,7 +21,6 @@ void Player::loadTexture(const std::string& path) {
     
     m_sprite->setScale(sf::Vector2f(escalaX, escalaY));
     
-    // Centrar el origen (para que la posición sea el centro)
     sf::FloatRect bounds = m_sprite->getLocalBounds();
     m_sprite->setOrigin(sf::Vector2f(bounds.size.x / 2, bounds.size.y / 2));
     m_sprite->setPosition(m_position);
@@ -60,13 +56,34 @@ void Player::move(sf::Vector2f direction, float dt) {
     }
 }
 
-sf::FloatRect Player::getBounds() const {
+sf::Vector2f Player::getPosition() const {
+    return m_position;
+}
+
+sf::FloatRect Player::getHurtbox() const {
     if (m_sprite) {
         return m_sprite->getGlobalBounds();
     }
     return sf::FloatRect();
 }
 
-sf::Vector2f Player::getPosition() const {
-    return m_position;
+sf::FloatRect Player::getBounds() const {
+    return getHurtbox();
+}
+
+sf::FloatRect Player::getHitbox() const {
+    if (m_sprite) {
+        sf::FloatRect bounds = m_sprite->getGlobalBounds();
+        
+        // La hitbox son solo los pies (60% del ancho y 20px de alto)
+        float anchoHitbox = bounds.size.x * 0.6f; 
+        float altoHitbox = 20.0f; 
+        
+        return sf::FloatRect(
+            { bounds.position.x + (bounds.size.x - anchoHitbox) / 2.0f, 
+              bounds.position.y + bounds.size.y - altoHitbox },
+            { anchoHitbox, altoHitbox }
+        );
+    }
+    return sf::FloatRect();
 }
