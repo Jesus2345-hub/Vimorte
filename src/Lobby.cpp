@@ -7,7 +7,7 @@ LobbyState::LobbyState(sf::RenderWindow* window, Game* game)
     : State(window, game), m_background(nullptr)
 {
     // 1. CARGAR JUGADOR
-    m_player.loadTexture("assets/images/player/idle.png");
+    m_player.loadAssets();
     m_player.setPosition(600, 300); 
     m_player.setSpeed(300.0f);
     
@@ -49,7 +49,7 @@ void LobbyState::update(float dt)
     // Verificación de colisiones usando la Hitbox de los pies
     for (const auto& obj : m_mapaFisico) 
     {
-        if (m_player.getHitbox().findIntersection(obj.getBounds())) 
+        if (m_player.getBounds().findIntersection(obj.getBounds())) 
         {
             m_player.setPosition(posAnterior.x, posAnterior.y);
             break; 

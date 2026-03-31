@@ -10,7 +10,7 @@ MenuState::MenuState(sf::RenderWindow* window, Game* game)
     window->setView(window->getDefaultView());
     miMenu = std::make_unique<Menu>(static_cast<float>(window->getSize().x), static_cast<float>(window->getSize().y));
 
-    if (m_menuMusic.openFromFile("assets/sounds/lobby.ogg")) {
+    if (m_menuMusic.openFromFile("assets/sounds/")) {
         m_menuMusic.setLooping(true);
         m_menuMusic.setVolume(game->getRealMusica());
         m_menuMusic.play();
