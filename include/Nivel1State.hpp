@@ -4,34 +4,40 @@
 #include <SFML/Graphics.hpp>
 #include "entities/Player.hpp"
 #include "Obstaculo.hpp"
+#include "MinigamePool.hpp"
 #include <memory>
 #include <vector>
-#include <optional>
 
-class LobbyState : public State 
+class Nivel1State : public State 
 {
 private:
     Player m_player;
     
-    // Fondo del lobby
+    // Fondo del nivel 1
     sf::Texture m_backgroundTexture;
     std::unique_ptr<sf::Sprite> m_background;
-
-    // Lógica de colisiones
+    
+    // Dimensiones del mundo
+    sf::Vector2f m_worldSize;
+    
+    // Sistema de colisiones
     std::vector<Obstaculo> m_mapaFisico;
     void configurarColisiones();
     
-    // Área del ascensor
-    sf::FloatRect m_ascensorArea;
-    bool m_cercaAscensor;
+    // Cámara para el desplazamiento
+    sf::View m_camera;
     
-    // UI de interacción
+    // Minijuego de pool
+    MinigamePool m_poolMinigame;
+    bool m_cercaMesaPool;
+    
     sf::Font m_font;
     std::unique_ptr<sf::Text> m_textoInteraccion;
     
 public:
-    LobbyState(sf::RenderWindow* window, Game* game);
+    Nivel1State(sf::RenderWindow* window, Game* game);
     void update(float dt) override;
     void draw() override;
-    ~LobbyState() override = default;
+    void handleEvent(const sf::Event& event);
+    ~Nivel1State() override = default;
 };

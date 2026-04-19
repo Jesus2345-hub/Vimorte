@@ -1,6 +1,7 @@
 #include "Game.hpp"
 #include "MenuState.hpp" 
-#include "State.hpp" 
+#include "State.hpp"
+#include "Nivel1State.hpp"
 #include <optional>
 #include <iostream>
 #include <vector>
@@ -21,10 +22,21 @@ void Game::run()
         float deltaTime = clock.restart().asSeconds();
 
         while (const std::optional<sf::Event> event = window->pollEvent()) {
-            if (event->is<sf::Event::Closed>()) window->close();
+            if (event->is<sf::Event::Closed>()) {
+                window->close();
+            }
+            
+            // Pasar evento al estado actual si es Nivel1State
+            if (!states.empty()) {
+                if (auto* nivel1 = dynamic_cast<Nivel1State*>(states.top().get())) {
+                    nivel1->handleEvent(*event);
+                }
+            }
         }
 
-        if (!states.empty()) states.top()->update(deltaTime);
+        if (!states.empty()) {
+            states.top()->update(deltaTime);
+        }
 
         window->clear(sf::Color::Black); 
         
@@ -56,8 +68,14 @@ void Game::changeState(std::unique_ptr<State> state) {
     states.push(std::move(state));
 }
 
-void Game::pushState(std::unique_ptr<State> state) { states.push(std::move(state)); }
-void Game::popState() { if (!states.empty()) states.pop(); }
+void Game::pushState(std::unique_ptr<State> state) { 
+    states.push(std::move(state)); 
+}
+
+void Game::popState() { 
+    if (!states.empty()) states.pop(); 
+}
+
 void Game::returnToMenu() {
     while (states.size() > 1) states.pop();
     changeState(std::make_unique<MenuState>(window.get(), this));
