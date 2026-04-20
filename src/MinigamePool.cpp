@@ -35,7 +35,7 @@ void MinigamePool::setSize(const sf::Vector2f& size) {
     // Mesa de pool (un poco más pequeña que el fondo)
     sf::Vector2f tableSize(size.x - 60.f, size.y - 100.f);
     m_table.setSize(tableSize);
-    m_table.setPosition(sf::Vector2f(m_position.x + 30.f, m_position.y + 50.f));
+    m_table.setPosition(sf::Vector2f(m_position.x + 200.f, m_position.y + 100.f));
     
     // Configurar textos
     if (m_font.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf")) {

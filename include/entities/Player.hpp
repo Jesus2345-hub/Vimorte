@@ -36,6 +36,7 @@ public:
     sf::FloatRect getBounds() const;
     sf::Vector2f getPosition() const;
 
+    
     sf::FloatRect getHurtbox() const;
     void drawHurtbox(sf::RenderWindow& window) const;
     

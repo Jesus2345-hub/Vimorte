@@ -29,10 +29,10 @@ Nivel1State::Nivel1State(sf::RenderWindow* window, Game* game)
     
     configurarColisiones();
     
-    m_poolMinigame.setSize(sf::Vector2f(1000.f, 700.f));
+    m_poolMinigame.setSize(sf::Vector2f(1000.f, 500.f));
     m_poolMinigame.setPosition(sf::Vector2f(
         (windowSize.x - 1000.f) / 2.f,
-        (windowSize.y - 700.f) / 2.f
+        (windowSize.y - 500.f) / 2.f
     ));
     
     if (m_font.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf")) {
@@ -135,7 +135,7 @@ void Nivel1State::update(float dt)
             float length = std::sqrt(movimiento.x * movimiento.x + movimiento.y * movimiento.y);
             movimiento /= length;
         }
-        
+                
         m_player.move(movimiento, dt);
     }
     
@@ -282,7 +282,7 @@ void Nivel1State::configurarColisiones()
     // Muro horizontal inferior lab de vimorte 
     m_mapaFisico.emplace_back(1400.f, 579.f, 400.f, 20.f);
     // Muro horizontal superior del salón de la pizarra (lado izquierdo inferior)
-    m_mapaFisico.emplace_back(18.f, 880.f, 750.f, 23.f);
+    m_mapaFisico.emplace_back(18.f, 880.f, 750.f, 200.f);
     // Bloque pequeño a la derecha de la tubería 
     m_mapaFisico.emplace_back(1020.f, 880.f, 54.f, 17.f);
     // Muro horizontal superior del salón de juego (lado izquierdo inferior)
