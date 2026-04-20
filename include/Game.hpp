@@ -35,7 +35,7 @@ public:
     void pushState(std::unique_ptr<State> state);
     void popState();
     void changeState(std::unique_ptr<State> state);
-    void returnToMenu(); // Para salir desde la pausa al menú principal
+    void returnToMenu();
 };
 
 #endif

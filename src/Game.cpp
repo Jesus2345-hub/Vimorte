@@ -26,11 +26,9 @@ void Game::run()
                 window->close();
             }
             
-            // Pasar evento al estado actual si es Nivel1State
+            // Pasar evento al estado actual
             if (!states.empty()) {
-                if (auto* nivel1 = dynamic_cast<Nivel1State*>(states.top().get())) {
-                    nivel1->handleEvent(*event);
-                }
+                states.top()->handleEvent(*event);
             }
         }
 

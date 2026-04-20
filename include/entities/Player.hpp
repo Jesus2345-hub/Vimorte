@@ -3,11 +3,12 @@
 #include <string>
 #include <memory>
 #include "../Animation.hpp"
+#include "../Inventory.hpp"
 
 class Player {
 private:
     sf::Texture m_idleTexture;
-    std::unique_ptr<sf::Sprite> m_sprite;  // ← Cambiar a puntero
+    std::unique_ptr<sf::Sprite> m_sprite;
     sf::Vector2f m_position;
     float m_speed;
     
@@ -20,6 +21,9 @@ private:
     
     Animation* m_currentAnimation;
     sf::Vector2f m_lastDirection;
+
+    // Inventario
+    std::unique_ptr<Inventory> m_inventory;
     
 public:
     Player();
@@ -29,11 +33,15 @@ public:
     void update(float dt);
     void draw(sf::RenderWindow& window);
     void move(sf::Vector2f direction, float dt);
-    sf::FloatRect getBounds() const; //Ojito que le cambie el nombre a esta función, antes era getHitbox() pero ahora devuelve el bounds del sprite completo
+    sf::FloatRect getBounds() const;
     sf::Vector2f getPosition() const;
 
-    sf::FloatRect getHurtbox() const; //Esta seria la funcion de Sarai! le puse Hurtbox para recordar la diferencia
-    void drawHurtbox(sf::RenderWindow& window) const;  // Para debug visual
+    sf::FloatRect getHurtbox() const;
+    void drawHurtbox(sf::RenderWindow& window) const;
+    
+    // Acceso al inventario
+    Inventory* getInventory() { return m_inventory.get(); }
+    void clearInventory() { if (m_inventory) m_inventory->clear(); }
 
 private:
     void updateAnimation(sf::Vector2f direction);
