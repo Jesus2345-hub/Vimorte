@@ -116,7 +116,7 @@ void Nivel1State::update(float dt)
     
     // Verificación de colisiones
     for (const auto& obj : m_mapaFisico) {
-        if (m_player.getBounds().findIntersection(obj.getBounds())) {
+        if (m_player.getHurtbox().findIntersection(obj.getBounds()).has_value()) {
             m_player.setPosition(posAnterior.x, posAnterior.y);
             break;
         }
@@ -160,6 +160,9 @@ void Nivel1State::draw()
     
     // Dibujar jugador
     m_player.draw(*window);
+
+    // ===== DIBUJAR HURTBOX DEL JUGADOR =====
+    m_player.drawHurtbox(*window);
     
     // ===== DEBUG: DIBUJAR COLISIONES =====
     for (const auto& obj : m_mapaFisico) {
@@ -254,6 +257,8 @@ void Nivel1State::configurarColisiones()
 
     m_mapaFisico.emplace_back(100.f, 320.f, 50.f, 150.f);
     m_mapaFisico.emplace_back(300.f, 410.f, 70.f, 50.f);
+
+    m_mapaFisico.emplace_back(1184.f, 1174.f, 351.f, 182.f);  // Mesa de pool
    
 
     std::cout << "✅ Colisiones configuradas: " << m_mapaFisico.size() << " paredes con huecos" << std::endl;

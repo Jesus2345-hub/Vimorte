@@ -31,7 +31,10 @@ public:
     void move(sf::Vector2f direction, float dt);
     sf::FloatRect getBounds() const; //Ojito que le cambie el nombre a esta función, antes era getHitbox() pero ahora devuelve el bounds del sprite completo
     sf::Vector2f getPosition() const;
-    
+
+    sf::FloatRect getHurtbox() const; //Esta seria la funcion de Sarai! le puse Hurtbox para recordar la diferencia
+    void drawHurtbox(sf::RenderWindow& window) const;  // Para debug visual
+
 private:
     void updateAnimation(sf::Vector2f direction);
 };

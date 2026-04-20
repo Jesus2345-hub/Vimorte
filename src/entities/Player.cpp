@@ -151,3 +151,40 @@ sf::FloatRect Player::getBounds() const {
 sf::Vector2f Player::getPosition() const {
     return m_position;
 }
+
+sf::FloatRect Player::getHurtbox() const {
+    if (!m_sprite) return sf::FloatRect(sf::Vector2f(0.f, 0.f), sf::Vector2f(0.f, 0.f));
+    
+    // Obtener la posición actual del sprite
+    sf::Vector2f spritePos = m_sprite->getPosition();
+    
+    // Obtener los bounds completos del sprite
+    sf::FloatRect fullBounds = m_sprite->getGlobalBounds();
+    
+    // Crear un rectángulo pequeño en los pies del personaje
+    // (centrado horizontalmente, en la parte inferior del sprite)
+    float hurtboxWidth = fullBounds.size.x * 0.7f;  // 40% del ancho del sprite
+    float hurtboxHeight = fullBounds.size.y * 0.30f; // 15% del alto del sprite
+    
+    // Posicionar en los pies (parte inferior central)
+    float hurtboxX = spritePos.x - hurtboxWidth / 2.f;
+    float hurtboxY = spritePos.y + fullBounds.size.y / 2.f - hurtboxHeight;
+    
+    return sf::FloatRect(
+        sf::Vector2f(hurtboxX, hurtboxY),
+        sf::Vector2f(hurtboxWidth, hurtboxHeight)
+    );
+}
+
+void Player::drawHurtbox(sf::RenderWindow& window) const {
+    sf::FloatRect hurtbox = getHurtbox();
+    
+    sf::RectangleShape hurtboxShape;
+    hurtboxShape.setPosition(sf::Vector2f(hurtbox.position.x, hurtbox.position.y));
+    hurtboxShape.setSize(sf::Vector2f(hurtbox.size.x, hurtbox.size.y));
+    hurtboxShape.setFillColor(sf::Color(0, 255, 0, 150));  // Verde semi-transparente
+    hurtboxShape.setOutlineThickness(2.f);
+    hurtboxShape.setOutlineColor(sf::Color::Green);
+    
+    window.draw(hurtboxShape);
+}

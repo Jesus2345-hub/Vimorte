@@ -68,15 +68,14 @@ void LobbyState::update(float dt)
     
     // Verificación de colisiones
     for (const auto& obj : m_mapaFisico) {
-        if (m_player.getBounds().findIntersection(obj.getBounds())) {
+        if (m_player.getHurtbox().findIntersection(obj.getBounds()).has_value()) {
             m_player.setPosition(posAnterior.x, posAnterior.y);
             break; 
         }
     }
     
     // VERIFICAR SI EL JUGADOR ESTÁ CERCA DEL ASCENSOR
-    // En SFML 3.0.2, findIntersection devuelve std::optional<sf::FloatRect>
-    std::optional<sf::FloatRect> interseccion = m_player.getBounds().findIntersection(m_ascensorArea);
+    std::optional<sf::FloatRect> interseccion = m_player.getHurtbox().findIntersection(m_ascensorArea);
     m_cercaAscensor = interseccion.has_value();
     
     // INTERACCIÓN CON ASCENSOR
