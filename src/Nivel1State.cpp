@@ -198,33 +198,64 @@ void Nivel1State::configurarColisiones()
 {
     m_mapaFisico.clear();
     
-    // ===== BORDES DEL MUNDO =====
-    m_mapaFisico.emplace_back(-10.f, 0.f, 10.f, m_worldSize.y);           // Izquierda
-    m_mapaFisico.emplace_back(m_worldSize.x, 0.f, 10.f, m_worldSize.y);   // Derecha
-    m_mapaFisico.emplace_back(0.f, -10.f, m_worldSize.x, 10.f);           // Arriba
-    m_mapaFisico.emplace_back(0.f, m_worldSize.y, m_worldSize.x, 10.f);   // Abajo
     
-    // ===== MURO HORIZONTAL CENTRAL (con hueco para pasar) =====
-    // Parte izquierda del muro central
-    m_mapaFisico.emplace_back(0.f, 571.f, 600.f, 48.f);
-    // Parte derecha del muro central (deja hueco de 600 a 800)
-    m_mapaFisico.emplace_back(800.f, 571.f, 954.f, 48.f);
-    
-    // ===== MURO VERTICAL IZQUIERDO (con hueco para pasar) =====
-    // Parte superior del muro vertical izquierdo
-    m_mapaFisico.emplace_back(763.f, 0.f, 53.f, 400.f);
-    // Parte inferior del muro vertical izquierdo (deja hueco de 400 a 550)
-    m_mapaFisico.emplace_back(763.f, 550.f, 53.f, 69.f);
-    
-    // ===== MURO VERTICAL INFERIOR (con hueco para pasar) =====
-    // Parte superior del muro vertical inferior
-    m_mapaFisico.emplace_back(763.f, 920.f, 53.f, 200.f);
-    // Parte inferior del muro vertical inferior (deja hueco de 1120 a 1300)
-    m_mapaFisico.emplace_back(763.f, 1300.f, 53.f, 287.f);
+    // arreglos de Sara
 
-    m_mapaFisico.emplace_back(1184.f, 1174.f, 351.f, 182.f);  // MEsa de Pool
-
+    // Límite superior corregido (más arriba)
+    m_mapaFisico.emplace_back(50.f, 12.f, 1700.f, 20.f);
+    // Pared lateral izquierda 
+    m_mapaFisico.emplace_back(18.f, 12.f, 20.f, 1700.f);
+    // Límite inferior de las habitaciones superiores (ajustado a la tubería)
+    m_mapaFisico.emplace_back(18.f, 1490.f, 1700.f, 20.f);
+    // Pared lateral derecha
+    m_mapaFisico.emplace_back(1700.f, 12.f, 30.f, 1700.f);
+    // Pared divisoria interna (Laboratorio - Baño)
+    m_mapaFisico.emplace_back(750.f, 12.f, 22.f, 550.f);
+    // Muro horizontal inferior del laboratorio (basado en tu última selección)
+    m_mapaFisico.emplace_back(18.f, 579.f, 360.f, 15.f);
     
+    //puerta hab. con tanque
+    // Bloque 1: Base de la puerta (donde se une al muro)
+    m_mapaFisico.emplace_back(378.f, 579.f, 20.f, 25.f); 
+    // Bloque 2: Parte inclinada de la puerta
+    m_mapaFisico.emplace_back(398.f, 604.f, 49.f, 55.f);
+
+
+    // Muro horizontal inferior del baño (conecta con la divisoria vertical)
+    m_mapaFisico.emplace_back(550.f, 579.f, 680.f, 20.f);
+    // Muro horizontal inferior lab de vimorte 
+    m_mapaFisico.emplace_back(1400.f, 579.f, 400.f, 20.f);
+    // Muro horizontal superior del salón de la pizarra (lado izquierdo inferior)
+    m_mapaFisico.emplace_back(18.f, 880.f, 750.f, 23.f);
+    // Bloque pequeño a la derecha de la tubería 
+    m_mapaFisico.emplace_back(1020.f, 880.f, 54.f, 17.f);
+    // Muro horizontal superior del salón de juego (lado izquierdo inferior)
+    m_mapaFisico.emplace_back(1250.f, 880.f, 750.f, 23.f);// Pared vertical que separa el pasillo de la zona inferior (medida 13x141)
+    m_mapaFisico.emplace_back(755.f, 880.f, 13.f, 200.f);   
+    // Extensión vertical para cerrar la esquina (mismo X, nueva Y y Alto)
+    m_mapaFisico.emplace_back(755.f, 1250.f, 13.f, 250.f);
+
+    m_mapaFisico.emplace_back(985.f, 880.f, 13.f, 200.f);   
+    // Extensión vertical para cerrar la esquina (mismo X, nueva Y y Alto)
+    m_mapaFisico.emplace_back(985.f, 1250.f, 13.f, 250.f);
+    // Bloque horizontal para cerrar la esquina inferior derecha (medida 302x22)
+    m_mapaFisico.emplace_back(1255.f, 950.f, 502.f, 22.f);
+
+    m_mapaFisico.emplace_back(15.f, 950.f, 702.f, 22.f);
+    // Bloque de colisión para el conjunto de mesas y sillas (Salón Pizarra)
+    m_mapaFisico.emplace_back(150.f, 1150.f, 120.f, 50.f);
+    m_mapaFisico.emplace_back(550.f, 1300.f, 120.f, 50.f);
+    m_mapaFisico.emplace_back(70.f, 1350.f, 50.f, 50.f);
+
+    //bloque de colisiones del cuarto con tanque
+    m_mapaFisico.emplace_back(100.f, 115.f, 200.f, 20.f);
+    m_mapaFisico.emplace_back(450.f, 115.f, 200.f, 20.f);
+    m_mapaFisico.emplace_back(200.f, 70.f, 250.f, 20.f);
+
+    m_mapaFisico.emplace_back(100.f, 320.f, 50.f, 150.f);
+    m_mapaFisico.emplace_back(300.f, 410.f, 70.f, 50.f);
+   
+
     std::cout << "✅ Colisiones configuradas: " << m_mapaFisico.size() << " paredes con huecos" << std::endl;
 }
 
