@@ -5,6 +5,7 @@
 #include "entities/Player.hpp"
 #include "Obstaculo.hpp"
 #include "MinigamePool.hpp"
+#include "MinigameQuiz.hpp"
 #include "Inventory.hpp"
 #include <memory>
 #include <vector>
@@ -24,7 +25,11 @@ private:
     sf::View m_camera;
     
     MinigamePool m_poolMinigame;
+    MinigameQuiz m_quizMinigame;
+    sf::FloatRect m_pizarraArea;    
+
     bool m_cercaMesaPool;
+    bool m_cercaPizarra;
     
     sf::Font m_font;
     std::unique_ptr<sf::Text> m_textoInteraccion;

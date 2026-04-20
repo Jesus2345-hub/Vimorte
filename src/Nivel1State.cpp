@@ -27,12 +27,25 @@ Nivel1State::Nivel1State(sf::RenderWindow* window, Game* game)
                         sf::Vector2f(static_cast<float>(windowSize.x), 
                                      static_cast<float>(windowSize.y)));
     
+    // Definir área de la pizarra
+    m_pizarraArea = sf::FloatRect(
+        sf::Vector2f(300.f, 950.f),  // X, Y
+        sf::Vector2f(250.f, 100.f)   // ANCHO, ALTO
+    );
+
     configurarColisiones();
     
     m_poolMinigame.setSize(sf::Vector2f(1000.f, 500.f));
     m_poolMinigame.setPosition(sf::Vector2f(
         (windowSize.x - 1000.f) / 2.f,
         (windowSize.y - 500.f) / 2.f
+    ));
+
+    // 6. CONFIGURAR MINIJUEGO DE QUIZ
+    m_quizMinigame.setSize(sf::Vector2f(900.f, 600.f));
+    m_quizMinigame.setPosition(sf::Vector2f(
+    (windowSize.x - 900.f) / 2.f,
+    (windowSize.y - 600.f) / 2.f
     ));
     
     if (m_font.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf")) {
@@ -71,6 +84,15 @@ void Nivel1State::handleEvent(const sf::Event& event) {
             if (keyEvent->code == sf::Keyboard::Key::Escape) {
                 m_poolMinigame.deactivate();
                 std::cout << "🎱 Minijuego de pool cerrado" << std::endl;
+            }
+        }
+    }
+    else if (m_quizMinigame.isActive()) {
+        m_quizMinigame.handleEvent(event, *window);
+        if (event.is<sf::Event::KeyPressed>()) {
+            const auto& keyEvent = event.getIf<sf::Event::KeyPressed>();
+            if (keyEvent->code == sf::Keyboard::Key::Escape) {
+                m_quizMinigame.deactivate();
             }
         }
     }
@@ -117,6 +139,44 @@ void Nivel1State::update(float dt)
         
         return;
     }
+
+    // Verificar si está cerca de la pizarra
+    m_cercaPizarra = m_player.getHurtbox().findIntersection(m_pizarraArea).has_value();
+
+    // Activar quiz con R
+    static bool rQuizPresionado = false;
+    if (m_cercaPizarra && !m_quizMinigame.isActive() && !m_poolMinigame.isActive()) {
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R))
+        {
+            if (!rQuizPresionado)
+            {
+                rQuizPresionado = true;
+                m_quizMinigame.activate();
+                std::cout << "📚 Minijuego de preguntas activado!" << std::endl;
+            }
+        }
+        else
+        {
+            rQuizPresionado = false;
+        }
+    }
+
+    // Si el quiz está activo
+    if (m_quizMinigame.isActive()) {
+        m_quizMinigame.update(dt);
+        m_player.update(dt);
+    
+        sf::Vector2f playerPos = m_player.getPosition();
+        sf::Vector2f cameraPos = playerPos;
+        float halfWidth = static_cast<float>(windowSize.x) / 2.f;
+        float halfHeight = static_cast<float>(windowSize.y) / 2.f;
+        cameraPos.x = std::clamp(cameraPos.x, halfWidth, m_worldSize.x - halfWidth);
+        cameraPos.y = std::clamp(cameraPos.y, halfHeight, m_worldSize.y - halfHeight);
+        m_camera.setCenter(cameraPos);
+    
+        return;
+    }
+
     
     // Movimiento solo si inventario no está abierto
     Inventory* inv = m_player.getInventory();
@@ -221,6 +281,14 @@ void Nivel1State::draw()
         colision.setOutlineColor(sf::Color::Red);
         window->draw(colision);
     }
+
+    // ===== DEBUG: DIBUJAR ÁREA DE LA PIZARRA =====
+    sf::RectangleShape pizarraDebug(sf::Vector2f(m_pizarraArea.size.x, m_pizarraArea.size.y));
+    pizarraDebug.setPosition(sf::Vector2f(m_pizarraArea.position.x, m_pizarraArea.position.y));
+    pizarraDebug.setFillColor(sf::Color(0, 0, 255, 100));  // Azul semi-transparente
+    pizarraDebug.setOutlineThickness(3.f);
+    pizarraDebug.setOutlineColor(sf::Color::Blue);
+    window->draw(pizarraDebug);
     
     // Debug: área de la mesa de pool
     sf::RectangleShape mesaDebug(sf::Vector2f(351.f, 182.f));
@@ -236,6 +304,24 @@ void Nivel1State::draw()
         window->draw(*m_textoInteraccion);
         window->setView(m_camera);
     }
+
+    // Dibujar texto de interacción para la pizarra
+    if (m_cercaPizarra && !m_quizMinigame.isActive() && !m_poolMinigame.isActive() && m_textoInteraccion) {
+        m_textoInteraccion->setString("Presiona R para la leccion de matematicas");
+        sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
+        m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
+    
+        window->setView(window->getDefaultView());
+        window->draw(*m_textoInteraccion);
+        window->setView(m_camera);
+    }
+
+    // Dibujar quiz
+    if (m_quizMinigame.isActive()) {
+    window->setView(window->getDefaultView());
+    m_quizMinigame.draw(*window);
+    }
+
     
     // ===== FASE 2: DIBUJAR UI CON VISTA POR DEFECTO =====
     window->setView(window->getDefaultView());
@@ -282,7 +368,7 @@ void Nivel1State::configurarColisiones()
     // Muro horizontal inferior lab de vimorte 
     m_mapaFisico.emplace_back(1400.f, 579.f, 400.f, 20.f);
     // Muro horizontal superior del salón de la pizarra (lado izquierdo inferior)
-    m_mapaFisico.emplace_back(18.f, 880.f, 750.f, 200.f);
+    m_mapaFisico.emplace_back(18.f, 880.f, 750.f, 10.f); //CAmbie de 200
     // Bloque pequeño a la derecha de la tubería 
     m_mapaFisico.emplace_back(1020.f, 880.f, 54.f, 17.f);
     // Muro horizontal superior del salón de juego (lado izquierdo inferior)
