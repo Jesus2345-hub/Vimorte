@@ -3,16 +3,13 @@
 
 #include "State.hpp"
 #include "Menu.hpp"
-#include <SFML/Audio.hpp>
 #include <memory>
 
 class MenuState : public State {
 private:
     std::unique_ptr<Menu> miMenu;
     bool mostrarConfig;
-	int seleccionConfig;
-    // Objeto de música para el menú
-    sf::Music m_menuMusic;
+    int seleccionConfig;
 
 public:
     MenuState(sf::RenderWindow* window, Game* game);

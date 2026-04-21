@@ -6,6 +6,7 @@
 #include <vector>
 #include <memory>
 #include <stack>
+#include "GameSaveManager.hpp"
 
 class State;
 
@@ -13,29 +14,54 @@ class Game {
 private:
     std::unique_ptr<sf::RenderWindow> window;
     std::stack<std::unique_ptr<State>> states;
-
+    
+    // Sistema de guardado
+    GameSaveManager saveManager;
+    
+    // Configuración de audio
     float volGeneral = 100.f;
     float volMusica = 50.f;
     float volEfectos = 80.f;
+    
+    // Música del juego
+    sf::Music m_currentMusic;
+    std::string m_currentMusicPath;
+    
+    void cargarConfiguracionAudio();
+    void guardarConfiguracionAudio();
 
 public:
     Game();
     ~Game();
     void run();
     
-    void setVolGeneral(float v) { volGeneral = v; }
-    void setVolMusica(float v) { volMusica = v; }
-    void setVolEfectos(float v) { volEfectos = v; }
+    // Gestión de estados
+    void pushState(std::unique_ptr<State> state);
+    void popState();
+    void changeState(std::unique_ptr<State> state);
+    void returnToMenu();
+    
+    // Sistema de guardado
+    GameSaveManager& getSaveManager() { return saveManager; }
+    void guardarPartidaActual();
+    void cargarPartidaYContinuar(int slotId);
+    bool tienePartidaActiva() const { return saveManager.getCurrentSlotId() >= 0; }
+    
+    // Configuración de audio
+    void setVolGeneral(float v);
+    void setVolMusica(float v);
+    void setVolEfectos(float v);
     
     float getVolGeneral() const { return volGeneral; }
     float getVolMusica() const { return volMusica; }
     float getVolEfectos() const { return volEfectos; }
     float getRealMusica() const { return (volMusica * volGeneral) / 100.f; }
-
-    void pushState(std::unique_ptr<State> state);
-    void popState();
-    void changeState(std::unique_ptr<State> state);
-    void returnToMenu();
+    float getRealEfectos() const { return (volEfectos * volGeneral) / 100.f; }
+    
+    // Gestión de música
+    void cambiarMusica(const std::string& rutaMusica);
+    void detenerMusica();
+    void actualizarVolumenMusica();
 };
 
 #endif

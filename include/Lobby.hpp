@@ -29,6 +29,9 @@ private:
     sf::Font m_font;
     std::unique_ptr<sf::Text> m_textoInteraccion;
     
+    // Control de guardado
+    bool m_guardadoRealizado = false;
+    
 public:
     LobbyState(sf::RenderWindow* window, Game* game);
     void update(float dt) override;
