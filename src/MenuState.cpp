@@ -1,8 +1,8 @@
 #include "MenuState.hpp"
-#include "Lobby.hpp" 
+#include "Lobby.hpp"
+#include "SaveSelectState.hpp"
 #include "Game.hpp"  
 #include <iostream>
-#include <algorithm>
 
 MenuState::MenuState(sf::RenderWindow* window, Game* game) 
     : State(window, game), mostrarConfig(false), seleccionConfig(0) 
@@ -10,11 +10,8 @@ MenuState::MenuState(sf::RenderWindow* window, Game* game)
     window->setView(window->getDefaultView());
     miMenu = std::make_unique<Menu>(static_cast<float>(window->getSize().x), static_cast<float>(window->getSize().y));
 
-    if (m_menuMusic.openFromFile("assets/sounds/menu.ogg")) {
-        m_menuMusic.setLooping(true);
-        m_menuMusic.setVolume(game->getRealMusica());
-        m_menuMusic.play();
-    }
+    // Música del menú
+    game->cambiarMusica("assets/sounds/menu.ogg");
 }
 
 void MenuState::update(float dt) {
@@ -39,11 +36,24 @@ void MenuState::update(float dt) {
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right)) mod = 0.5f;
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left)) mod = -0.5f;
 
-        if (seleccionConfig == 0) game->setVolGeneral(std::clamp(game->getVolGeneral() + mod, 0.f, 100.f));
-        if (seleccionConfig == 1) game->setVolMusica(std::clamp(game->getVolMusica() + mod, 0.f, 100.f));
-        if (seleccionConfig == 2) game->setVolEfectos(std::clamp(game->getVolEfectos() + mod, 0.f, 100.f));
-
-        m_menuMusic.setVolume(game->getRealMusica());
+        if (seleccionConfig == 0) {
+            float nuevoVol = game->getVolGeneral() + mod;
+            if (nuevoVol < 0.f) nuevoVol = 0.f;
+            if (nuevoVol > 100.f) nuevoVol = 100.f;
+            game->setVolGeneral(nuevoVol);
+        }
+        if (seleccionConfig == 1) {
+            float nuevoVol = game->getVolMusica() + mod;
+            if (nuevoVol < 0.f) nuevoVol = 0.f;
+            if (nuevoVol > 100.f) nuevoVol = 100.f;
+            game->setVolMusica(nuevoVol);
+        }
+        if (seleccionConfig == 2) {
+            float nuevoVol = game->getVolEfectos() + mod;
+            if (nuevoVol < 0.f) nuevoVol = 0.f;
+            if (nuevoVol > 100.f) nuevoVol = 100.f;
+            game->setVolEfectos(nuevoVol);
+        }
     }
 
     static bool clickProcesado = false;
@@ -55,14 +65,17 @@ void MenuState::update(float dt) {
             if (miMenu->verificarClickConfig(mousePos)) {
                 mostrarConfig = !mostrarConfig;
             }
-            // PRIORIDAD 2: Jugar (Solo si el menú de config está cerrado para evitar clics fantasma)
-            else if (!mostrarConfig && miMenu->verificarClick(mousePos)) {
-                std::cout << "BOTON JUGAR PRESIONADO" << std::endl;
-                m_menuMusic.stop();
-                game->changeState(std::make_unique<LobbyState>(window, game));
-                return; 
+            // PRIORIDAD 2: Nueva Partida (false = modo normal, permite crear y eliminar)
+            else if (!mostrarConfig && miMenu->verificarClickJugar(mousePos)) {
+                std::cout << "🆕 NUEVA PARTIDA - Abriendo selector de slots" << std::endl;
+                game->pushState(std::make_unique<SaveSelectState>(window, game, false));  // <-- false para modo normal
             }
-            // PRIORIDAD 3: Salir
+            // PRIORIDAD 3: Cargar Partida (true = solo carga, no permite crear ni eliminar)
+            else if (!mostrarConfig && miMenu->verificarClickCargar(mousePos)) {
+                std::cout << "📂 CARGAR PARTIDA - Abriendo selector de slots" << std::endl;
+                game->pushState(std::make_unique<SaveSelectState>(window, game, true));   // <-- true para solo carga
+            }
+            // PRIORIDAD 4: Salir
             else if (miMenu->verificarClickSalir(mousePos)) {
                 window->close();
             }

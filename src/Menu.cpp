@@ -14,10 +14,11 @@ Menu::Menu(float ancho, float alto)
         std::cerr << "ERROR: fuente\n";
     }
 
-    // 2. CREAR OBJETOS (Ahora sí llamamos al constructor con los datos listos)
+    // 2. CREAR OBJETOS
     spriteFondo = std::make_unique<sf::Sprite>(texturaFondo);
     spriteConfig = std::make_unique<sf::Sprite>(texturaConfig);
-    textoBoton = std::make_unique<sf::Text>(fuente);
+    textoJugar = std::make_unique<sf::Text>(fuente);
+    textoCargar = std::make_unique<sf::Text>(fuente);
     textoSalir = std::make_unique<sf::Text>(fuente);
 
     // 3. CONFIGURAR TODO
@@ -29,34 +30,48 @@ Menu::Menu(float ancho, float alto)
     spriteConfig->setPosition({ ancho - 70.f, alto - 70.f });
 
     // Textos
-    textoBoton->setString("ENTRAR");
-    textoBoton->setCharacterSize(35);
-    textoBoton->setFillColor(sf::Color::White);
+    textoJugar->setString("NUEVA PARTIDA");
+    textoJugar->setCharacterSize(30);
+    textoJugar->setFillColor(sf::Color::White);
+
+    textoCargar->setString("CARGAR PARTIDA");
+    textoCargar->setCharacterSize(30);
+    textoCargar->setFillColor(sf::Color::White);
 
     textoSalir->setString("SALIR");
     textoSalir->setCharacterSize(35);
     textoSalir->setFillColor(sf::Color::White);
 
-    // Botones (Lógica de cajas)
-    cajaBoton.setSize({250.f, 70.f});
-    cajaBoton.setFillColor(sf::Color(200, 0, 0));
-    cajaBoton.setOutlineThickness(3);
-    cajaBoton.setOutlineColor(sf::Color::White);
-    cajaBoton.setPosition({ancho / 2.f - 125.f, alto / 2.f + 100.f});
+    // Botones
+    cajaJugar.setSize({300.f, 70.f});
+    cajaJugar.setFillColor(sf::Color(200, 0, 0));
+    cajaJugar.setOutlineThickness(3);
+    cajaJugar.setOutlineColor(sf::Color::White);
+    cajaJugar.setPosition({ancho / 2.f - 150.f, alto / 2.f + 50.f});
 
-    sf::FloatRect tb = textoBoton->getLocalBounds();
-    textoBoton->setOrigin({ tb.position.x + tb.size.x / 2.f, tb.position.y + tb.size.y / 2.f });
-    textoBoton->setPosition({ cajaBoton.getPosition().x + 125.f, cajaBoton.getPosition().y + 35.f });
+    sf::FloatRect tj = textoJugar->getLocalBounds();
+    textoJugar->setOrigin({ tj.position.x + tj.size.x / 2.f, tj.position.y + tj.size.y / 2.f });
+    textoJugar->setPosition({ cajaJugar.getPosition().x + 150.f, cajaJugar.getPosition().y + 35.f });
 
-    cajaSalir.setSize({250.f, 70.f});
+    cajaCargar.setSize({300.f, 70.f});
+    cajaCargar.setFillColor(sf::Color(200, 0, 0));
+    cajaCargar.setOutlineThickness(3);
+    cajaCargar.setOutlineColor(sf::Color::White);
+    cajaCargar.setPosition({ancho / 2.f - 150.f, alto / 2.f + 140.f});
+
+    sf::FloatRect tc = textoCargar->getLocalBounds();
+    textoCargar->setOrigin({ tc.position.x + tc.size.x / 2.f, tc.position.y + tc.size.y / 2.f });
+    textoCargar->setPosition({ cajaCargar.getPosition().x + 150.f, cajaCargar.getPosition().y + 35.f });
+
+    cajaSalir.setSize({300.f, 70.f});
     cajaSalir.setFillColor(sf::Color(200, 0, 0));
     cajaSalir.setOutlineThickness(3);
     cajaSalir.setOutlineColor(sf::Color::White);
-    cajaSalir.setPosition({ancho / 2.f - 125.f, alto / 2.f + 200.f});
+    cajaSalir.setPosition({ancho / 2.f - 150.f, alto / 2.f + 230.f});
 
     sf::FloatRect ts = textoSalir->getLocalBounds();
     textoSalir->setOrigin({ ts.position.x + ts.size.x / 2.f, ts.position.y + ts.size.y / 2.f });
-    textoSalir->setPosition({ cajaSalir.getPosition().x + 125.f, cajaSalir.getPosition().y + 35.f });
+    textoSalir->setPosition({ cajaSalir.getPosition().x + 150.f, cajaSalir.getPosition().y + 35.f });
 
     cajaConfig.setSize({50.f, 50.f});
     cajaConfig.setFillColor(sf::Color::Transparent);
@@ -65,21 +80,32 @@ Menu::Menu(float ancho, float alto)
 
 void Menu::actualizar(sf::Vector2i mousePos) {
     sf::Vector2f m = (sf::Vector2f)mousePos;
-    cajaBoton.setFillColor(cajaBoton.getGlobalBounds().contains(m) ? sf::Color(120, 0, 0) : sf::Color(200, 0, 0));
+    cajaJugar.setFillColor(cajaJugar.getGlobalBounds().contains(m) ? sf::Color(120, 0, 0) : sf::Color(200, 0, 0));
+    cajaCargar.setFillColor(cajaCargar.getGlobalBounds().contains(m) ? sf::Color(120, 0, 0) : sf::Color(200, 0, 0));
     cajaSalir.setFillColor(cajaSalir.getGlobalBounds().contains(m) ? sf::Color(120, 0, 0) : sf::Color(200, 0, 0));
 }
 
 void Menu::dibujar(sf::RenderWindow& ventana) {
     if (spriteFondo) ventana.draw(*spriteFondo);
-    ventana.draw(cajaBoton);
-    if (textoBoton) ventana.draw(*textoBoton);
+    
+    ventana.draw(cajaJugar);
+    if (textoJugar) ventana.draw(*textoJugar);
+    
+    ventana.draw(cajaCargar);
+    if (textoCargar) ventana.draw(*textoCargar);
+    
     ventana.draw(cajaSalir);
     if (textoSalir) ventana.draw(*textoSalir);
+    
     if (spriteConfig) ventana.draw(*spriteConfig);
 }
 
-bool Menu::verificarClick(sf::Vector2i mousePos) {
-    return cajaBoton.getGlobalBounds().contains((sf::Vector2f)mousePos);
+bool Menu::verificarClickJugar(sf::Vector2i mousePos) {
+    return cajaJugar.getGlobalBounds().contains((sf::Vector2f)mousePos);
+}
+
+bool Menu::verificarClickCargar(sf::Vector2i mousePos) {
+    return cajaCargar.getGlobalBounds().contains((sf::Vector2f)mousePos);
 }
 
 bool Menu::verificarClickSalir(sf::Vector2i mousePos) {

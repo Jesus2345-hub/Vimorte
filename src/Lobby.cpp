@@ -7,6 +7,10 @@
 LobbyState::LobbyState(sf::RenderWindow* window, Game* game) 
     : State(window, game), m_background(nullptr), m_cercaAscensor(false), m_textoInteraccion(nullptr)
 {
+    // Cambiar a música del lobby
+    game->cambiarMusica("assets/sounds/lobby.ogg");// agregar la musica del lobby
+      game->detenerMusica();//quitar cuando se agregue la musica 
+    
     // 1. CARGAR JUGADOR
     m_player.loadAssets();
     m_player.setPosition(600, 300); 
@@ -28,7 +32,7 @@ LobbyState::LobbyState(sf::RenderWindow* window, Game* game)
     configurarColisiones();
     
     // 4. CONFIGURAR ÁREA DEL ASCENSOR
-   m_ascensorArea = sf::FloatRect(sf::Vector2f(1050.f, 50.f), sf::Vector2f(100.f, 150.f));
+    m_ascensorArea = sf::FloatRect(sf::Vector2f(1050.f, 50.f), sf::Vector2f(100.f, 150.f));
    
     // 5. CONFIGURAR TEXTO DE INTERACCIÓN
     if (m_font.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf")) {
@@ -41,7 +45,14 @@ LobbyState::LobbyState(sf::RenderWindow* window, Game* game)
         sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
         m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
     }
+    
+    // Verificar si hay partida activa
+    if (!game->tienePartidaActiva()) {
+        std::cout << "⚠️ No hay partida activa. Se recomienda crear una nueva partida." << std::endl;
+    }
 }
+
+
 
 void LobbyState::update(float dt) 
 {
@@ -83,6 +94,14 @@ void LobbyState::update(float dt)
     if (m_cercaAscensor && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R)) {
         if (!rProcesado) {
             rProcesado = true;
+            
+            // GUARDAR PARTIDA antes de cambiar de nivel
+            if (game->tienePartidaActiva()) {
+                game->getSaveManager().setNivelActual(1, 1);  // Nivel 1, Nodo 1
+                game->guardarPartidaActual();
+                std::cout << "💾 Partida guardada automáticamente al entrar al Nivel 1" << std::endl;
+            }
+            
             std::cout << "¡Transición al Nivel 1!" << std::endl;
             game->changeState(std::make_unique<Nivel1State>(window, game));
             return;

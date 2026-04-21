@@ -71,6 +71,14 @@ Nivel1State::Nivel1State(sf::RenderWindow* window, Game* game)
         m_worldItems[i].setPosition(positions[i]);
     }
     
+    // ========== AÑADIDO: GUARDADO AUTOMÁTICO AL ENTRAR AL NIVEL ==========
+    if (game->tienePartidaActiva()) {
+        game->getSaveManager().setNivelActual(1, 1);  // Nivel 1, Nodo 1
+        game->guardarPartidaActual();
+        std::cout << "💾 Partida guardada automáticamente en Nivel 1" << std::endl;
+    }
+    // ====================================================================
+    
     std::cout << "✅ Nivel1State inicializado correctamente" << std::endl;
 }
 
@@ -212,6 +220,12 @@ void Nivel1State::update(float dt)
                 if (inv) {
                     inv->tryCollectItem(names[i], colors[i]);
                     std::cout << "Recogido: " << names[i] << std::endl;
+                    
+                    // ========== AÑADIDO: GUARDAR ITEM RECOLECTADO ==========
+                    if (game->tienePartidaActiva()) {
+                        game->getSaveManager().addItemRecolectado(names[i]);
+                    }
+                    // =====================================================
                 }
             }
         }
