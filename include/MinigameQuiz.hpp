@@ -7,8 +7,10 @@
 
 struct Pregunta {
     std::string enunciado;
-    std::vector<std::string> opciones;
-    int respuestaCorrecta;  // Índice 0-3
+    std::vector<std::string> opciones;      // Opciones de texto
+    std::vector<std::string> imagenes;      // Rutas de imágenes (vacío = pregunta de texto)
+    bool esPreguntaConImagenes;             // true = usa imágenes, false = usa texto
+    int respuestaCorrecta;                  // Índice 0-3 (o 0-2 para imágenes)
 };
 
 class MinigameQuiz {
@@ -23,10 +25,17 @@ private:
     std::unique_ptr<sf::Text> m_puntuacionText;
     std::unique_ptr<sf::Text> m_instruccionesText;
     std::unique_ptr<sf::Text> m_resultadoText;
-    
-    // Botones de respuesta
-    std::vector<sf::RectangleShape> m_botones;
+    std::vector<bool> m_tieneImagen;
+
+    // Opciones de TEXTO
     std::vector<std::unique_ptr<sf::Text>> m_textosBotones;
+    
+    // Opciones de IMAGEN
+    std::vector<std::unique_ptr<sf::Sprite>> m_imagenesBotones;
+    std::vector<sf::Texture> m_texturasBotones;
+    std::vector<std::unique_ptr<sf::RectangleShape>> m_bordesHover;  // Borde amarillo para hover
+    
+    // Hover
     std::vector<bool> m_botonHover;
     
     // Banco de preguntas
@@ -74,5 +83,8 @@ private:
     void verificarRespuesta(int opcion);
     void configurarUI();
     void actualizarTextos();
+    void actualizarImagenes();
+    void ocultarOpcionesTexto();
+    void ocultarOpcionesImagen();
     void mostrarResultadoTemporal(const std::string& mensaje, const sf::Color& color);
 };
