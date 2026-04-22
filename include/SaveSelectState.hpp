@@ -20,12 +20,14 @@ private:
     std::vector<bool> m_slotHover;
     
     std::unique_ptr<sf::Text> m_instructionText;
+    std::unique_ptr<sf::Text> m_selectedSlotText;
     
     bool m_modoNuevaPartida = false;
-    bool m_soloCarga = false;  // true = solo cargar, false = nueva partida
+    bool m_soloCarga = false;
     std::string m_nombreInput;
     std::unique_ptr<sf::Text> m_inputText;
     int m_slotSeleccionado = -1;
+    int m_slotSeleccionadoParaEliminar = -1;  // Nuevo: slot seleccionado para eliminar
     
     // Botones de acción
     sf::RectangleShape m_btnEliminar;
@@ -42,6 +44,7 @@ public:
 private:
     void actualizarUI();
     void seleccionarSlot(int slotId);
+    void ejecutarAccionSlot(int slotId);
     void iniciarNuevaPartida(int slotId);
     void cargarPartidaExistente(int slotId);
     void eliminarPartidaSeleccionada();

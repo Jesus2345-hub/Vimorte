@@ -12,7 +12,7 @@ bool GameProgressData::guardarEnArchivo(int slotId) {
         return false;
     }
     
-    file << "nivel_actual,nodo_actual,centinela_disponible,centinela_id,ruta_actual,nombre,tiempo,muertes\n";
+    file << "nivel_actual,nodo_actual,centinela_disponible,centinela_id,ruta_actual,nombre,tiempo,muertes,modo_juego,checkpoint_ruta,checkpoint_centinela\n";
     file << nivelActualId << ","
          << nodoActualId << ","
          << (centinelaDisponible ? "true" : "false") << ","
@@ -20,7 +20,10 @@ bool GameProgressData::guardarEnArchivo(int slotId) {
          << rutaActual << ","
          << nombreJugador << ","
          << tiempoJugado << ","
-         << muertes << "\n";
+         << muertes << ","
+         << static_cast<int>(modoElegido) << ","
+         << checkpointRutaArbol << ","
+         << checkpointCentinelaId << "\n";
     
     // Guardar items
     file << "#ITEMS\n";
@@ -56,6 +59,17 @@ bool GameProgressData::cargarDesdeArchivo(int slotId) {
         std::getline(ss, token, ','); nombreJugador = token;
         std::getline(ss, token, ','); tiempoJugado = std::stof(token);
         std::getline(ss, token, ','); muertes = std::stoi(token);
+        
+        // Intentar leer modo de juego (para compatibilidad con saves antiguos)
+        if (std::getline(ss, token, ',')) {
+            modoElegido = static_cast<ModoJuego>(std::stoi(token));
+        }
+        if (std::getline(ss, token, ',')) {
+            checkpointRutaArbol = token;
+        }
+        if (std::getline(ss, token, ',')) {
+            checkpointCentinelaId = token;
+        }
     }
     
     // Leer items
@@ -72,6 +86,7 @@ bool GameProgressData::cargarDesdeArchivo(int slotId) {
     }
     
     std::cout << "✅ Progreso cargado desde slot " << slotId << " (Nivel " << nivelActualId << ")" << std::endl;
+    std::cout << "   Modo de juego: " << static_cast<int>(modoElegido) << std::endl;
     return true;
 }
 
@@ -93,6 +108,8 @@ bool GameSaveManager::crearNuevaPartida(int slotId, const std::string& nombre) {
     currentSlotId = slotId;
     currentProgress = GameProgressData();
     currentProgress.nombreJugador = nombre;
+    currentProgress.rutaActual = "nivel1";  // Ruta inicial
+    currentProgress.modoElegido = GameProgressData::ModoJuego::NO_ELEGIDO;
     
     std::cout << "✅ Nueva partida creada: '" << nombre << "' en slot " << slotId << std::endl;
     return guardarProgresoActual();

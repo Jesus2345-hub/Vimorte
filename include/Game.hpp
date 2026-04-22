@@ -7,6 +7,7 @@
 #include <memory>
 #include <stack>
 #include "GameSaveManager.hpp"
+#include "LevelTree.hpp"
 
 class State;
 
@@ -17,6 +18,9 @@ private:
     
     // Sistema de guardado
     GameSaveManager saveManager;
+    
+    // Árbol de niveles
+    LevelTree levelTree;
     
     // Configuración de audio
     float volGeneral = 100.f;
@@ -47,6 +51,12 @@ public:
     void cargarPartidaYContinuar(int slotId);
     bool tienePartidaActiva() const { return saveManager.getCurrentSlotId() >= 0; }
     
+    // Árbol de niveles
+    LevelTree& getLevelTree() { return levelTree; }
+    void avanzarNivel();
+    void entrarCentinela();
+    void volverDeCentinela();
+    
     // Configuración de audio
     void setVolGeneral(float v);
     void setVolMusica(float v);
@@ -62,6 +72,9 @@ public:
     void cambiarMusica(const std::string& rutaMusica);
     void detenerMusica();
     void actualizarVolumenMusica();
+    
+    // Añadir en la sección pública de Game.hpp:
+    void reintentarCentinela();
 };
 
 #endif

@@ -1,12 +1,14 @@
 #include "SaveSelectState.hpp"
 #include "Lobby.hpp"
 #include "Game.hpp"
+#include "ModoJuegoState.hpp" 
 #include <iostream>
 #include <algorithm>
 
 SaveSelectState::SaveSelectState(sf::RenderWindow* window, Game* game, bool soloCarga) 
     : State(window, game), saveManager(game->getSaveManager()), 
-      m_modoNuevaPartida(false), m_soloCarga(soloCarga), m_slotSeleccionado(-1) {
+      m_modoNuevaPartida(false), m_soloCarga(soloCarga), m_slotSeleccionado(-1),
+      m_slotSeleccionadoParaEliminar(-1) {
     
     // Cargar fuente
     if (!m_font.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf")) {
@@ -25,7 +27,7 @@ SaveSelectState::SaveSelectState(sf::RenderWindow* window, Game* game, bool solo
     m_panel.setOutlineColor(sf::Color(100, 100, 150));
     
     // Título
-    std::string titulo = m_soloCarga ? "CARGAR PARTIDA" : "SELECCIONAR PARTIDA";
+    std::string titulo = "SELECCIONAR PARTIDA";
     m_title = std::make_unique<sf::Text>(m_font, titulo, 40);
     m_title->setFillColor(sf::Color::Yellow);
     sf::FloatRect titleBounds = m_title->getLocalBounds();
@@ -33,29 +35,30 @@ SaveSelectState::SaveSelectState(sf::RenderWindow* window, Game* game, bool solo
     m_title->setPosition(sf::Vector2f(640.f, 100.f));
     
     // Instrucciones
-    std::string instrucciones = m_soloCarga ? 
-        "Click: Cargar partida | ESC: Volver" :
-        "Click: Nueva partida (vacio) / Cargar (ocupado) | SUPR: Eliminar | ESC: Volver";
-    m_instructionText = std::make_unique<sf::Text>(m_font, instrucciones, 14);
+    std::string instrucciones = "Click: Seleccionar slot | Doble Click: Cargar/Nueva | ELIMINAR: Borrar seleccionado | ESC: Volver";
+    m_instructionText = std::make_unique<sf::Text>(m_font, instrucciones, 13);
     m_instructionText->setFillColor(sf::Color(180, 180, 180));
     sf::FloatRect instBounds = m_instructionText->getLocalBounds();
     m_instructionText->setOrigin(sf::Vector2f(instBounds.size.x / 2.f, instBounds.size.y / 2.f));
     m_instructionText->setPosition(sf::Vector2f(640.f, 680.f));
     
-    // Botón eliminar (solo visible en modo normal)
-    if (!m_soloCarga) {
-        m_btnEliminar.setSize(sf::Vector2f(150.f, 40.f));
-        m_btnEliminar.setPosition(sf::Vector2f(850.f, 620.f));
-        m_btnEliminar.setFillColor(sf::Color(150, 0, 0, 200));
-        m_btnEliminar.setOutlineThickness(2.f);
-        m_btnEliminar.setOutlineColor(sf::Color::Red);
-        
-        m_btnEliminarText = std::make_unique<sf::Text>(m_font, "ELIMINAR", 18);
-        m_btnEliminarText->setFillColor(sf::Color::White);
-        sf::FloatRect btnBounds = m_btnEliminarText->getLocalBounds();
-        m_btnEliminarText->setOrigin(sf::Vector2f(btnBounds.size.x / 2.f, btnBounds.size.y / 2.f));
-        m_btnEliminarText->setPosition(sf::Vector2f(925.f, 640.f));
-    }
+    // Botón eliminar
+    m_btnEliminar.setSize(sf::Vector2f(150.f, 40.f));
+    m_btnEliminar.setPosition(sf::Vector2f(850.f, 620.f));
+    m_btnEliminar.setFillColor(sf::Color(150, 0, 0, 200));
+    m_btnEliminar.setOutlineThickness(2.f);
+    m_btnEliminar.setOutlineColor(sf::Color::Red);
+    
+    m_btnEliminarText = std::make_unique<sf::Text>(m_font, "ELIMINAR", 18);
+    m_btnEliminarText->setFillColor(sf::Color::White);
+    sf::FloatRect btnBounds = m_btnEliminarText->getLocalBounds();
+    m_btnEliminarText->setOrigin(sf::Vector2f(btnBounds.size.x / 2.f, btnBounds.size.y / 2.f));
+    m_btnEliminarText->setPosition(sf::Vector2f(925.f, 640.f));
+    
+    // Texto de slot seleccionado
+    m_selectedSlotText = std::make_unique<sf::Text>(m_font, "Ningún slot seleccionado", 14);
+    m_selectedSlotText->setFillColor(sf::Color(150, 150, 150));
+    m_selectedSlotText->setPosition(sf::Vector2f(340.f, 150.f));
     
     // Input text para nueva partida
     m_inputText = std::make_unique<sf::Text>(m_font, "", 24);
@@ -73,7 +76,7 @@ void SaveSelectState::actualizarUI() {
     m_slotBoxes.clear();
     m_slotHover.clear();
     
-    float startY = 180.f;
+    float startY = 200.f;
     float spacing = 90.f;
     
     for (size_t i = 0; i < slots.size(); i++) {
@@ -98,13 +101,12 @@ void SaveSelectState::actualizarUI() {
                 displayText += " [CENTINELA]";
             }
         } else {
-            displayText += m_soloCarga ? "[VACIO - No disponible]" : "[VACIO] - Click para nueva partida";
+            displayText += "[VACIO]";
         }
         
         text->setString(displayText);
         text->setCharacterSize(16);
-        text->setFillColor(slots[i].nombrePartida == "[VACIO]" && m_soloCarga ? 
-                          sf::Color(100, 100, 100) : sf::Color::White);
+        text->setFillColor(sf::Color::White);
         text->setPosition(sf::Vector2f(360.f, startY + i * spacing + 20.f));
         m_slotTexts.push_back(std::move(text));
         
@@ -113,18 +115,26 @@ void SaveSelectState::actualizarUI() {
 }
 
 void SaveSelectState::seleccionarSlot(int slotId) {
-    if (m_soloCarga) {
-        // En modo solo carga, solo permitir cargar slots ocupados
-        if (slots[slotId].nombrePartida != "[VACIO]") {
-            cargarPartidaExistente(slotId);
-        }
+    m_slotSeleccionadoParaEliminar = slotId;
+    
+    // Actualizar texto de selección
+    std::string seleccionText = "Slot seleccionado: " + std::to_string(slotId + 1);
+    if (slots[slotId].nombrePartida != "[VACIO]") {
+        seleccionText += " - " + slots[slotId].nombrePartida;
     } else {
-        // En modo normal, vacío = nueva partida, ocupado = cargar
-        if (slots[slotId].nombrePartida == "[VACIO]") {
-            iniciarNuevaPartida(slotId);
-        } else {
-            cargarPartidaExistente(slotId);
-        }
+        seleccionText += " [VACIO]";
+    }
+    m_selectedSlotText->setString(seleccionText);
+    
+    std::cout << "📍 Slot " << (slotId + 1) << " seleccionado" << std::endl;
+}
+
+void SaveSelectState::ejecutarAccionSlot(int slotId) {
+    // Vacío = nueva partida, ocupado = cargar
+    if (slots[slotId].nombrePartida == "[VACIO]") {
+        iniciarNuevaPartida(slotId);
+    } else {
+        cargarPartidaExistente(slotId);
     }
 }
 
@@ -133,7 +143,9 @@ void SaveSelectState::iniciarNuevaPartida(int slotId) {
         if (!m_nombreInput.empty()) {
             if (saveManager.crearNuevaPartida(slotId, m_nombreInput)) {
                 std::cout << "✅ Nueva partida creada: " << m_nombreInput << std::endl;
-                game->changeState(std::make_unique<LobbyState>(window, game));
+                
+                // En lugar de ir directo al Lobby, mostrar elección de modo
+                game->changeState(std::make_unique<ModoJuegoState>(window, game, m_nombreInput, slotId));
             }
         }
     } else {
@@ -144,18 +156,27 @@ void SaveSelectState::iniciarNuevaPartida(int slotId) {
     }
 }
 
+
 void SaveSelectState::cargarPartidaExistente(int slotId) {
     game->cargarPartidaYContinuar(slotId);
 }
 
 void SaveSelectState::eliminarPartidaSeleccionada() {
-    for (size_t i = 0; i < m_slotBoxes.size(); i++) {
-        if (m_slotHover[i] && slots[i].nombrePartida != "[VACIO]") {
-            saveManager.eliminarPartida(i);
-            actualizarUI();
-            std::cout << "🗑️ Partida eliminada del slot " << (i + 1) << std::endl;
-            break;
-        }
+    if (m_slotSeleccionadoParaEliminar >= 0 && 
+        m_slotSeleccionadoParaEliminar < (int)slots.size() &&
+        slots[m_slotSeleccionadoParaEliminar].nombrePartida != "[VACIO]") {
+        
+        int slotAEliminar = m_slotSeleccionadoParaEliminar;
+        saveManager.eliminarPartida(slotAEliminar);
+        actualizarUI();
+        
+        // Resetear selección
+        m_slotSeleccionadoParaEliminar = -1;
+        m_selectedSlotText->setString("Ningún slot seleccionado");
+        
+        std::cout << "🗑️ Partida eliminada del slot " << (slotAEliminar + 1) << std::endl;
+    } else {
+        std::cout << "⚠️ No hay un slot válido seleccionado para eliminar" << std::endl;
     }
 }
 
@@ -189,32 +210,48 @@ void SaveSelectState::handleEvent(const sf::Event& event) {
     for (size_t i = 0; i < m_slotBoxes.size(); i++) {
         m_slotHover[i] = m_slotBoxes[i].getGlobalBounds().contains(mousePos);
         
-        if (slots[i].nombrePartida == "[VACIO]" && m_soloCarga) {
-            m_slotBoxes[i].setOutlineColor(sf::Color(50, 50, 50));
+        // Color diferente según estado
+        if (i == (size_t)m_slotSeleccionadoParaEliminar) {
+            // Slot seleccionado: borde verde
+            m_slotBoxes[i].setOutlineColor(sf::Color::Green);
+            m_slotBoxes[i].setOutlineThickness(3.f);
+        } else if (m_slotHover[i]) {
+            // Slot con hover: borde amarillo
+            m_slotBoxes[i].setOutlineColor(sf::Color::Yellow);
+            m_slotBoxes[i].setOutlineThickness(2.f);
         } else {
-            m_slotBoxes[i].setOutlineColor(m_slotHover[i] ? sf::Color::Yellow : sf::Color(100, 100, 100));
+            // Slot normal
+            m_slotBoxes[i].setOutlineColor(sf::Color(100, 100, 100));
+            m_slotBoxes[i].setOutlineThickness(2.f);
         }
     }
     
     // Actualizar hover del botón eliminar
-    if (!m_soloCarga && m_btnEliminarText) {
+    if (m_btnEliminarText) {
         m_btnEliminarHover = m_btnEliminar.getGlobalBounds().contains(mousePos);
         m_btnEliminar.setFillColor(m_btnEliminarHover ? sf::Color(200, 0, 0, 200) : sf::Color(150, 0, 0, 200));
     }
     
     if (const auto* mouseEvent = event.getIf<sf::Event::MouseButtonPressed>()) {
         if (mouseEvent->button == sf::Mouse::Button::Left) {
-            // Verificar click en slots
-            for (size_t i = 0; i < m_slotBoxes.size(); i++) {
-                if (m_slotHover[i]) {
-                    seleccionarSlot(i);
-                    break;
-                }
+            // PRIMERO: Verificar si se hizo click en el botón eliminar
+            if (m_btnEliminarHover) {
+                eliminarPartidaSeleccionada();
+                return;
             }
             
-            // Verificar click en botón eliminar
-            if (!m_soloCarga && m_btnEliminarHover) {
-                eliminarPartidaSeleccionada();
+            // SEGUNDO: Verificar click en slots
+            for (size_t i = 0; i < m_slotBoxes.size(); i++) {
+                if (m_slotHover[i]) {
+                    // Si ya estaba seleccionado, ejecutar acción (doble click implícito)
+                    if (m_slotSeleccionadoParaEliminar == (int)i) {
+                        ejecutarAccionSlot(i);
+                    } else {
+                        // Si no, solo seleccionarlo
+                        seleccionarSlot(i);
+                    }
+                    break;
+                }
             }
         }
     }
@@ -224,9 +261,14 @@ void SaveSelectState::handleEvent(const sf::Event& event) {
             game->popState();
         }
         
-        // Eliminar partida con SUPR (solo en modo normal)
-        if (!m_soloCarga && keyEvent->code == sf::Keyboard::Key::Delete) {
+        // Eliminar partida con SUPR
+        if (keyEvent->code == sf::Keyboard::Key::Delete) {
             eliminarPartidaSeleccionada();
+        }
+        
+        // Enter para ejecutar acción en slot seleccionado
+        if (keyEvent->code == sf::Keyboard::Key::Enter && m_slotSeleccionadoParaEliminar >= 0) {
+            ejecutarAccionSlot(m_slotSeleccionadoParaEliminar);
         }
     }
 }
@@ -247,6 +289,7 @@ void SaveSelectState::draw() {
     
     if (m_title) window->draw(*m_title);
     if (m_instructionText) window->draw(*m_instructionText);
+    if (m_selectedSlotText) window->draw(*m_selectedSlotText);
     
     // Dibujar slots
     for (size_t i = 0; i < m_slotBoxes.size(); i++) {
@@ -255,10 +298,8 @@ void SaveSelectState::draw() {
     }
     
     // Dibujar botón eliminar
-    if (!m_soloCarga) {
-        window->draw(m_btnEliminar);
-        if (m_btnEliminarText) window->draw(*m_btnEliminarText);
-    }
+    window->draw(m_btnEliminar);
+    if (m_btnEliminarText) window->draw(*m_btnEliminarText);
     
     // Dibujar input de nombre si estamos creando nueva partida
     if (m_modoNuevaPartida) {
@@ -267,15 +308,15 @@ void SaveSelectState::draw() {
         inputBg.setFillColor(sf::Color(0, 0, 0, 200));
         inputBg.setOutlineThickness(2.f);
         inputBg.setOutlineColor(sf::Color::Yellow);
-        window->draw(inputBg);  // <-- CORREGIDO: window->draw
+        window->draw(inputBg);
         
         m_inputText->setString("Nombre: " + m_nombreInput + (m_nombreInput.empty() ? "_" : ""));
         m_inputText->setPosition(sf::Vector2f(460.f, 512.f));
-        window->draw(*m_inputText);  // <-- CORREGIDO: window->draw
+        window->draw(*m_inputText);
         
         sf::Text helpText(m_font, "Presiona ENTER para confirmar, ESC para cancelar", 14);
         helpText.setFillColor(sf::Color(150, 150, 150));
         helpText.setPosition(sf::Vector2f(460.f, 560.f));
-        window->draw(helpText);  // <-- CORREGIDO: window->draw
+        window->draw(helpText);
     }
 }

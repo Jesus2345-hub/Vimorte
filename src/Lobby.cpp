@@ -7,10 +7,6 @@
 LobbyState::LobbyState(sf::RenderWindow* window, Game* game) 
     : State(window, game), m_background(nullptr), m_cercaAscensor(false), m_textoInteraccion(nullptr)
 {
-    // Cambiar a música del lobby
-    game->cambiarMusica("assets/sounds/lobby.ogg");// agregar la musica del lobby
-      game->detenerMusica();//quitar cuando se agregue la musica 
-    
     // 1. CARGAR JUGADOR
     m_player.loadAssets();
     m_player.setPosition(600, 300); 

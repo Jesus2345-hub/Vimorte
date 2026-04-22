@@ -1,22 +1,65 @@
 #include "MenuState.hpp"
 #include "Lobby.hpp"
 #include "SaveSelectState.hpp"
+#include "AdminMenuState.hpp"
 #include "Game.hpp"  
 #include <iostream>
+#include <cctype>
 
 MenuState::MenuState(sf::RenderWindow* window, Game* game) 
-    : State(window, game), mostrarConfig(false), seleccionConfig(0) 
+    : State(window, game), mostrarConfig(false), seleccionConfig(0),
+      m_adminInput(""), m_adminMode(false), m_adminHover(false)
 {
     window->setView(window->getDefaultView());
     miMenu = std::make_unique<Menu>(static_cast<float>(window->getSize().x), static_cast<float>(window->getSize().y));
+
+    // Configurar botón admin
+    m_adminButton.setSize(sf::Vector2f(80.f, 40.f));
+    m_adminButton.setPosition(sf::Vector2f(10.f, 10.f));
+    m_adminButton.setFillColor(sf::Color(100, 0, 0, 200));
+    m_adminButton.setOutlineThickness(2.f);
+    m_adminButton.setOutlineColor(sf::Color::Red);
+    
+    m_adminText = std::make_unique<sf::Text>(miMenu->getFuente(), "ADMIN", 16);
+    m_adminText->setFillColor(sf::Color::White);
+    sf::FloatRect textBounds = m_adminText->getLocalBounds();
+    m_adminText->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
+    m_adminText->setPosition(sf::Vector2f(50.f, 30.f));
 
     // Música del menú
     game->cambiarMusica("assets/sounds/menu.ogg");
 }
 
+void MenuState::handleEvent(const sf::Event& event) {
+    // Detectar teclas para "admin"
+    if (const auto* textEntered = event.getIf<sf::Event::TextEntered>()) {
+        char c = static_cast<char>(textEntered->unicode);
+        if (std::isalpha(static_cast<unsigned char>(c))) {
+            m_adminInput += std::tolower(static_cast<unsigned char>(c));
+            // Mantener solo últimos 5 caracteres
+            if (m_adminInput.length() > 5) {
+                m_adminInput = m_adminInput.substr(m_adminInput.length() - 5);
+            }
+            
+            if (m_adminInput == "admin") {
+                m_adminMode = true;
+                m_adminInput = "";
+                std::cout << "🔐 Modo administrador activado" << std::endl;
+            }
+        }
+    }
+}
+
 void MenuState::update(float dt) {
     sf::Vector2i mousePos = sf::Mouse::getPosition(*window);
     miMenu->actualizar(mousePos);
+
+    // Si está en modo admin, mostrar botón extra
+    if (m_adminMode) {
+        sf::Vector2f mouseF = window->mapPixelToCoords(mousePos);
+        m_adminHover = m_adminButton.getGlobalBounds().contains(mouseF);
+        m_adminButton.setFillColor(m_adminHover ? sf::Color(150, 0, 0, 200) : sf::Color(100, 0, 0, 200));
+    }
 
     if (mostrarConfig) {
         // Control de selección de barra
@@ -61,21 +104,22 @@ void MenuState::update(float dt) {
         if (!clickProcesado) {
             clickProcesado = true;
             
+            // Botón admin
+            if (m_adminMode && m_adminHover) {
+                game->pushState(std::make_unique<AdminMenuState>(window, game));
+                return;
+            }
+            
             // PRIORIDAD 1: Configuración (La tuerca)
             if (miMenu->verificarClickConfig(mousePos)) {
                 mostrarConfig = !mostrarConfig;
             }
-            // PRIORIDAD 2: Nueva Partida (false = modo normal, permite crear y eliminar)
+            // PRIORIDAD 2: Jugar
             else if (!mostrarConfig && miMenu->verificarClickJugar(mousePos)) {
-                std::cout << "🆕 NUEVA PARTIDA - Abriendo selector de slots" << std::endl;
-                game->pushState(std::make_unique<SaveSelectState>(window, game, false));  // <-- false para modo normal
+                std::cout << "🎮 JUGAR - Abriendo selector de slots unificado" << std::endl;
+                game->pushState(std::make_unique<SaveSelectState>(window, game, false));
             }
-            // PRIORIDAD 3: Cargar Partida (true = solo carga, no permite crear ni eliminar)
-            else if (!mostrarConfig && miMenu->verificarClickCargar(mousePos)) {
-                std::cout << "📂 CARGAR PARTIDA - Abriendo selector de slots" << std::endl;
-                game->pushState(std::make_unique<SaveSelectState>(window, game, true));   // <-- true para solo carga
-            }
-            // PRIORIDAD 4: Salir
+            // PRIORIDAD 3: Salir
             else if (miMenu->verificarClickSalir(mousePos)) {
                 window->close();
             }
@@ -91,6 +135,12 @@ void MenuState::draw() {
     window->setView(window->getDefaultView());
     miMenu->dibujar(*window);
 
+    // Dibujar botón admin si está activado
+    if (m_adminMode) {
+        window->draw(m_adminButton);
+        if (m_adminText) window->draw(*m_adminText);
+    }
+
     if (mostrarConfig) {
         sf::RectangleShape fondo({500.f, 350.f});
         fondo.setPosition({390.f, 185.f});
@@ -104,7 +154,7 @@ void MenuState::draw() {
             t.setFillColor(sel ? sf::Color::Yellow : sf::Color::White);
             window->draw(t);
 
-            sf::RectangleShape b({300.f, 10.f});
+                        sf::RectangleShape b({300.f, 10.f});
             b.setPosition({420.f, y + 40.f});
             b.setFillColor(sf::Color(100, 100, 100));
             window->draw(b);

@@ -37,6 +37,16 @@ private:
     std::vector<sf::CircleShape> m_worldItems;
     std::vector<bool> m_itemsCollected;
     
+    // === NUEVO: Para conexión con árbol ===
+    bool m_mostrarPuertaSalida;
+    bool m_cercaPuertaSalida;
+    sf::FloatRect m_puertaSalidaArea;
+    
+    void verificarSalidaNivel();
+    void verificarEntradaCentinela();
+    // Añadir en la sección private de Nivel1State.hpp:
+    void jugadorHaMuerto();
+    
 public:
     Nivel1State(sf::RenderWindow* window, Game* game);
     void update(float dt) override;

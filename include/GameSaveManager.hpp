@@ -15,6 +15,19 @@ struct GameProgressData {
     int muertes = 0;
     std::vector<std::string> itemsRecolectados;
     
+    // === NUEVO: Modo de dificultad / elección de camino ===
+    enum class ModoJuego {
+        NO_ELEGIDO = 0,
+        CAMINO_AGRADABLE = 1,      // Puede reintentar centinelas
+        CAMINO_CON_CONSECUENCIAS = 2  // Sin reintentos, decisiones permanentes
+    };
+    ModoJuego modoElegido = ModoJuego::NO_ELEGIDO;
+    
+    // === NUEVO: Punto de guardado antes de entrar a un centinela (solo para modo agradable) ===
+    bool tieneCheckpointCentinela = false;
+    std::string checkpointRutaArbol;      // Ruta antes de entrar al centinela
+    std::string checkpointCentinelaId;    // ID del centinela en el que se está
+    
     bool guardarEnArchivo(int slotId);
     bool cargarDesdeArchivo(int slotId);
 };

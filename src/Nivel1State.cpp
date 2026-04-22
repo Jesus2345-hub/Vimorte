@@ -1,11 +1,13 @@
 #include "Nivel1State.hpp"
 #include "PauseState.hpp"
+#include "MuerteCentinelaState.hpp"
 #include <iostream>
 #include <cmath>
 #include <algorithm>
 
 Nivel1State::Nivel1State(sf::RenderWindow* window, Game* game) 
-    : State(window, game), m_background(nullptr), m_cercaMesaPool(false), m_textoInteraccion(nullptr)
+    : State(window, game), m_background(nullptr), m_cercaMesaPool(false), m_textoInteraccion(nullptr),
+      m_mostrarPuertaSalida(true), m_cercaPuertaSalida(false)
 {
     m_player.loadAssets();
     m_player.setPosition(1150.f, 300.f);
@@ -32,6 +34,9 @@ Nivel1State::Nivel1State(sf::RenderWindow* window, Game* game)
         sf::Vector2f(300.f, 950.f),  // X, Y
         sf::Vector2f(250.f, 100.f)   // ANCHO, ALTO
     );
+    
+    // Área de salida del nivel (para avanzar al siguiente)
+    m_puertaSalidaArea = sf::FloatRect(sf::Vector2f(1600.f, 1300.f), sf::Vector2f(100.f, 150.f));
 
     configurarColisiones();
     
@@ -109,6 +114,35 @@ void Nivel1State::handleEvent(const sf::Event& event) {
     Inventory* inv = m_player.getInventory();
     if (inv) {
         inv->handleEvent(event, *window);
+    }
+}
+
+void Nivel1State::verificarSalidaNivel() {
+    m_cercaPuertaSalida = m_player.getHurtbox().findIntersection(m_puertaSalidaArea).has_value();
+    
+    static bool ePresionado = false;
+    if (m_cercaPuertaSalida && !m_poolMinigame.isActive() && !m_quizMinigame.isActive()) {
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::E)) {
+            if (!ePresionado) {
+                ePresionado = true;
+                std::cout << "🚪 Saliendo del nivel..." << std::endl;
+                game->avanzarNivel();  // Usar el árbol para avanzar
+            }
+        } else {
+            ePresionado = false;
+        }
+    }
+}
+
+void Nivel1State::verificarEntradaCentinela() {
+    // Verificar si el nivel actual tiene centinela
+    LevelNode* currentNode = game->getLevelTree().getCurrentNode();
+    if (currentNode && currentNode->hasCentinela()) {
+        // Aquí puedes definir un área específica para entrar al centinela
+        // Por ejemplo, una puerta especial o un objeto interactivo
+        
+        // Para el nivel 1, no tiene centinela, así que esto no se ejecutará
+        // Para niveles que sí tengan, se activará cuando el jugador esté en el área
     }
 }
 
@@ -248,6 +282,12 @@ void Nivel1State::update(float dt)
     cameraPos.y = std::clamp(cameraPos.y, halfHeight, m_worldSize.y - halfHeight);
     m_camera.setCenter(cameraPos);
     
+    // Verificar salida del nivel
+    verificarSalidaNivel();
+    
+    // Verificar entrada a centinela
+    verificarEntradaCentinela();
+    
     // Pausa
     static bool escapeProcesado = false;
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape)) {
@@ -336,9 +376,27 @@ void Nivel1State::draw()
     m_quizMinigame.draw(*window);
     }
 
+    // ===== DEBUG: DIBUJAR ÁREA DE SALIDA =====
+    if (m_mostrarPuertaSalida) {
+        sf::RectangleShape salidaDebug(sf::Vector2f(m_puertaSalidaArea.size.x, m_puertaSalidaArea.size.y));
+        salidaDebug.setPosition(sf::Vector2f(m_puertaSalidaArea.position.x, m_puertaSalidaArea.position.y));
+        salidaDebug.setFillColor(sf::Color(0, 255, 0, 50));
+        salidaDebug.setOutlineThickness(3.f);
+        salidaDebug.setOutlineColor(sf::Color::Green);
+        window->draw(salidaDebug);
+    }
     
     // ===== FASE 2: DIBUJAR UI CON VISTA POR DEFECTO =====
     window->setView(window->getDefaultView());
+    
+    // Texto de interacción para salida
+    if (m_cercaPuertaSalida && !m_poolMinigame.isActive() && !m_quizMinigame.isActive() && m_textoInteraccion) {
+        m_textoInteraccion->setString("Presiona E para avanzar al siguiente nivel");
+        sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
+        m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
+        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
+        window->draw(*m_textoInteraccion);
+    }
     
     // Minijuego (ya está centrado por su propia configuración)
     if (m_poolMinigame.isActive()) {
@@ -415,4 +473,28 @@ void Nivel1State::configurarColisiones()
     m_mapaFisico.emplace_back(1184.f, 1174.f, 351.f, 182.f);  // Mesa de pool
    
     std::cout << "✅ Colisiones configuradas: " << m_mapaFisico.size() << " paredes con huecos" << std::endl;
+}
+
+// Reemplazar el método jugadorHaMuerto() en Nivel1State.cpp:
+void Nivel1State::jugadorHaMuerto() {
+    LevelNode* currentNode = game->getLevelTree().getCurrentNode();
+    
+    if (currentNode && currentNode->type == LevelType::CENTINELA) {
+        // Estamos en un centinela, verificar modo de juego
+        GameProgressData& progress = game->getSaveManager().getCurrentProgress();
+        
+        // CORREGIDO: addMuerte es un método de GameSaveManager, no de GameProgressData
+        game->getSaveManager().addMuerte();
+        
+        if (progress.modoElegido == GameProgressData::ModoJuego::CAMINO_AGRADABLE) {
+            // Mostrar opción de reintentar
+            game->pushState(std::make_unique<MuerteCentinelaState>(window, game, true));
+        } else {
+            // Modo consecuencias: game over, volver al menú
+            game->pushState(std::make_unique<MuerteCentinelaState>(window, game, false));
+        }
+    } else {
+        // Muerte en nivel normal, reiniciar nivel (o mostrar pausa)
+        game->pushState(std::make_unique<PauseState>(window, game));
+    }
 }

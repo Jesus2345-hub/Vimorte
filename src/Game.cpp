@@ -3,6 +3,7 @@
 #include "State.hpp"
 #include "Nivel1State.hpp"
 #include "Lobby.hpp"
+#include "AdminMenuState.hpp"
 #include <optional>
 #include <iostream>
 #include <vector>
@@ -16,6 +17,9 @@ Game::Game()
     
     // Cargar configuración de audio guardada
     cargarConfiguracionAudio();
+    
+    // Construir árbol de niveles
+    levelTree.buildTree();
     
     states.push(std::make_unique<MenuState>(window.get(), this));
 }
@@ -115,23 +119,79 @@ void Game::actualizarVolumenMusica() {
 
 void Game::guardarPartidaActual() {
     if (tienePartidaActiva()) {
+        // Actualizar la ruta del árbol antes de guardar
+        saveManager.getCurrentProgress().rutaActual = levelTree.getCurrentPath();
         saveManager.guardarProgresoActual();
         std::cout << "💾 Partida guardada en slot " << saveManager.getCurrentSlotId() << std::endl;
     }
 }
 
+void Game::avanzarNivel() {
+    if (levelTree.goToNextLevel()) {
+        auto newState = levelTree.createCurrentState(window.get(), this);
+        if (newState) {
+            changeState(std::move(newState));
+            
+            // Guardar progreso
+            if (tienePartidaActiva()) {
+                LevelNode* current = levelTree.getCurrentNode();
+                saveManager.setNivelActual(current->levelNumber, current->levelNumber);
+                saveManager.getCurrentProgress().rutaActual = levelTree.getCurrentPath();
+                guardarPartidaActual();
+            }
+        }
+    }
+}
+
+void Game::entrarCentinela() {
+    if (levelTree.goToCentinela()) {
+        auto newState = levelTree.createCurrentState(window.get(), this);
+        if (newState) {
+            changeState(std::move(newState));
+            
+            if (tienePartidaActiva()) {
+                saveManager.getCurrentProgress().rutaActual = levelTree.getCurrentPath();
+                guardarPartidaActual();
+            }
+        }
+    }
+}
+
+void Game::volverDeCentinela() {
+    if (levelTree.returnFromCentinela()) {
+        auto newState = levelTree.createCurrentState(window.get(), this);
+        if (newState) {
+            changeState(std::move(newState));
+            
+            if (tienePartidaActiva()) {
+                saveManager.getCurrentProgress().rutaActual = levelTree.getCurrentPath();
+                guardarPartidaActual();
+            }
+        }
+    }
+}
+
 void Game::cargarPartidaYContinuar(int slotId) {
     if (saveManager.cargarPartida(slotId)) {
+        // Restaurar la ruta guardada en el árbol
+        std::string rutaGuardada = saveManager.getCurrentProgress().rutaActual;
+        if (!rutaGuardada.empty() && rutaGuardada != "principal") {
+            levelTree.restorePath(rutaGuardada);
+        }
+        
         int nivelId = saveManager.getCurrentProgress().nivelActualId;
-        std::cout << "📂 Cargando partida del slot " << slotId << " - Nivel " << nivelId << std::endl;
+        std::cout << "📂 Cargando partida del slot " << slotId << " - " 
+                  << levelTree.getCurrentNodeInfo() << std::endl;
         
         // Detener la música del menú antes de cambiar de estado
         detenerMusica();
         
-        // Cargar el nivel correspondiente
-        if (nivelId == 1) {
-            changeState(std::make_unique<Nivel1State>(window.get(), this));
+        // Cargar el estado correspondiente
+        auto newState = levelTree.createCurrentState(window.get(), this);
+        if (newState) {
+            changeState(std::move(newState));
         } else {
+            // Fallback: ir al lobby
             changeState(std::make_unique<LobbyState>(window.get(), this));
         }
     }
@@ -187,7 +247,7 @@ void Game::run()
 }
 
 void Game::changeState(std::unique_ptr<State> state) {
-    if (!states.empty()) states.pop();
+    while (!states.empty()) states.pop();
     states.push(std::move(state));
 }
 
@@ -203,6 +263,38 @@ void Game::returnToMenu() {
     // Detener música actual al volver al menú
     detenerMusica();
     
-    while (states.size() > 1) states.pop();
-    changeState(std::make_unique<MenuState>(window.get(), this));
+    // Limpiar todos los estados y poner el MenuState
+    while (!states.empty()) {
+        states.pop();
+    }
+    states.push(std::make_unique<MenuState>(window.get(), this));
+    
+    std::cout << "🏠 Volviendo al menú principal" << std::endl;
+}
+
+// Añadir al final de Game.cpp:
+void Game::reintentarCentinela() {
+    GameProgressData& progress = saveManager.getCurrentProgress();
+    
+    if (progress.modoElegido == GameProgressData::ModoJuego::CAMINO_AGRADABLE &&
+        progress.tieneCheckpointCentinela) {
+        
+        // Restaurar la ruta del checkpoint
+        levelTree.restorePath(progress.checkpointRutaArbol);
+        
+        // Limpiar el checkpoint para no poder usarlo infinitamente (solo un reintento)
+        progress.tieneCheckpointCentinela = false;
+        progress.checkpointRutaArbol = "";
+        progress.checkpointCentinelaId = "";
+        
+        auto newState = levelTree.createCurrentState(window.get(), this);
+        if (newState) {
+            changeState(std::move(newState));
+            std::cout << "🔄 Reintentando desde el checkpoint antes del centinela" << std::endl;
+        }
+    } else {
+        // En modo CONSECUENCIAS o sin checkpoint, volver al menú principal
+        std::cout << "💀 Has fallado. Las consecuencias son permanentes." << std::endl;
+        returnToMenu();
+    }
 }

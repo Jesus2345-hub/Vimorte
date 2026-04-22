@@ -1,8 +1,8 @@
 #include "PauseState.hpp"
 #include "Game.hpp"
 #include "SaveSelectState.hpp"
+#include "MenuState.hpp"
 #include <iostream>
-// Quitar #include <algorithm> si solo lo usas para clamp
 
 PauseState::PauseState(sf::RenderWindow* window, Game* game) 
     : State(window, game), mostrarConfig(false), seleccionConfig(0) 
@@ -14,7 +14,7 @@ PauseState::PauseState(sf::RenderWindow* window, Game* game)
     m_background.setSize({1280.f, 720.f});
     m_background.setFillColor(sf::Color(0, 0, 0, 180));
     
-    // Panel central - más grande para todos los botones
+    // Panel central
     m_panel.setSize({500.f, 550.f});
     m_panel.setFillColor(sf::Color(30, 30, 50, 240));
     m_panel.setOutlineThickness(4);
@@ -24,31 +24,51 @@ PauseState::PauseState(sf::RenderWindow* window, Game* game)
     // Título
     m_title = std::make_unique<sf::Text>(m_font, "PAUSA", 50);
     m_title->setFillColor(sf::Color::Yellow);
-    m_title->setPosition({640.f - m_title->getGlobalBounds().size.x / 2.f, 110.f});
+    sf::FloatRect titleBounds = m_title->getLocalBounds();
+    m_title->setOrigin({titleBounds.size.x / 2.f, 0.f});
+    m_title->setPosition({640.f, 110.f});
 
     // Botón Continuar
     m_resumeText = std::make_unique<sf::Text>(m_font, "CONTINUAR", 30);
-    m_resumeText->setPosition({640.f - m_resumeText->getGlobalBounds().size.x / 2.f, 200.f});
+    m_resumeText->setFillColor(sf::Color::White);
+    sf::FloatRect resumeBounds = m_resumeText->getLocalBounds();
+    m_resumeText->setOrigin({resumeBounds.size.x / 2.f, 0.f});
+    m_resumeText->setPosition({640.f, 200.f});
 
     // Botón Guardar Partida
     m_saveText = std::make_unique<sf::Text>(m_font, "GUARDAR PARTIDA", 30);
-    m_saveText->setPosition({640.f - m_saveText->getGlobalBounds().size.x / 2.f, 270.f});
+    m_saveText->setFillColor(sf::Color::White);
+    sf::FloatRect saveBounds = m_saveText->getLocalBounds();
+    m_saveText->setOrigin({saveBounds.size.x / 2.f, 0.f});
+    m_saveText->setPosition({640.f, 270.f});
 
     // Botón Cargar Partida
     m_loadText = std::make_unique<sf::Text>(m_font, "CARGAR PARTIDA", 30);
-    m_loadText->setPosition({640.f - m_loadText->getGlobalBounds().size.x / 2.f, 340.f});
+    m_loadText->setFillColor(sf::Color::White);
+    sf::FloatRect loadBounds = m_loadText->getLocalBounds();
+    m_loadText->setOrigin({loadBounds.size.x / 2.f, 0.f});
+    m_loadText->setPosition({640.f, 340.f});
 
     // Botón Ajustes
     m_configBtn = std::make_unique<sf::Text>(m_font, "AJUSTES", 30);
-    m_configBtn->setPosition({640.f - m_configBtn->getGlobalBounds().size.x / 2.f, 410.f});
+    m_configBtn->setFillColor(sf::Color::White);
+    sf::FloatRect configBounds = m_configBtn->getLocalBounds();
+    m_configBtn->setOrigin({configBounds.size.x / 2.f, 0.f});
+    m_configBtn->setPosition({640.f, 410.f});
 
     // Botón Menú Principal
     m_menuText = std::make_unique<sf::Text>(m_font, "MENU PRINCIPAL", 30);
-    m_menuText->setPosition({640.f - m_menuText->getGlobalBounds().size.x / 2.f, 480.f});
+    m_menuText->setFillColor(sf::Color::White);
+    sf::FloatRect menuBounds = m_menuText->getLocalBounds();
+    m_menuText->setOrigin({menuBounds.size.x / 2.f, 0.f});
+    m_menuText->setPosition({640.f, 480.f});
 
     // Botón Salir
     m_exitText = std::make_unique<sf::Text>(m_font, "SALIR DEL JUEGO", 30);
-    m_exitText->setPosition({640.f - m_exitText->getGlobalBounds().size.x / 2.f, 550.f});
+    m_exitText->setFillColor(sf::Color::White);
+    sf::FloatRect exitBounds = m_exitText->getLocalBounds();
+    m_exitText->setOrigin({exitBounds.size.x / 2.f, 0.f});
+    m_exitText->setPosition({640.f, 550.f});
 }
 
 void PauseState::update(float dt) {
