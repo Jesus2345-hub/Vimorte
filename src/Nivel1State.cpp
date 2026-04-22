@@ -40,10 +40,10 @@ Nivel1State::Nivel1State(sf::RenderWindow* window, Game* game)
 
     configurarColisiones();
     
-    m_poolMinigame.setSize(sf::Vector2f(1000.f, 500.f));
+    m_poolMinigame.setSize(sf::Vector2f(1000.f, 600.f));
     m_poolMinigame.setPosition(sf::Vector2f(
         (windowSize.x - 1000.f) / 2.f,
-        (windowSize.y - 500.f) / 2.f
+        (windowSize.y - 500.f - 70.f) / 2.f - 15.f
     ));
 
     // 6. CONFIGURAR MINIJUEGO DE QUIZ

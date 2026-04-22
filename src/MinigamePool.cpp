@@ -32,13 +32,19 @@ void MinigamePool::setSize(const sf::Vector2f& size) {
     m_size = size;
     m_background.setSize(size);
     
-    // Mesa de pool (un poco más pequeña que el fondo)
-    sf::Vector2f tableSize(size.x - 60.f, size.y - 100.f);
+    // Mesa de pool tamaño (un poco más pequeña que el fondo)
+    sf::Vector2f tableSize(size.x - 80.f, size.y - 100.f);
     m_table.setSize(tableSize);
-    m_table.setPosition(sf::Vector2f(m_position.x + 200.f, m_position.y + 100.f));
+    
+    //Mesa de Pool / posicion
+    m_table.setPosition(sf::Vector2f(
+        m_position.x + 220.f,
+        m_position.y + 100.f
+    ));
     
     // Configurar textos
     if (m_font.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf")) {
+        
         // TÍTULO - CENTRADO
         m_titleText = std::make_unique<sf::Text>(m_font);
         m_titleText->setString("MINIJUEGO DE POOL");
@@ -47,21 +53,34 @@ void MinigamePool::setSize(const sf::Vector2f& size) {
         // Centrar el origen del texto
         sf::FloatRect titleBounds = m_titleText->getLocalBounds();
         m_titleText->setOrigin(sf::Vector2f(titleBounds.size.x / 2.f, titleBounds.size.y / 2.f));
-        // Posicionar en el centro horizontal, arriba
-        m_titleText->setPosition(sf::Vector2f(m_position.x + size.x / 2.f, m_position.y + 25.f));
+        
+        // Posicionar del titulo
+        m_titleText->setPosition(sf::Vector2f(
+            m_position.x + size.x / 2.f,
+            m_position.y + 65.f
+        ));
         
         // TEXTO DE PUNTUACIÓN - ESQUINA SUPERIOR DERECHA
         m_scoreText = std::make_unique<sf::Text>(m_font);
         m_scoreText->setCharacterSize(20);
         m_scoreText->setFillColor(sf::Color::Yellow);
-        m_scoreText->setPosition(sf::Vector2f(m_position.x + size.x - 150.f, m_position.y + 15.f));
+        
+        //Posicion del score
+        m_scoreText->setPosition(sf::Vector2f(
+            m_position.x + size.x - 150.f,
+            m_position.y + 65.f
+        ));
         
         // TEXTO DE INSTRUCCIONES - ESQUINA INFERIOR IZQUIERDA
         m_instructionText = std::make_unique<sf::Text>(m_font);
         m_instructionText->setString("Click y arrastra para golpear la bola blanca");
         m_instructionText->setCharacterSize(14);
         m_instructionText->setFillColor(sf::Color(200, 200, 200));
-        m_instructionText->setPosition(sf::Vector2f(m_position.x + 20.f, m_position.y + size.y - 30.f));
+        //Posicion de las instrcuciones
+        m_instructionText->setPosition(sf::Vector2f(
+            m_position.x + 260.f,
+            m_position.y + size.y + 20.f 
+        ));
         
         // TEXTO PARA CERRAR - ESQUINA INFERIOR DERECHA
         m_closeText = std::make_unique<sf::Text>(m_font);
@@ -71,7 +90,11 @@ void MinigamePool::setSize(const sf::Vector2f& size) {
         // Alinear a la derecha
         sf::FloatRect closeBounds = m_closeText->getLocalBounds();
         m_closeText->setOrigin(sf::Vector2f(closeBounds.size.x, 0.f));
-        m_closeText->setPosition(sf::Vector2f(m_position.x + size.x - 20.f, m_position.y + size.y - 30.f));
+        //Posicion del texto de cerrar
+        m_closeText->setPosition(sf::Vector2f(
+            m_position.x + size.x - 20.f,
+            m_position.y + size.y + 20.f
+        ));
     }
     
     initPockets();
