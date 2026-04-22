@@ -42,6 +42,8 @@ public:
     bool isInCentinela() const { return inCentinelaPath; }
     
     LevelNode* findNode(const std::string& id);
+    // Añadir en la sección pública de LevelTree.hpp:
+void resetToRoot();
     
 private:
     LevelNode* findNodeRecursive(LevelNode* node, const std::string& id);

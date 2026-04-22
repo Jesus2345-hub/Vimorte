@@ -217,3 +217,12 @@ LevelNode* LevelTree::findNodeRecursive(LevelNode* node, const std::string& id) 
     if (found) return found;
     return findNodeRecursive(node->right.get(), id);
 }
+
+void LevelTree::resetToRoot() {
+    currentNode = root.get();
+    while (!navigationHistory.empty()) navigationHistory.pop();
+    visitedNodes.clear();
+    if (currentNode) visitedNodes.push_back(currentNode->id);
+    inCentinelaPath = false;
+    std::cout << "🔄 Árbol reiniciado a la raíz: " << currentNode->displayName << std::endl;
+}
