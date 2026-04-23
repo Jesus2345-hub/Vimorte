@@ -418,3 +418,26 @@ bool Inventory::tryCollectItem(const std::string& itemName, const sf::Color& col
 void Inventory::addDefaultItems() {
     // Vacío por defecto
 }
+// ========== MÉTODOS PARA EL SISTEMA DE OBJETOS ==========
+
+bool Inventory::hasItem(const std::string& nombre) const {
+    for (const auto& item : m_items) {
+        if (item && item->name == nombre) {
+            return true;
+        }
+    }
+    return false;
+}
+
+Item* Inventory::getSelectedItem() {
+    if (m_selectedSlot >= 0 && m_selectedSlot < (int)m_items.size()) {
+        return m_items[m_selectedSlot].get();
+    }
+    return nullptr;
+}
+
+void Inventory::removeSelectedItem() {
+    if (m_selectedSlot >= 0 && m_selectedSlot < (int)m_items.size()) {
+        removeItem(m_selectedSlot);
+    }
+}

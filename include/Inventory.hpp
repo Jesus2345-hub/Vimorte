@@ -7,14 +7,23 @@
 struct Item {
     std::string name;
     sf::Color color;
+    std::string rutaImagen;
+    
+    // Constructor por defecto
+    Item() : name(""), color(sf::Color::White), rutaImagen("") {}
+    
+    // Constructor con parámetros
+    Item(const std::string& n, const sf::Color& c, const std::string& ruta = "")
+        : name(n), color(c), rutaImagen(ruta) {}
 };
 
 class Inventory {
 private:
     std::vector<std::unique_ptr<Item>> m_items;
     std::vector<Item*> m_hotbar;
-    int m_selectedSlot;        // Ahora puede ser cualquier índice (0-14)
-    int m_activeHotbarSlot;    // Slot de la hotbar que está activo (0-4)
+    
+    int m_selectedSlot;
+    int m_activeHotbarSlot;
     bool m_isOpen;
     
     // UI
@@ -51,6 +60,11 @@ public:
     void selectSlot(int slot);
     int getSelectedSlot() const { return m_selectedSlot; }
     int getActiveHotbarSlot() const { return m_activeHotbarSlot; }
+    
+    // Métodos para el sistema de objetos
+    bool hasItem(const std::string& nombre) const;
+    Item* getSelectedItem();
+    void removeSelectedItem();
     
     void update(float dt);
     void handleEvent(const sf::Event& event, sf::RenderWindow& window);

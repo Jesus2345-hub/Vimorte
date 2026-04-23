@@ -6,21 +6,48 @@
 #include <algorithm>
 
 Nivel1State::Nivel1State(sf::RenderWindow* window, Game* game) 
-    : State(window, game), m_background(nullptr), m_cercaMesaPool(false), m_textoInteraccion(nullptr),
-      m_mostrarPuertaSalida(true), m_cercaPuertaSalida(false)
+    : State(window, game), 
+      m_background(nullptr), 
+      m_cercaMesaPool(false), 
+      m_textoInteraccion(nullptr),
+      m_mostrarPuertaSalida(true), 
+      m_cercaPuertaSalida(false), 
+      m_escapeConsumed(false), 
+      m_mostrarTutorial(false), 
+      m_cercaMesaColorMix(false), 
+      m_mostrarTutorialPorTecla(false), 
+      m_esperandoSegundaE(false),
+      m_msjActual()
 {
+    m_msjActual.texto = "";
+    m_msjActual.tiempoRestante = 0.0f;
+    m_msjActual.color = sf::Color::Yellow;
+
     m_player.loadAssets();
     m_player.setPosition(1150.f, 300.f);
     m_player.setSpeed(300.0f);
+    
+    // Verificar si es la primera vez para mostrar el tutorial
+    if (game->tienePartidaActiva()) 
+    {
+        const auto& items = game->getSaveManager().getCurrentProgress().itemsRecolectados;
+        auto it = std::find(items.begin(), items.end(), "TutorialVisto");
+        
+        if (it == items.end()) {
+            m_mostrarTutorial = true;
+            game->getSaveManager().addItemRecolectado("TutorialVisto");
+            std::cout << "Primer ingreso: Mostrando tutorial" << std::endl;
+        }
+    }
     
     if (m_backgroundTexture.loadFromFile("assets/images/niveles/nivel1/background.jpg")) {
         m_background = std::make_unique<sf::Sprite>(m_backgroundTexture);
         sf::Vector2u textureSize = m_backgroundTexture.getSize();
         m_worldSize = sf::Vector2f(static_cast<float>(textureSize.x), 
                                     static_cast<float>(textureSize.y));
-        std::cout << "✅ Nivel 1 cargado. Tamaño: " << m_worldSize.x << "x" << m_worldSize.y << std::endl;
+        std::cout << "Nivel 1 cargado. Tamaño: " << m_worldSize.x << "x" << m_worldSize.y << std::endl;
     } else {
-        std::cerr << "❌ Error: No se pudo cargar background.jpg" << std::endl;
+        std::cerr << "Error: No se pudo cargar background.jpg" << std::endl;
         m_worldSize = sf::Vector2f(1754.f, 1587.f);
     }
     
@@ -29,30 +56,28 @@ Nivel1State::Nivel1State(sf::RenderWindow* window, Game* game)
                         sf::Vector2f(static_cast<float>(windowSize.x), 
                                      static_cast<float>(windowSize.y)));
     
-    // Definir área de la pizarra
-    m_pizarraArea = sf::FloatRect(
-        sf::Vector2f(300.f, 950.f),  // X, Y
-        sf::Vector2f(250.f, 100.f)   // ANCHO, ALTO
-    );
+    // ========== ÁREAS DE INTERACCIÓN ==========
+    m_pizarraArea = sf::FloatRect(sf::Vector2f(200.f, 700.f), sf::Vector2f(180.f, 150.f));
+    m_mesaColorMixArea = sf::FloatRect(sf::Vector2f(40.f, 280.f), sf::Vector2f(100.f, 120.f));
+    m_mesaPoolArea = sf::FloatRect(sf::Vector2f(910.f, 900.f), sf::Vector2f(240.f, 120.f));
+    m_puertaSalidaArea = sf::FloatRect(sf::Vector2f(1550.f, 1350.f), sf::Vector2f(120.f, 180.f));
     
-    // Área de salida del nivel (para avanzar al siguiente)
-    m_puertaSalidaArea = sf::FloatRect(sf::Vector2f(1600.f, 1300.f), sf::Vector2f(100.f, 150.f));
-
     configurarColisiones();
     
-    m_poolMinigame.setSize(sf::Vector2f(1000.f, 600.f));
+    m_poolMinigame.setSize(sf::Vector2f(800.f, 500.f));
     m_poolMinigame.setPosition(sf::Vector2f(
         (windowSize.x - 1000.f) / 2.f,
         (windowSize.y - 500.f - 70.f) / 2.f - 15.f
     ));
-
-    // 6. CONFIGURAR MINIJUEGO DE QUIZ
+    m_colorMixMinigame.initUI();
+    
     m_quizMinigame.setSize(sf::Vector2f(900.f, 600.f));
     m_quizMinigame.setPosition(sf::Vector2f(
-    (windowSize.x - 900.f) / 2.f,
-    (windowSize.y - 600.f) / 2.f
+        (windowSize.x - 900.f) / 2.f,
+        (windowSize.y - 600.f) / 2.f
     ));
     
+    // Cargar fuente y crear textos
     if (m_font.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf")) {
         m_textoInteraccion = std::make_unique<sf::Text>(m_font);
         m_textoInteraccion->setString("Presiona R para jugar al pool");
@@ -62,41 +87,64 @@ Nivel1State::Nivel1State(sf::RenderWindow* window, Game* game)
         
         sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
         m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
+        
+        m_textoMensaje = std::make_unique<sf::Text>(m_font);
+        m_textoMensaje->setCharacterSize(24);
+        m_textoMensaje->setFillColor(sf::Color::Yellow);
     }
     
-    // Items de prueba en el mundo
-    m_worldItems.resize(3);
-    m_itemsCollected.resize(3, false);
-    sf::Color colors[] = {sf::Color::Red, sf::Color::Blue, sf::Color::Green};
-    sf::Vector2f positions[] = {{1100.f, 400.f}, {1200.f, 500.f}, {1000.f, 600.f}};
-    for (int i = 0; i < 3; ++i) {
-        m_worldItems[i].setRadius(15.f);
-        m_worldItems[i].setFillColor(colors[i]);
-        m_worldItems[i].setOrigin(sf::Vector2f(15.f, 15.f));
-        m_worldItems[i].setPosition(positions[i]);
-    }
+    m_colorMixMinigame.setSize(sf::Vector2f(900.f, 600.f));
+    m_colorMixMinigame.setPosition(sf::Vector2f((windowSize.x - 900.f) / 2.f, (windowSize.y - 600.f) / 2.f));
     
-    // ========== AÑADIDO: GUARDADO AUTOMÁTICO AL ENTRAR AL NIVEL ==========
+    // ========== GUARDADO AUTOMÁTICO ==========
     if (game->tienePartidaActiva()) {
-        game->getSaveManager().setNivelActual(1, 1);  // Nivel 1, Nodo 1
+        game->getSaveManager().setNivelActual(1, 1);
         game->guardarPartidaActual();
-        std::cout << "💾 Partida guardada automáticamente en Nivel 1" << std::endl;
+        std::cout << "Partida guardada automáticamente en Nivel 1" << std::endl;
     }
-    // ====================================================================
     
-    std::cout << "✅ Nivel1State inicializado correctamente" << std::endl;
+    std::cout << "Nivel1State inicializado correctamente" << std::endl;
 }
 
-void Nivel1State::handleEvent(const sf::Event& event) {
-    // Manejar eventos del minijuego
+void Nivel1State::handleEvent(const sf::Event& event) 
+{
+    // Manejar teclas globales (Escape y M)
+    if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>()) {
+        if (keyPressed->code == sf::Keyboard::Key::Escape) {
+            if (m_mostrarTutorial || m_mostrarTutorialPorTecla) {
+                m_mostrarTutorial = false;
+                m_mostrarTutorialPorTecla = false;
+                m_escapeConsumed = true;
+                return;
+            }
+        }
+        
+        if (keyPressed->code == sf::Keyboard::Key::M) {
+            std::cout << "M presionada - Activando tutorial" << std::endl;
+            if (game->tienePartidaActiva()) {
+                const auto& items = game->getSaveManager().getCurrentProgress().itemsRecolectados;
+                auto it = std::find(items.begin(), items.end(), "TutorialVisto");
+                if (it != items.end()) {
+                    m_mostrarTutorialPorTecla = true;
+                } else {
+                    m_mostrarTutorial = true;
+                }
+            } else {
+                m_mostrarTutorialPorTecla = true;
+            }
+        }
+    }
+
+    // Manejar eventos de minijuegos
     if (m_poolMinigame.isActive()) {
         m_poolMinigame.handleEvent(event, *window);
-        
         if (event.is<sf::Event::KeyPressed>()) {
             const auto& keyEvent = event.getIf<sf::Event::KeyPressed>();
             if (keyEvent->code == sf::Keyboard::Key::Escape) {
                 m_poolMinigame.deactivate();
-                std::cout << "🎱 Minijuego de pool cerrado" << std::endl;
+                std::cout << "Minijuego de pool cerrado" << std::endl;
+                m_escapeConsumed = true;
+                return;
             }
         }
     }
@@ -106,6 +154,20 @@ void Nivel1State::handleEvent(const sf::Event& event) {
             const auto& keyEvent = event.getIf<sf::Event::KeyPressed>();
             if (keyEvent->code == sf::Keyboard::Key::Escape) {
                 m_quizMinigame.deactivate();
+                m_escapeConsumed = true;
+                return;
+            }
+        }
+    }
+    else if (m_colorMixMinigame.isActive()) {
+        m_colorMixMinigame.handleEvent(event, *window);
+        if (event.is<sf::Event::KeyPressed>()) {
+            const auto& keyEvent = event.getIf<sf::Event::KeyPressed>();
+            if (keyEvent->code == sf::Keyboard::Key::Escape) {
+                m_colorMixMinigame.deactivate();
+                std::cout << "Minijuego de colores cerrado" << std::endl;
+                m_escapeConsumed = true;
+                return;
             }
         }
     }
@@ -117,7 +179,14 @@ void Nivel1State::handleEvent(const sf::Event& event) {
     }
 }
 
-void Nivel1State::verificarSalidaNivel() {
+void Nivel1State::verificarEntradaCentinela() {
+    LevelNode* currentNode = game->getLevelTree().getCurrentNode();
+    if (currentNode && currentNode->hasCentinela()) {
+    }
+}
+
+void Nivel1State::verificarSalidaNivel() 
+{
     m_cercaPuertaSalida = m_player.getHurtbox().findIntersection(m_puertaSalidaArea).has_value();
     
     static bool ePresionado = false;
@@ -125,8 +194,8 @@ void Nivel1State::verificarSalidaNivel() {
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::E)) {
             if (!ePresionado) {
                 ePresionado = true;
-                std::cout << "🚪 Saliendo del nivel..." << std::endl;
-                game->avanzarNivel();  // Usar el árbol para avanzar
+                std::cout << "Saliendo del nivel..." << std::endl;
+                game->avanzarNivel();
             }
         } else {
             ePresionado = false;
@@ -134,33 +203,30 @@ void Nivel1State::verificarSalidaNivel() {
     }
 }
 
-void Nivel1State::verificarEntradaCentinela() {
-    // Verificar si el nivel actual tiene centinela
-    LevelNode* currentNode = game->getLevelTree().getCurrentNode();
-    if (currentNode && currentNode->hasCentinela()) {
-        // Aquí puedes definir un área específica para entrar al centinela
-        // Por ejemplo, una puerta especial o un objeto interactivo
-        
-        // Para el nivel 1, no tiene centinela, así que esto no se ejecutará
-        // Para niveles que sí tengan, se activará cuando el jugador esté en el área
-    }
-}
-
 void Nivel1State::update(float dt) 
 {
+    // Actualizar mensaje temporal
+    if (m_textoMensaje && m_msjActual.tiempoRestante > 0.0f) {
+        m_msjActual.tiempoRestante -= dt;
+        if (m_msjActual.tiempoRestante <= 0.0f) {
+            m_textoMensaje->setString("");
+        }
+    }
+    
     sf::Vector2f posAnterior = m_player.getPosition();
     sf::Vector2u windowSize = window->getSize();
     
-    sf::FloatRect mesaPoolArea(sf::Vector2f(1100.f, 1100.f), sf::Vector2f(500.f, 300.f));
-    m_cercaMesaPool = m_player.getBounds().findIntersection(mesaPoolArea).has_value();
-    
+    // ========== ÁREA DE LA MESA DE POOL ==========
+    m_cercaMesaPool = m_player.getBounds().findIntersection(m_mesaPoolArea).has_value();
+
     static bool rPresionado = false;
-    if (m_cercaMesaPool && !m_poolMinigame.isActive()) {
+    if (m_cercaMesaPool && !m_poolMinigame.isActive())
+    {
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R)) {
             if (!rPresionado) {
                 rPresionado = true;
                 m_poolMinigame.activate();
-                std::cout << "🎱 Minijuego de pool activado!" << std::endl;
+                std::cout << "Minijuego de pool activado!" << std::endl;
             }
         } else {
             rPresionado = false;
@@ -182,28 +248,22 @@ void Nivel1State::update(float dt)
         return;
     }
 
-    // Verificar si está cerca de la pizarra
+    // ========== ÁREA DE LA PIZARRA ==========
     m_cercaPizarra = m_player.getHurtbox().findIntersection(m_pizarraArea).has_value();
 
-    // Activar quiz con R
     static bool rQuizPresionado = false;
     if (m_cercaPizarra && !m_quizMinigame.isActive() && !m_poolMinigame.isActive()) {
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R))
-        {
-            if (!rQuizPresionado)
-            {
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R)) {
+            if (!rQuizPresionado) {
                 rQuizPresionado = true;
                 m_quizMinigame.activate();
-                std::cout << "📚 Minijuego de preguntas activado!" << std::endl;
+                std::cout << "Minijuego de preguntas activado!" << std::endl;
             }
-        }
-        else
-        {
+        } else {
             rQuizPresionado = false;
         }
     }
 
-    // Si el quiz está activo
     if (m_quizMinigame.isActive()) {
         m_quizMinigame.update(dt);
         m_player.update(dt);
@@ -219,8 +279,39 @@ void Nivel1State::update(float dt)
         return;
     }
 
+    // ========== ÁREA DE LA MESA DE COLORES ==========
+    m_cercaMesaColorMix = m_player.getHurtbox().findIntersection(m_mesaColorMixArea).has_value();
     
-    // Movimiento solo si inventario no está abierto
+    static bool rColorPresionado = false;
+    if (m_cercaMesaColorMix && !m_colorMixMinigame.isActive() && 
+        !m_poolMinigame.isActive() && !m_quizMinigame.isActive()) {
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R)) {
+            if (!rColorPresionado) {
+                rColorPresionado = true;
+                m_colorMixMinigame.activate();
+                std::cout << "Minijuego de mezcla de colores activado!" << std::endl;
+            }
+        } else {
+            rColorPresionado = false;
+        }
+    }
+    
+    if (m_colorMixMinigame.isActive()) {
+        m_colorMixMinigame.update(dt);
+        m_player.update(dt);
+        
+        sf::Vector2f playerPos = m_player.getPosition();
+        sf::Vector2f cameraPos = playerPos;
+        float halfWidth = static_cast<float>(windowSize.x) / 2.f;
+        float halfHeight = static_cast<float>(windowSize.y) / 2.f;
+        cameraPos.x = std::clamp(cameraPos.x, halfWidth, m_worldSize.x - halfWidth);
+        cameraPos.y = std::clamp(cameraPos.y, halfHeight, m_worldSize.y - halfHeight);
+        m_camera.setCenter(cameraPos);
+        
+        return;
+    }
+
+    // ========== MOVIMIENTO ==========
     Inventory* inv = m_player.getInventory();
     if (!inv || !inv->isOpen()) {
         sf::Vector2f movimiento(0.f, 0.f);
@@ -243,29 +334,7 @@ void Nivel1State::update(float dt)
     
     m_player.update(dt);
     
-    // Recolección de items
-    for (size_t i = 0; i < m_worldItems.size(); ++i) {
-        if (!m_itemsCollected[i]) {
-            sf::FloatRect itemBounds(m_worldItems[i].getPosition() - sf::Vector2f(15.f, 15.f), sf::Vector2f(30.f, 30.f));
-            if (m_player.getBounds().findIntersection(itemBounds).has_value()) {
-                m_itemsCollected[i] = true;
-                std::string names[] = {"Red Gem", "Blue Gem", "Green Gem"};
-                sf::Color colors[] = {sf::Color::Red, sf::Color::Blue, sf::Color::Green};
-                if (inv) {
-                    inv->tryCollectItem(names[i], colors[i]);
-                    std::cout << "Recogido: " << names[i] << std::endl;
-                    
-                    // ========== AÑADIDO: GUARDAR ITEM RECOLECTADO ==========
-                    if (game->tienePartidaActiva()) {
-                        game->getSaveManager().addItemRecolectado(names[i]);
-                    }
-                    // =====================================================
-                }
-            }
-        }
-    }
-    
-    // Colisiones
+    // ========== COLISIONES ==========
     for (const auto& obj : m_mapaFisico) {
         if (m_player.getHurtbox().findIntersection(obj.getBounds()).has_value()) {
             m_player.setPosition(posAnterior.x, posAnterior.y);
@@ -273,7 +342,7 @@ void Nivel1State::update(float dt)
         }
     }
     
-    // Cámara
+    // ========== CÁMARA ==========
     sf::Vector2f playerPos = m_player.getPosition();
     sf::Vector2f cameraPos = playerPos;
     float halfWidth = static_cast<float>(windowSize.x) / 2.f;
@@ -282,28 +351,31 @@ void Nivel1State::update(float dt)
     cameraPos.y = std::clamp(cameraPos.y, halfHeight, m_worldSize.y - halfHeight);
     m_camera.setCenter(cameraPos);
     
-    // Verificar salida del nivel
     verificarSalidaNivel();
-    
-    // Verificar entrada a centinela
     verificarEntradaCentinela();
     
-    // Pausa
-    static bool escapeProcesado = false;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape)) {
-        if (!escapeProcesado) {
-            escapeProcesado = true;
-            game->pushState(std::make_unique<PauseState>(window, game));
+    // ========== PAUSA ==========
+    if (!m_mostrarTutorial && !m_mostrarTutorialPorTecla && !m_escapeConsumed) {
+        static bool escapeProcesado_ = false;
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape)) {
+            if (!escapeProcesado_) {
+                escapeProcesado_ = true;
+                game->pushState(std::make_unique<PauseState>(window, game));
+            }
+        } else {
+            escapeProcesado_ = false;
         }
-    } else {
-        escapeProcesado = false;
+    }
+
+    if (!sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape)) {
+        m_escapeConsumed = false;
     }
 }
 
 void Nivel1State::draw()
 {
     if (!window) return;
-    
+
     // ===== FASE 1: DIBUJAR MUNDO CON CÁMARA =====
     window->setView(m_camera);
     
@@ -313,13 +385,6 @@ void Nivel1State::draw()
         sf::RectangleShape fallback(m_worldSize);
         fallback.setFillColor(sf::Color(50, 30, 30));
         window->draw(fallback);
-    }
-    
-    // Dibujar items del mundo no recogidos
-    for (size_t i = 0; i < m_worldItems.size(); ++i) {
-        if (!m_itemsCollected[i]) {
-            window->draw(m_worldItems[i]);
-        }
     }
     
     m_player.draw(*window);
@@ -336,47 +401,28 @@ void Nivel1State::draw()
         window->draw(colision);
     }
 
-    // ===== DEBUG: DIBUJAR ÁREA DE LA PIZARRA =====
+    // Debug: ÁREAS DE INTERACCIÓN
     sf::RectangleShape pizarraDebug(sf::Vector2f(m_pizarraArea.size.x, m_pizarraArea.size.y));
     pizarraDebug.setPosition(sf::Vector2f(m_pizarraArea.position.x, m_pizarraArea.position.y));
-    pizarraDebug.setFillColor(sf::Color(0, 0, 255, 100));  // Azul semi-transparente
+    pizarraDebug.setFillColor(sf::Color(0, 0, 255, 100));
     pizarraDebug.setOutlineThickness(3.f);
     pizarraDebug.setOutlineColor(sf::Color::Blue);
     window->draw(pizarraDebug);
     
-    // Debug: área de la mesa de pool
-    sf::RectangleShape mesaDebug(sf::Vector2f(351.f, 182.f));
-    mesaDebug.setPosition(sf::Vector2f(1184.f, 1174.f));
+    sf::RectangleShape mesaDebug(sf::Vector2f(m_mesaPoolArea.size.x, m_mesaPoolArea.size.y));
+    mesaDebug.setPosition(sf::Vector2f(m_mesaPoolArea.position.x, m_mesaPoolArea.position.y));
     mesaDebug.setFillColor(sf::Color(0, 255, 0, 100));
     mesaDebug.setOutlineThickness(3.f);
     mesaDebug.setOutlineColor(sf::Color::Green);
     window->draw(mesaDebug);
+
+    sf::RectangleShape colorMixDebug(sf::Vector2f(m_mesaColorMixArea.size.x, m_mesaColorMixArea.size.y));
+    colorMixDebug.setPosition(sf::Vector2f(m_mesaColorMixArea.position.x, m_mesaColorMixArea.position.y));
+    colorMixDebug.setFillColor(sf::Color(255, 255, 0, 100));
+    colorMixDebug.setOutlineThickness(3.f);
+    colorMixDebug.setOutlineColor(sf::Color::Yellow);
+    window->draw(colorMixDebug);
     
-    // Texto de interacción
-    if (m_cercaMesaPool && !m_poolMinigame.isActive() && m_textoInteraccion) {
-        window->setView(window->getDefaultView());
-        window->draw(*m_textoInteraccion);
-        window->setView(m_camera);
-    }
-
-    // Dibujar texto de interacción para la pizarra
-    if (m_cercaPizarra && !m_quizMinigame.isActive() && !m_poolMinigame.isActive() && m_textoInteraccion) {
-        m_textoInteraccion->setString("Presiona R para la leccion de matematicas");
-        sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
-        m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
-    
-        window->setView(window->getDefaultView());
-        window->draw(*m_textoInteraccion);
-        window->setView(m_camera);
-    }
-
-    // Dibujar quiz
-    if (m_quizMinigame.isActive()) {
-    window->setView(window->getDefaultView());
-    m_quizMinigame.draw(*window);
-    }
-
-    // ===== DEBUG: DIBUJAR ÁREA DE SALIDA =====
     if (m_mostrarPuertaSalida) {
         sf::RectangleShape salidaDebug(sf::Vector2f(m_puertaSalidaArea.size.x, m_puertaSalidaArea.size.y));
         salidaDebug.setPosition(sf::Vector2f(m_puertaSalidaArea.position.x, m_puertaSalidaArea.position.y));
@@ -386,10 +432,35 @@ void Nivel1State::draw()
         window->draw(salidaDebug);
     }
     
-    // ===== FASE 2: DIBUJAR UI CON VISTA POR DEFECTO =====
+    // ===== FASE 2: DIBUJAR UI =====
     window->setView(window->getDefaultView());
     
-    // Texto de interacción para salida
+    // Textos de interacción
+    if (m_cercaMesaColorMix && !m_colorMixMinigame.isActive() && 
+        !m_poolMinigame.isActive() && !m_quizMinigame.isActive() && m_textoInteraccion) {
+        m_textoInteraccion->setString("Presiona R para jugar a mezclar colores");
+        sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
+        m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
+        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
+        window->draw(*m_textoInteraccion);
+    }
+    
+    if (m_cercaMesaPool && !m_poolMinigame.isActive() && m_textoInteraccion) {
+        m_textoInteraccion->setString("Presiona R para jugar al pool");
+        sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
+        m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
+        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
+        window->draw(*m_textoInteraccion);
+    }
+
+    if (m_cercaPizarra && !m_quizMinigame.isActive() && !m_poolMinigame.isActive() && m_textoInteraccion) {
+        m_textoInteraccion->setString("Presiona R para la leccion de matematicas");
+        sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
+        m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
+        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
+        window->draw(*m_textoInteraccion);
+    }
+    
     if (m_cercaPuertaSalida && !m_poolMinigame.isActive() && !m_quizMinigame.isActive() && m_textoInteraccion) {
         m_textoInteraccion->setString("Presiona E para avanzar al siguiente nivel");
         sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
@@ -398,9 +469,46 @@ void Nivel1State::draw()
         window->draw(*m_textoInteraccion);
     }
     
-    // Minijuego (ya está centrado por su propia configuración)
+    // Mensaje temporal
+    if (m_textoMensaje && m_msjActual.tiempoRestante > 0.0f && !m_textoMensaje->getString().isEmpty()) {
+        sf::Vector2u windowSize = window->getSize();
+        m_textoMensaje->setPosition(sf::Vector2f(windowSize.x / 2.f, windowSize.y / 3.f));
+        window->draw(*m_textoMensaje);
+    }
+    
+    // Minijuegos
+    if (m_colorMixMinigame.isActive()) {
+        m_colorMixMinigame.draw(*window);
+    }
+    if (m_quizMinigame.isActive()) {
+        m_quizMinigame.draw(*window);
+    }
     if (m_poolMinigame.isActive()) {
         m_poolMinigame.draw(*window);
+    }
+    
+    // Tutorial
+    if (m_mostrarTutorial || m_mostrarTutorialPorTecla) {
+        sf::RectangleShape overlay(sf::Vector2f(window->getSize().x, window->getSize().y));
+        overlay.setFillColor(sf::Color(0, 0, 0, 200));
+        window->draw(overlay);
+        
+        sf::Text tutorialText(m_font);
+        tutorialText.setString(
+            "DESPIERTA... ESTAS EN VIMORTE\n\n"
+            "No hay salida simple. Para escapar de esta habitacion\n"
+            "deberas superar los acertijos que esconde cada rincon.\n\n"
+            "Observa bien: algunos caminos solo se abriran\n"
+            "cuando demuestres tu habilidad.\n\n"
+            "Empieza por la mesa de pool...\n\n"
+            "[ESC] Cerrar | [M] ayuda"
+        );
+        tutorialText.setCharacterSize(20);
+        tutorialText.setFillColor(sf::Color::White);
+        sf::FloatRect textBounds = tutorialText.getLocalBounds();
+        tutorialText.setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
+        tutorialText.setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y / 2.f));
+        window->draw(tutorialText);
     }
     
     // Inventario
@@ -408,93 +516,47 @@ void Nivel1State::draw()
     if (inv) {
         inv->draw(*window);
     }
-    
-    // NO restaurar la cámara - ya terminamos de dibujar
 }
 
 void Nivel1State::configurarColisiones() 
 {
     m_mapaFisico.clear();
     
-    // Límite superior corregido (más arriba)
-    m_mapaFisico.emplace_back(50.f, 12.f, 1700.f, 20.f);
-    // Pared lateral izquierda 
+    m_mapaFisico.emplace_back(30.f, 12.f, 1700.f, 130.f);
     m_mapaFisico.emplace_back(18.f, 12.f, 20.f, 1700.f);
-    // Límite inferior de las habitaciones superiores (ajustado a la tubería)
-    m_mapaFisico.emplace_back(18.f, 1490.f, 1700.f, 20.f);
-    // Pared lateral derecha
-    m_mapaFisico.emplace_back(1700.f, 12.f, 30.f, 1700.f);
-    // Pared divisoria interna (Laboratorio - Baño)
-    m_mapaFisico.emplace_back(750.f, 12.f, 22.f, 550.f);
-    // Muro horizontal inferior del laboratorio (basado en tu última selección)
-    m_mapaFisico.emplace_back(18.f, 579.f, 360.f, 15.f);
-    
-    //puerta hab. con tanque
-    // Bloque 1: Base de la puerta (donde se une al muro)
-    m_mapaFisico.emplace_back(378.f, 579.f, 20.f, 25.f); 
-    // Bloque 2: Parte inclinada de la puerta
-    m_mapaFisico.emplace_back(398.f, 604.f, 49.f, 55.f);
-
-    // Muro horizontal inferior del baño (conecta con la divisoria vertical)
-    m_mapaFisico.emplace_back(550.f, 579.f, 680.f, 20.f);
-    // Muro horizontal inferior lab de vimorte 
-    m_mapaFisico.emplace_back(1400.f, 579.f, 400.f, 20.f);
-    // Muro horizontal superior del salón de la pizarra (lado izquierdo inferior)
-    m_mapaFisico.emplace_back(18.f, 880.f, 750.f, 10.f); //CAmbie de 200
-    // Bloque pequeño a la derecha de la tubería 
-    m_mapaFisico.emplace_back(1020.f, 880.f, 54.f, 17.f);
-    // Muro horizontal superior del salón de juego (lado izquierdo inferior)
-    m_mapaFisico.emplace_back(1250.f, 880.f, 750.f, 23.f);
-    // Pared vertical que separa el pasillo de la zona inferior (medida 13x141)
-    m_mapaFisico.emplace_back(755.f, 880.f, 13.f, 200.f);   
-    // Extensión vertical para cerrar la esquina (mismo X, nueva Y y Alto)
-    m_mapaFisico.emplace_back(755.f, 1250.f, 13.f, 250.f);
-
-    m_mapaFisico.emplace_back(985.f, 880.f, 13.f, 200.f);   
-    // Extensión vertical para cerrar la esquina (mismo X, nueva Y y Alto)
-    m_mapaFisico.emplace_back(985.f, 1250.f, 13.f, 250.f);
-    // Bloque horizontal para cerrar la esquina inferior derecha (medida 302x22)
-    m_mapaFisico.emplace_back(1255.f, 950.f, 502.f, 22.f);
-
-    m_mapaFisico.emplace_back(15.f, 950.f, 702.f, 22.f);
-    // Bloque de colisión para el conjunto de mesas y sillas (Salón Pizarra)
-    m_mapaFisico.emplace_back(150.f, 1150.f, 120.f, 50.f);
-    m_mapaFisico.emplace_back(550.f, 1300.f, 120.f, 50.f);
-    m_mapaFisico.emplace_back(70.f, 1350.f, 50.f, 50.f);
-
-    //bloque de colisiones del cuarto con tanque
-    m_mapaFisico.emplace_back(100.f, 115.f, 200.f, 20.f);
-    m_mapaFisico.emplace_back(450.f, 115.f, 200.f, 20.f);
-    m_mapaFisico.emplace_back(200.f, 70.f, 250.f, 20.f);
-
-    m_mapaFisico.emplace_back(100.f, 320.f, 50.f, 150.f);
-    m_mapaFisico.emplace_back(300.f, 410.f, 70.f, 50.f);
-
-    m_mapaFisico.emplace_back(1184.f, 1174.f, 351.f, 182.f);  // Mesa de pool
+    m_mapaFisico.emplace_back(570.f, 690.f, 20.f, 100.f);
+    m_mapaFisico.emplace_back(570.f, 12.f, 22.f, 410.f);
    
-    std::cout << "✅ Colisiones configuradas: " << m_mapaFisico.size() << " paredes con huecos" << std::endl;
+    std::cout << "Colisiones configuradas: " << m_mapaFisico.size() << " paredes" << std::endl;
 }
 
-// Reemplazar el método jugadorHaMuerto() en Nivel1State.cpp:
 void Nivel1State::jugadorHaMuerto() {
     LevelNode* currentNode = game->getLevelTree().getCurrentNode();
-    
     if (currentNode && currentNode->type == LevelType::CENTINELA) {
-        // Estamos en un centinela, verificar modo de juego
         GameProgressData& progress = game->getSaveManager().getCurrentProgress();
-        
-        // CORREGIDO: addMuerte es un método de GameSaveManager, no de GameProgressData
         game->getSaveManager().addMuerte();
-        
         if (progress.modoElegido == GameProgressData::ModoJuego::CAMINO_AGRADABLE) {
-            // Mostrar opción de reintentar
-            game->pushState(std::make_unique<MuerteCentinelaState>(window, game, true));
+            std::cout << "Muerte en centinela (modo agradable) - por implementar" << std::endl;
         } else {
-            // Modo consecuencias: game over, volver al menú
-            game->pushState(std::make_unique<MuerteCentinelaState>(window, game, false));
+            std::cout << "Muerte en centinela (modo consecuencias) - por implementar" << std::endl;
         }
     } else {
-        // Muerte en nivel normal, reiniciar nivel (o mostrar pausa)
         game->pushState(std::make_unique<PauseState>(window, game));
     }
+}
+
+void Nivel1State::mostrarMensaje(const std::string& texto, float duracion, sf::Color color) {
+    if (!m_textoMensaje) return;
+    
+    m_msjActual.texto = texto;
+    m_msjActual.tiempoRestante = duracion;
+    m_msjActual.color = color;
+    
+    m_textoMensaje->setString(texto);
+    m_textoMensaje->setFillColor(color);
+    
+    sf::FloatRect bounds = m_textoMensaje->getLocalBounds();
+    m_textoMensaje->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
+    
+    std::cout << "MENSAJE: " << texto << std::endl;
 }
