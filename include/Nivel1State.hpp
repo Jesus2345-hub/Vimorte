@@ -42,6 +42,7 @@ private:
     MensajeTemporal m_msjActual;
     std::unique_ptr<sf::Text> m_textoMensaje;
     
+    bool m_fontLoaded; 
     void mostrarMensaje(const std::string& texto, float duracion = 2.0f, sf::Color color = sf::Color::Yellow);
     
     bool m_cercaMesaPool;

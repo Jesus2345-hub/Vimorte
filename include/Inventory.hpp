@@ -28,6 +28,7 @@ private:
     
     // UI
     sf::Font m_font;
+    bool m_fontLoaded;                     // NUEVO: indica si la fuente se cargó correctamente
     sf::RectangleShape m_hotbarBg;
     sf::RectangleShape m_inventoryBg;
     std::vector<sf::RectangleShape> m_hotbarSlots;
@@ -60,11 +61,6 @@ public:
     void selectSlot(int slot);
     int getSelectedSlot() const { return m_selectedSlot; }
     int getActiveHotbarSlot() const { return m_activeHotbarSlot; }
-    
-    // Métodos para el sistema de objetos
-    bool hasItem(const std::string& nombre) const;
-    Item* getSelectedItem();
-    void removeSelectedItem();
     
     void update(float dt);
     void handleEvent(const sf::Event& event, sf::RenderWindow& window);

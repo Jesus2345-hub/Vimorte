@@ -17,7 +17,8 @@ Nivel1State::Nivel1State(sf::RenderWindow* window, Game* game)
       m_cercaMesaColorMix(false), 
       m_mostrarTutorialPorTecla(false), 
       m_esperandoSegundaE(false),
-      m_msjActual()
+      m_msjActual(),
+      m_fontLoaded(false)   
 {
     m_msjActual.texto = "";
     m_msjActual.tiempoRestante = 0.0f;
@@ -77,8 +78,15 @@ Nivel1State::Nivel1State(sf::RenderWindow* window, Game* game)
         (windowSize.y - 600.f) / 2.f
     ));
     
-    // Cargar fuente y crear textos
-    if (m_font.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf")) {
+    // ========== CARGA DE FUENTE CON VERIFICACIÓN ==========
+    m_fontLoaded = m_font.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf");
+    if (!m_fontLoaded) {
+        std::cerr << "ERROR en Nivel1State: No se pudo cargar la fuente 'assets/fonts/menu/VCR_OSD_MONO.ttf'" << std::endl;
+        std::cerr << "No se mostrarán textos de interacción ni tutorial." << std::endl;
+    }
+    
+    // Crear textos solo si la fuente es válida
+    if (m_fontLoaded) {
         m_textoInteraccion = std::make_unique<sf::Text>(m_font);
         m_textoInteraccion->setString("Presiona R para jugar al pool");
         m_textoInteraccion->setCharacterSize(20);
@@ -91,6 +99,9 @@ Nivel1State::Nivel1State(sf::RenderWindow* window, Game* game)
         m_textoMensaje = std::make_unique<sf::Text>(m_font);
         m_textoMensaje->setCharacterSize(24);
         m_textoMensaje->setFillColor(sf::Color::Yellow);
+    } else {
+        m_textoInteraccion = nullptr;
+        m_textoMensaje = nullptr;
     }
     
     m_colorMixMinigame.setSize(sf::Vector2f(900.f, 600.f));
@@ -435,38 +446,40 @@ void Nivel1State::draw()
     // ===== FASE 2: DIBUJAR UI =====
     window->setView(window->getDefaultView());
     
-    // Textos de interacción
-    if (m_cercaMesaColorMix && !m_colorMixMinigame.isActive() && 
-        !m_poolMinigame.isActive() && !m_quizMinigame.isActive() && m_textoInteraccion) {
-        m_textoInteraccion->setString("Presiona R para jugar a mezclar colores");
-        sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
-        m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
-        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
-        window->draw(*m_textoInteraccion);
-    }
-    
-    if (m_cercaMesaPool && !m_poolMinigame.isActive() && m_textoInteraccion) {
-        m_textoInteraccion->setString("Presiona R para jugar al pool");
-        sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
-        m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
-        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
-        window->draw(*m_textoInteraccion);
-    }
+    // Textos de interacción (solo si la fuente es válida)
+    if (m_fontLoaded && m_textoInteraccion) {
+        if (m_cercaMesaColorMix && !m_colorMixMinigame.isActive() && 
+            !m_poolMinigame.isActive() && !m_quizMinigame.isActive()) {
+            m_textoInteraccion->setString("Presiona R para jugar a mezclar colores");
+            sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
+            m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
+            m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
+            window->draw(*m_textoInteraccion);
+        }
+        
+        if (m_cercaMesaPool && !m_poolMinigame.isActive()) {
+            m_textoInteraccion->setString("Presiona R para jugar al pool");
+            sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
+            m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
+            m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
+            window->draw(*m_textoInteraccion);
+        }
 
-    if (m_cercaPizarra && !m_quizMinigame.isActive() && !m_poolMinigame.isActive() && m_textoInteraccion) {
-        m_textoInteraccion->setString("Presiona R para la leccion de matematicas");
-        sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
-        m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
-        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
-        window->draw(*m_textoInteraccion);
-    }
-    
-    if (m_cercaPuertaSalida && !m_poolMinigame.isActive() && !m_quizMinigame.isActive() && m_textoInteraccion) {
-        m_textoInteraccion->setString("Presiona E para avanzar al siguiente nivel");
-        sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
-        m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
-        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
-        window->draw(*m_textoInteraccion);
+        if (m_cercaPizarra && !m_quizMinigame.isActive() && !m_poolMinigame.isActive()) {
+            m_textoInteraccion->setString("Presiona R para la leccion de matematicas");
+            sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
+            m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
+            m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
+            window->draw(*m_textoInteraccion);
+        }
+        
+        if (m_cercaPuertaSalida && !m_poolMinigame.isActive() && !m_quizMinigame.isActive()) {
+            m_textoInteraccion->setString("Presiona E para avanzar al siguiente nivel");
+            sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
+            m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
+            m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
+            window->draw(*m_textoInteraccion);
+        }
     }
     
     // Mensaje temporal
@@ -487,28 +500,34 @@ void Nivel1State::draw()
         m_poolMinigame.draw(*window);
     }
     
-    // Tutorial
+    // ========== TUTORIAL (protegido) ==========
     if (m_mostrarTutorial || m_mostrarTutorialPorTecla) {
         sf::RectangleShape overlay(sf::Vector2f(window->getSize().x, window->getSize().y));
         overlay.setFillColor(sf::Color(0, 0, 0, 200));
         window->draw(overlay);
         
-        sf::Text tutorialText(m_font);
-        tutorialText.setString(
-            "DESPIERTA... ESTAS EN VIMORTE\n\n"
-            "No hay salida simple. Para escapar de esta habitacion\n"
-            "deberas superar los acertijos que esconde cada rincon.\n\n"
-            "Observa bien: algunos caminos solo se abriran\n"
-            "cuando demuestres tu habilidad.\n\n"
-            "Empieza por la mesa de pool...\n\n"
-            "[ESC] Cerrar | [M] ayuda"
-        );
-        tutorialText.setCharacterSize(20);
-        tutorialText.setFillColor(sf::Color::White);
-        sf::FloatRect textBounds = tutorialText.getLocalBounds();
-        tutorialText.setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
-        tutorialText.setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y / 2.f));
-        window->draw(tutorialText);
+        // Solo dibujar texto si la fuente es válida
+        if (m_fontLoaded) {
+            sf::Text tutorialText(m_font);
+            tutorialText.setString(
+                "DESPIERTA... ESTAS EN VIMORTE\n\n"
+                "No hay salida simple. Para escapar de esta habitacion\n"
+                "deberas superar los acertijos que esconde cada rincon.\n\n"
+                "Observa bien: algunos caminos solo se abriran\n"
+                "cuando demuestres tu habilidad.\n\n"
+                "Empieza por la mesa de pool...\n\n"
+                "[ESC] Cerrar | [M] ayuda"
+            );
+            tutorialText.setCharacterSize(20);
+            tutorialText.setFillColor(sf::Color::White);
+            sf::FloatRect textBounds = tutorialText.getLocalBounds();
+            tutorialText.setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
+            tutorialText.setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y / 2.f));
+            window->draw(tutorialText);
+        } else {
+            // Fallback: mostrar un rectángulo con un mensaje en consola
+            std::cerr << "No se puede mostrar el tutorial porque la fuente no está cargada." << std::endl;
+        }
     }
     
     // Inventario

@@ -3,16 +3,22 @@
 #include <algorithm>
 
 Inventory::Inventory() : m_selectedSlot(-1), m_activeHotbarSlot(0), m_isOpen(false), 
-                         m_infoText(nullptr), m_draggedItemIndex(-1), m_isDraggingItem(false) {
-    // Intentar cargar la fuente PRIMERO
-    if (!m_font.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf")) {
-        std::cerr << "Error cargando fuente para inventario" << std::endl;
+                         m_fontLoaded(false), m_infoText(nullptr), m_draggedItemIndex(-1), m_isDraggingItem(false) {
+    // ========== CARGA DE FUENTE CON VERIFICACIÓN ==========
+    m_fontLoaded = m_font.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf");
+    if (!m_fontLoaded) {
+        std::cerr << "ERROR: No se pudo cargar la fuente 'assets/fonts/menu/VCR_OSD_MONO.ttf'." << std::endl;
+        std::cerr << "No se mostrarán textos en el inventario." << std::endl;
     }
     
-    // Inicializar m_infoText DESPUÉS de cargar la fuente
-    m_infoText = std::make_unique<sf::Text>(m_font);
-    m_infoText->setCharacterSize(12);
-    m_infoText->setFillColor(sf::Color(200, 200, 200));
+    // Inicializar m_infoText solo si la fuente es válida, de lo contrario se queda nullptr
+    if (m_fontLoaded) {
+        m_infoText = std::make_unique<sf::Text>(m_font);
+        m_infoText->setCharacterSize(12);
+        m_infoText->setFillColor(sf::Color(200, 200, 200));
+    } else {
+        m_infoText = nullptr;
+    }
     
     // Hotbar
     m_hotbarBg.setSize(sf::Vector2f(300.f, 50.f));
@@ -282,8 +288,8 @@ void Inventory::draw(sf::RenderWindow& window) {
     sf::Vector2u windowSize = window.getSize();
     sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
     
+    // ========== DIBUJAR HOTBAR (INVENTARIO CERRADO) ==========
     if (!m_isOpen) {
-        // Hotbar cerrada
         m_hotbarBg.setPosition(sf::Vector2f(windowSize.x / 2.f, windowSize.y - 35.f));
         window.draw(m_hotbarBg);
         
@@ -314,27 +320,32 @@ void Inventory::draw(sf::RenderWindow& window) {
                 window.draw(itemShape);
             }
             
-            sf::Text slotNum(m_font, std::to_string(i + 1), 10);
-            slotNum.setFillColor(sf::Color(150, 150, 150));
-            slotNum.setPosition(sf::Vector2f(x - 18.f, y - 18.f));
-            window.draw(slotNum);
+            // Dibujar número del slot SÓLO si la fuente es válida
+            if (m_fontLoaded) {
+                sf::Text slotNum(m_font, std::to_string(i + 1), 10);
+                slotNum.setFillColor(sf::Color(150, 150, 150));
+                slotNum.setPosition(sf::Vector2f(x - 18.f, y - 18.f));
+                window.draw(slotNum);
+            }
         }
     }
     
+    // ========== DIBUJAR INVENTARIO EXTENDIDO (ABIERTO) ==========
     if (m_isOpen) {
-        // Inventario extendido
         m_inventoryBg.setPosition(sf::Vector2f(windowSize.x / 2.f, windowSize.y / 2.f));
         window.draw(m_inventoryBg);
         
-        // Título
-        sf::Text title(m_font, "INVENTARIO", 18);
-        title.setFillColor(sf::Color::White);
-        sf::FloatRect titleBounds = title.getLocalBounds();
-        title.setOrigin(sf::Vector2f(titleBounds.size.x / 2.f, 0.f));
-        title.setPosition(sf::Vector2f(windowSize.x / 2.f, windowSize.y / 2.f - 105.f));
-        window.draw(title);
+        // Título (solo si fuente cargada)
+        if (m_fontLoaded) {
+            sf::Text title(m_font, "INVENTARIO", 18);
+            title.setFillColor(sf::Color::White);
+            sf::FloatRect titleBounds = title.getLocalBounds();
+            title.setOrigin(sf::Vector2f(titleBounds.size.x / 2.f, 0.f));
+            title.setPosition(sf::Vector2f(windowSize.x / 2.f, windowSize.y / 2.f - 105.f));
+            window.draw(title);
+        }
         
-        // Instrucciones
+        // Instrucciones (solo si m_infoText es válido)
         if (m_infoText) {
             m_infoText->setString("Click: Seleccionar | Arrastrar: Mover | Click der: Eliminar | E: Cerrar");
             sf::FloatRect infoBounds = m_infoText->getLocalBounds();
@@ -381,8 +392,8 @@ void Inventory::draw(sf::RenderWindow& window) {
                     }
                 }
                 
-                // Dibujar números en la primera fila (hotbar)
-                if (row == 0) {
+                // Dibujar números en la primera fila (hotbar) SÓLO si la fuente es válida
+                if (row == 0 && m_fontLoaded) {
                     sf::Text slotNum(m_font, std::to_string(col + 1), 10);
                     slotNum.setFillColor(sf::Color(150, 150, 150));
                     slotNum.setPosition(sf::Vector2f(x - 18.f, y - 18.f));
@@ -417,27 +428,4 @@ bool Inventory::tryCollectItem(const std::string& itemName, const sf::Color& col
 
 void Inventory::addDefaultItems() {
     // Vacío por defecto
-}
-// ========== MÉTODOS PARA EL SISTEMA DE OBJETOS ==========
-
-bool Inventory::hasItem(const std::string& nombre) const {
-    for (const auto& item : m_items) {
-        if (item && item->name == nombre) {
-            return true;
-        }
-    }
-    return false;
-}
-
-Item* Inventory::getSelectedItem() {
-    if (m_selectedSlot >= 0 && m_selectedSlot < (int)m_items.size()) {
-        return m_items[m_selectedSlot].get();
-    }
-    return nullptr;
-}
-
-void Inventory::removeSelectedItem() {
-    if (m_selectedSlot >= 0 && m_selectedSlot < (int)m_items.size()) {
-        removeItem(m_selectedSlot);
-    }
 }
