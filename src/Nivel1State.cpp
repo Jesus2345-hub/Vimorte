@@ -252,8 +252,16 @@ void Nivel1State::update(float dt)
         sf::Vector2f cameraPos = playerPos;
         float halfWidth = static_cast<float>(windowSize.x) / 2.f;
         float halfHeight = static_cast<float>(windowSize.y) / 2.f;
-        cameraPos.x = std::clamp(cameraPos.x, halfWidth, m_worldSize.x - halfWidth);
-        cameraPos.y = std::clamp(cameraPos.y, halfHeight, m_worldSize.y - halfHeight);
+        if (halfWidth * 2.f >= m_worldSize.x) {
+            cameraPos.x = m_worldSize.x / 2.f;
+        } else {
+            cameraPos.x = std::clamp(cameraPos.x, halfWidth, m_worldSize.x - halfWidth);
+        }
+        if (halfHeight * 2.f >= m_worldSize.y) {
+            cameraPos.y = m_worldSize.y / 2.f;
+        } else {
+            cameraPos.y = std::clamp(cameraPos.y, halfHeight, m_worldSize.y - halfHeight);
+        }
         m_camera.setCenter(cameraPos);
         
         return;
@@ -283,8 +291,16 @@ void Nivel1State::update(float dt)
         sf::Vector2f cameraPos = playerPos;
         float halfWidth = static_cast<float>(windowSize.x) / 2.f;
         float halfHeight = static_cast<float>(windowSize.y) / 2.f;
-        cameraPos.x = std::clamp(cameraPos.x, halfWidth, m_worldSize.x - halfWidth);
-        cameraPos.y = std::clamp(cameraPos.y, halfHeight, m_worldSize.y - halfHeight);
+        if (halfWidth * 2.f >= m_worldSize.x) {
+            cameraPos.x = m_worldSize.x / 2.f;
+        } else {
+            cameraPos.x = std::clamp(cameraPos.x, halfWidth, m_worldSize.x - halfWidth);
+        }
+        if (halfHeight * 2.f >= m_worldSize.y) {
+            cameraPos.y = m_worldSize.y / 2.f;
+        } else {
+            cameraPos.y = std::clamp(cameraPos.y, halfHeight, m_worldSize.y - halfHeight);
+        }
         m_camera.setCenter(cameraPos);
     
         return;
@@ -315,8 +331,16 @@ void Nivel1State::update(float dt)
         sf::Vector2f cameraPos = playerPos;
         float halfWidth = static_cast<float>(windowSize.x) / 2.f;
         float halfHeight = static_cast<float>(windowSize.y) / 2.f;
-        cameraPos.x = std::clamp(cameraPos.x, halfWidth, m_worldSize.x - halfWidth);
-        cameraPos.y = std::clamp(cameraPos.y, halfHeight, m_worldSize.y - halfHeight);
+        if (halfWidth * 2.f >= m_worldSize.x) {
+            cameraPos.x = m_worldSize.x / 2.f;
+        } else {
+            cameraPos.x = std::clamp(cameraPos.x, halfWidth, m_worldSize.x - halfWidth);
+        }
+        if (halfHeight * 2.f >= m_worldSize.y) {
+            cameraPos.y = m_worldSize.y / 2.f;
+        } else {
+            cameraPos.y = std::clamp(cameraPos.y, halfHeight, m_worldSize.y - halfHeight);
+        }
         m_camera.setCenter(cameraPos);
         
         return;
@@ -358,8 +382,16 @@ void Nivel1State::update(float dt)
     sf::Vector2f cameraPos = playerPos;
     float halfWidth = static_cast<float>(windowSize.x) / 2.f;
     float halfHeight = static_cast<float>(windowSize.y) / 2.f;
-    cameraPos.x = std::clamp(cameraPos.x, halfWidth, m_worldSize.x - halfWidth);
-    cameraPos.y = std::clamp(cameraPos.y, halfHeight, m_worldSize.y - halfHeight);
+    if (halfWidth * 2.f >= m_worldSize.x) {
+        cameraPos.x = m_worldSize.x / 2.f;
+    } else {
+        cameraPos.x = std::clamp(cameraPos.x, halfWidth, m_worldSize.x - halfWidth);
+    }
+    if (halfHeight * 2.f >= m_worldSize.y) {
+        cameraPos.y = m_worldSize.y / 2.f;
+    } else {
+        cameraPos.y = std::clamp(cameraPos.y, halfHeight, m_worldSize.y - halfHeight);
+    }
     m_camera.setCenter(cameraPos);
     
     verificarSalidaNivel();
