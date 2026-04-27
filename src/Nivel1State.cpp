@@ -130,6 +130,7 @@ Nivel1State::Nivel1State(sf::RenderWindow* window, Game* game)
     }
     
     std::cout << "Nivel1State inicializado correctamente" << std::endl;
+    game->setIsInLevel(true);
 }
 
 void Nivel1State::handleEvent(const sf::Event& event) 

@@ -108,6 +108,7 @@ m_dartsMinigame.setPosition(sf::Vector2f(
     m_teleportZone2 = sf::FloatRect(sf::Vector2f(1200.f, 120.f), sf::Vector2f(60.f, 60.f));
     m_teleportDestination2 = sf::Vector2f(450.f, 120.f);
     std::cout << "NivelSara1State inicializado correctamente" << std::endl;
+    game->setIsInLevel(true);
 }
 
 void NivelSara1State::configurarColisiones() {

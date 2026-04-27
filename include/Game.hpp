@@ -34,6 +34,7 @@ private:
     
     void cargarConfiguracionAudio();
     void guardarConfiguracionAudio();
+    bool m_isInLevel = false;
 
 public:
     Game();
@@ -83,6 +84,8 @@ public:
     void applyCurrentView();
     // En la sección pública de Game.hpp, añadir:
 std::stack<std::unique_ptr<State>>& getStates() { return states; }
+void setIsInLevel(bool inLevel) { m_isInLevel = inLevel; }
+bool isInLevel() const { return m_isInLevel; }
 };
 
 #endif

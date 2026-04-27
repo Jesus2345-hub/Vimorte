@@ -27,6 +27,7 @@ MenuState::MenuState(sf::RenderWindow* window, Game* game)
     m_adminText->setPosition(sf::Vector2f(50.f, 30.f));
 
     game->cambiarMusica("assets/sounds/menu.ogg");
+    game->setIsInLevel(false);
 }
 
 void MenuState::handleEvent(const sf::Event& event) {

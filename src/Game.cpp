@@ -317,10 +317,15 @@ void Game::run()
             sf::Vector2f(static_cast<float>(newSize.x), static_cast<float>(newSize.y))
         )));
         
-        while (!states.empty()) states.pop();
-        states.push(std::make_unique<MenuState>(window.get(), this));
+        // Si NO estamos en un nivel, recrear el menú para que se centre
+        if (!m_isInLevel)
+        {
+            while (!states.empty()) states.pop();
+            states.push(std::make_unique<MenuState>(window.get(), this));
+        }
         
-        std::cout << "F11: " << newSize.x << "x" << newSize.y << std::endl;
+        std::cout << "F11: " << newSize.x << "x" << newSize.y 
+                  << (m_isInLevel ? " (nivel)" : " (menú recreado)") << std::endl;
     }
 }
 
@@ -399,12 +404,13 @@ void Game::returnToMenu()
 
     levelTree.resetToRoot();
 
+    m_isInLevel = false;  // ← ESTA LÍNEA ES NUEVA
+
     auto menuState = std::make_unique<MenuState>(window.get(), this);
     states.push(std::move(menuState));
 
     std::cout << "✅ Menú principal cargado correctamente" << std::endl;
 }
-
 void Game::setPantallaCompleta(bool fullscreen) {
     Config::getInstance().setPantallaCompleta(fullscreen);
     Config::getInstance().alternarPantalla(window.get());

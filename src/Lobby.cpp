@@ -46,6 +46,7 @@ LobbyState::LobbyState(sf::RenderWindow* window, Game* game)
     if (!game->tienePartidaActiva()) {
         std::cout << "⚠️ No hay partida activa. Se recomienda crear una nueva partida." << std::endl;
     }
+    game->setIsInLevel(true);
 }
 
 
