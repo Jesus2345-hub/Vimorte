@@ -66,6 +66,8 @@ private:
     void verificarSalidaNivel();
     void verificarEntradaCentinela();
     void jugadorHaMuerto();
+    sf::Vector2u m_lastWindowSize;  // Para detectar cambios de tamaño
+    
     
 public:
     Nivel1State(sf::RenderWindow* window, Game* game);

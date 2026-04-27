@@ -46,10 +46,13 @@ NivelSara1State::NivelSara1State(sf::RenderWindow* window, Game* game)
 
     // Configurar cámara 
     sf::Vector2u windowSize = window->getSize();
-    m_camera = sf::View(sf::Vector2f(m_worldSize.x / 2.f, m_worldSize.y / 2.f),
-                        sf::Vector2f(static_cast<float>(windowSize.x),
-                                     static_cast<float>(windowSize.y)));
-
+    float fixedWidth = 1280.f;
+    float fixedHeight = 720.f;
+    m_camera = sf::View(
+        sf::Vector2f(m_worldSize.x / 2.f, m_worldSize.y / 2.f),
+        sf::Vector2f(fixedWidth, fixedHeight)
+    );
+    m_lastWindowSize = windowSize;
     
     m_puertaSalidaArea = sf::FloatRect(sf::Vector2f(1550.f, 1350.f), sf::Vector2f(120.f, 180.f));
     configurarColisiones();
@@ -59,15 +62,18 @@ NivelSara1State::NivelSara1State(sf::RenderWindow* window, Game* game)
     m_dartsTriggerRadius = 150.f;
 
     // Configurar minijuego de dardos
-    m_dartsMinigame.setSize(sf::Vector2f(900.f, 600.f));
-    m_dartsMinigame.setPosition(sf::Vector2f(
-        (windowSize.x - 900.f) / 2.f,
-        (windowSize.y - 600.f) / 2.f
-    ));
+    sf::Vector2u winSize = window->getSize();
+float dartsW = winSize.x * 0.7f;
+float dartsH = winSize.y * 0.83f;
+m_dartsMinigame.setSize(sf::Vector2f(dartsW, dartsH));
+m_dartsMinigame.setPosition(sf::Vector2f(
+    (winSize.x - dartsW) / 2.f,
+    (winSize.y - dartsH) / 2.f
+));
     m_dartsMinigame.setVitalSigns(&m_vitalSigns);
     
     // Configurar signos estáticos de Andrea (oscilan pero no se modifican con dardos)
-    sf::Vector2u winSize = window->getSize();
+    
     float panelWidth = 200.f;             
     float marginRight = 20.f;             
     float leftPos = winSize.x - panelWidth - marginRight;
@@ -267,23 +273,29 @@ void NivelSara1State::update(float dt) {
         }
     }
 
-    // Cámara centrada en el jugador
+        // ========== CÁMARA FIJA ==========
     sf::Vector2f playerPos = m_player.getPosition();
     sf::Vector2f cameraPos = playerPos;
-    float halfWidth = static_cast<float>(windowSize.x) / 2.f;
-    float halfHeight = static_cast<float>(windowSize.y) / 2.f;
 
-    if (halfWidth * 2.f >= m_worldSize.x)
+    float halfWidth = 1280.f / 2.f;
+    float halfHeight = 720.f / 2.f;
+
+    if (halfWidth * 2.f >= m_worldSize.x) {
         cameraPos.x = m_worldSize.x / 2.f;
-    else
-        cameraPos.x = std::clamp(cameraPos.x, halfWidth, m_worldSize.x - halfWidth);
+    } else {
+        if (cameraPos.x < halfWidth) cameraPos.x = halfWidth;
+        if (cameraPos.x > m_worldSize.x - halfWidth) cameraPos.x = m_worldSize.x - halfWidth;
+    }
 
-    if (halfHeight * 2.f >= m_worldSize.y)
+    if (halfHeight * 2.f >= m_worldSize.y) {
         cameraPos.y = m_worldSize.y / 2.f;
-    else
-        cameraPos.y = std::clamp(cameraPos.y, halfHeight, m_worldSize.y - halfHeight);
+    } else {
+        if (cameraPos.y < halfHeight) cameraPos.y = halfHeight;
+        if (cameraPos.y > m_worldSize.y - halfHeight) cameraPos.y = m_worldSize.y - halfHeight;
+    }
 
     m_camera.setCenter(cameraPos);
+
 
     verificarSalidaNivel();
 

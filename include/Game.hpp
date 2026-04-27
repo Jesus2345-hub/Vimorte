@@ -8,6 +8,7 @@
 #include <stack>
 #include "GameSaveManager.hpp"
 #include "LevelTree.hpp"
+#include "Config.hpp"
 
 class State;
 
@@ -75,6 +76,13 @@ public:
     
     // Añadir en la sección pública de Game.hpp:
     void reintentarCentinela();
+    
+    Config& getConfig() { return Config::getInstance(); }
+    void setPantallaCompleta(bool fullscreen);
+    void aplicarConfiguracionPantalla();
+    void applyCurrentView();
+    // En la sección pública de Game.hpp, añadir:
+std::stack<std::unique_ptr<State>>& getStates() { return states; }
 };
 
 #endif

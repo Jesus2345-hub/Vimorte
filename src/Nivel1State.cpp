@@ -53,9 +53,15 @@ Nivel1State::Nivel1State(sf::RenderWindow* window, Game* game)
     }
     
     sf::Vector2u windowSize = window->getSize();
-    m_camera = sf::View(sf::Vector2f(m_worldSize.x / 2.f, m_worldSize.y / 2.f), 
-                        sf::Vector2f(static_cast<float>(windowSize.x), 
-                                     static_cast<float>(windowSize.y)));
+    
+    // Cámara con tamaño FIJO 1280x720 (no cambia con la ventana)
+    float fixedWidth = 1280.f;
+    float fixedHeight = 720.f;
+    m_camera = sf::View(
+        sf::Vector2f(m_worldSize.x / 2.f, m_worldSize.y / 2.f),
+        sf::Vector2f(fixedWidth, fixedHeight)
+    );
+    m_lastWindowSize = windowSize;
     
     // ========== ÁREAS DE INTERACCIÓN ==========
     m_pizarraArea = sf::FloatRect(sf::Vector2f(200.f, 700.f), sf::Vector2f(180.f, 150.f));
@@ -65,18 +71,30 @@ Nivel1State::Nivel1State(sf::RenderWindow* window, Game* game)
     
     configurarColisiones();
     
-    m_poolMinigame.setSize(sf::Vector2f(800.f, 500.f));
+    float poolW = windowSize.x * 0.78f;
+    float poolH = windowSize.y * 0.83f;
+    m_poolMinigame.setSize(sf::Vector2f(poolW, poolH));
     m_poolMinigame.setPosition(sf::Vector2f(
-        (windowSize.x - 1000.f) / 2.f,
-        (windowSize.y - 500.f - 70.f) / 2.f - 15.f
+        (windowSize.x - poolW) / 2.f,
+        (windowSize.y - poolH) / 2.f
+    ));
+
+    float quizW = windowSize.x * 0.7f;
+    float quizH = windowSize.y * 0.83f;
+    m_quizMinigame.setSize(sf::Vector2f(quizW, quizH));
+    m_quizMinigame.setPosition(sf::Vector2f(
+        (windowSize.x - quizW) / 2.f,
+        (windowSize.y - quizH) / 2.f
+    ));
+
+    float colorW = windowSize.x * 0.7f;
+    float colorH = windowSize.y * 0.83f;
+    m_colorMixMinigame.setSize(sf::Vector2f(colorW, colorH));
+    m_colorMixMinigame.setPosition(sf::Vector2f(
+        (windowSize.x - colorW) / 2.f,
+        (windowSize.y - colorH) / 2.f
     ));
     m_colorMixMinigame.initUI();
-    
-    m_quizMinigame.setSize(sf::Vector2f(900.f, 600.f));
-    m_quizMinigame.setPosition(sf::Vector2f(
-        (windowSize.x - 900.f) / 2.f,
-        (windowSize.y - 600.f) / 2.f
-    ));
     
     // ========== CARGA DE FUENTE CON VERIFICACIÓN ==========
     m_fontLoaded = m_font.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf");
@@ -103,9 +121,6 @@ Nivel1State::Nivel1State(sf::RenderWindow* window, Game* game)
         m_textoInteraccion = nullptr;
         m_textoMensaje = nullptr;
     }
-    
-    m_colorMixMinigame.setSize(sf::Vector2f(900.f, 600.f));
-    m_colorMixMinigame.setPosition(sf::Vector2f((windowSize.x - 900.f) / 2.f, (windowSize.y - 600.f) / 2.f));
     
     // ========== GUARDADO AUTOMÁTICO ==========
     if (game->tienePartidaActiva()) {
@@ -225,7 +240,6 @@ void Nivel1State::update(float dt)
     }
     
     sf::Vector2f posAnterior = m_player.getPosition();
-    sf::Vector2u windowSize = window->getSize();
     
     // ========== ÁREA DE LA MESA DE POOL ==========
     m_cercaMesaPool = m_player.getBounds().findIntersection(m_mesaPoolArea).has_value();
@@ -248,19 +262,22 @@ void Nivel1State::update(float dt)
         m_poolMinigame.update(dt);
         m_player.update(dt);
         
+        // Cámara fija
         sf::Vector2f playerPos = m_player.getPosition();
         sf::Vector2f cameraPos = playerPos;
-        float halfWidth = static_cast<float>(windowSize.x) / 2.f;
-        float halfHeight = static_cast<float>(windowSize.y) / 2.f;
+        float halfWidth = 1280.f / 2.f;
+        float halfHeight = 720.f / 2.f;
         if (halfWidth * 2.f >= m_worldSize.x) {
             cameraPos.x = m_worldSize.x / 2.f;
         } else {
-            cameraPos.x = std::clamp(cameraPos.x, halfWidth, m_worldSize.x - halfWidth);
+            if (cameraPos.x < halfWidth) cameraPos.x = halfWidth;
+            if (cameraPos.x > m_worldSize.x - halfWidth) cameraPos.x = m_worldSize.x - halfWidth;
         }
         if (halfHeight * 2.f >= m_worldSize.y) {
             cameraPos.y = m_worldSize.y / 2.f;
         } else {
-            cameraPos.y = std::clamp(cameraPos.y, halfHeight, m_worldSize.y - halfHeight);
+            if (cameraPos.y < halfHeight) cameraPos.y = halfHeight;
+            if (cameraPos.y > m_worldSize.y - halfHeight) cameraPos.y = m_worldSize.y - halfHeight;
         }
         m_camera.setCenter(cameraPos);
         
@@ -287,19 +304,22 @@ void Nivel1State::update(float dt)
         m_quizMinigame.update(dt);
         m_player.update(dt);
     
+        // Cámara fija
         sf::Vector2f playerPos = m_player.getPosition();
         sf::Vector2f cameraPos = playerPos;
-        float halfWidth = static_cast<float>(windowSize.x) / 2.f;
-        float halfHeight = static_cast<float>(windowSize.y) / 2.f;
+        float halfWidth = 1280.f / 2.f;
+        float halfHeight = 720.f / 2.f;
         if (halfWidth * 2.f >= m_worldSize.x) {
             cameraPos.x = m_worldSize.x / 2.f;
         } else {
-            cameraPos.x = std::clamp(cameraPos.x, halfWidth, m_worldSize.x - halfWidth);
+            if (cameraPos.x < halfWidth) cameraPos.x = halfWidth;
+            if (cameraPos.x > m_worldSize.x - halfWidth) cameraPos.x = m_worldSize.x - halfWidth;
         }
         if (halfHeight * 2.f >= m_worldSize.y) {
             cameraPos.y = m_worldSize.y / 2.f;
         } else {
-            cameraPos.y = std::clamp(cameraPos.y, halfHeight, m_worldSize.y - halfHeight);
+            if (cameraPos.y < halfHeight) cameraPos.y = halfHeight;
+            if (cameraPos.y > m_worldSize.y - halfHeight) cameraPos.y = m_worldSize.y - halfHeight;
         }
         m_camera.setCenter(cameraPos);
     
@@ -327,19 +347,22 @@ void Nivel1State::update(float dt)
         m_colorMixMinigame.update(dt);
         m_player.update(dt);
         
+        // Cámara fija
         sf::Vector2f playerPos = m_player.getPosition();
         sf::Vector2f cameraPos = playerPos;
-        float halfWidth = static_cast<float>(windowSize.x) / 2.f;
-        float halfHeight = static_cast<float>(windowSize.y) / 2.f;
+        float halfWidth = 1280.f / 2.f;
+        float halfHeight = 720.f / 2.f;
         if (halfWidth * 2.f >= m_worldSize.x) {
             cameraPos.x = m_worldSize.x / 2.f;
         } else {
-            cameraPos.x = std::clamp(cameraPos.x, halfWidth, m_worldSize.x - halfWidth);
+            if (cameraPos.x < halfWidth) cameraPos.x = halfWidth;
+            if (cameraPos.x > m_worldSize.x - halfWidth) cameraPos.x = m_worldSize.x - halfWidth;
         }
         if (halfHeight * 2.f >= m_worldSize.y) {
             cameraPos.y = m_worldSize.y / 2.f;
         } else {
-            cameraPos.y = std::clamp(cameraPos.y, halfHeight, m_worldSize.y - halfHeight);
+            if (cameraPos.y < halfHeight) cameraPos.y = halfHeight;
+            if (cameraPos.y > m_worldSize.y - halfHeight) cameraPos.y = m_worldSize.y - halfHeight;
         }
         m_camera.setCenter(cameraPos);
         
@@ -380,18 +403,25 @@ void Nivel1State::update(float dt)
     // ========== CÁMARA ==========
     sf::Vector2f playerPos = m_player.getPosition();
     sf::Vector2f cameraPos = playerPos;
-    float halfWidth = static_cast<float>(windowSize.x) / 2.f;
-    float halfHeight = static_cast<float>(windowSize.y) / 2.f;
+
+    // Tamaño FIJO de la cámara (1280x720)
+    float halfWidth = 1280.f / 2.f;
+    float halfHeight = 720.f / 2.f;
+
     if (halfWidth * 2.f >= m_worldSize.x) {
         cameraPos.x = m_worldSize.x / 2.f;
     } else {
-        cameraPos.x = std::clamp(cameraPos.x, halfWidth, m_worldSize.x - halfWidth);
+        if (cameraPos.x < halfWidth) cameraPos.x = halfWidth;
+        if (cameraPos.x > m_worldSize.x - halfWidth) cameraPos.x = m_worldSize.x - halfWidth;
     }
+
     if (halfHeight * 2.f >= m_worldSize.y) {
         cameraPos.y = m_worldSize.y / 2.f;
     } else {
-        cameraPos.y = std::clamp(cameraPos.y, halfHeight, m_worldSize.y - halfHeight);
+        if (cameraPos.y < halfHeight) cameraPos.y = halfHeight;
+        if (cameraPos.y > m_worldSize.y - halfHeight) cameraPos.y = m_worldSize.y - halfHeight;
     }
+
     m_camera.setCenter(cameraPos);
     
     verificarSalidaNivel();
@@ -478,14 +508,17 @@ void Nivel1State::draw()
     // ===== FASE 2: DIBUJAR UI =====
     window->setView(window->getDefaultView());
     
-    // Textos de interacción (solo si la fuente es válida)
+    // Textos de interacción
     if (m_fontLoaded && m_textoInteraccion) {
+        float winW = static_cast<float>(window->getSize().x);
+        float winH = static_cast<float>(window->getSize().y);
+        
         if (m_cercaMesaColorMix && !m_colorMixMinigame.isActive() && 
             !m_poolMinigame.isActive() && !m_quizMinigame.isActive()) {
             m_textoInteraccion->setString("Presiona R para jugar a mezclar colores");
             sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
             m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
-            m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
+            m_textoInteraccion->setPosition(sf::Vector2f(winW / 2.f, winH - 70.f));
             window->draw(*m_textoInteraccion);
         }
         
@@ -493,7 +526,7 @@ void Nivel1State::draw()
             m_textoInteraccion->setString("Presiona R para jugar al pool");
             sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
             m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
-            m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
+            m_textoInteraccion->setPosition(sf::Vector2f(winW / 2.f, winH - 70.f));
             window->draw(*m_textoInteraccion);
         }
 
@@ -501,7 +534,7 @@ void Nivel1State::draw()
             m_textoInteraccion->setString("Presiona R para la leccion de matematicas");
             sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
             m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
-            m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
+            m_textoInteraccion->setPosition(sf::Vector2f(winW / 2.f, winH - 70.f));
             window->draw(*m_textoInteraccion);
         }
         
@@ -509,15 +542,15 @@ void Nivel1State::draw()
             m_textoInteraccion->setString("Presiona E para avanzar al siguiente nivel");
             sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
             m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
-            m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
+            m_textoInteraccion->setPosition(sf::Vector2f(winW / 2.f, winH - 70.f));
             window->draw(*m_textoInteraccion);
         }
     }
     
     // Mensaje temporal
     if (m_textoMensaje && m_msjActual.tiempoRestante > 0.0f && !m_textoMensaje->getString().isEmpty()) {
-        sf::Vector2u windowSize = window->getSize();
-        m_textoMensaje->setPosition(sf::Vector2f(windowSize.x / 2.f, windowSize.y / 3.f));
+        sf::Vector2u winSize = window->getSize();
+        m_textoMensaje->setPosition(sf::Vector2f(winSize.x / 2.f, winSize.y / 3.f));
         window->draw(*m_textoMensaje);
     }
     
@@ -532,13 +565,12 @@ void Nivel1State::draw()
         m_poolMinigame.draw(*window);
     }
     
-    // ========== TUTORIAL (protegido) ==========
+    // Tutorial
     if (m_mostrarTutorial || m_mostrarTutorialPorTecla) {
         sf::RectangleShape overlay(sf::Vector2f(window->getSize().x, window->getSize().y));
         overlay.setFillColor(sf::Color(0, 0, 0, 200));
         window->draw(overlay);
         
-        // Solo dibujar texto si la fuente es válida
         if (m_fontLoaded) {
             sf::Text tutorialText(m_font);
             tutorialText.setString(
@@ -556,9 +588,6 @@ void Nivel1State::draw()
             tutorialText.setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
             tutorialText.setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y / 2.f));
             window->draw(tutorialText);
-        } else {
-            // Fallback: mostrar un rectángulo con un mensaje en consola
-            std::cerr << "No se puede mostrar el tutorial porque la fuente no está cargada." << std::endl;
         }
     }
     
@@ -595,6 +624,7 @@ void Nivel1State::jugadorHaMuerto() {
         game->pushState(std::make_unique<PauseState>(window, game));
     }
 }
+
 
 void Nivel1State::mostrarMensaje(const std::string& texto, float duracion, sf::Color color) {
     if (!m_textoMensaje) return;

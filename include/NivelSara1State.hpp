@@ -70,4 +70,5 @@ private:
     } m_msjActual;
 
     void mostrarMensaje(const std::string& texto, float duracion, sf::Color color);
+    sf::Vector2u m_lastWindowSize;
 };

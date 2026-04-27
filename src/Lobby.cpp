@@ -122,27 +122,31 @@ void LobbyState::draw()
 {
     if (!window) return;
     
+    window->setView(window->getDefaultView());
+    
     if (m_background) {
+        // Estirar fondo para cubrir toda la ventana
+        sf::Vector2u winSize = window->getSize();
+        sf::Vector2u texSize = m_backgroundTexture.getSize();
+        float scaleX = static_cast<float>(winSize.x) / texSize.x;
+        float scaleY = static_cast<float>(winSize.y) / texSize.y;
+        m_background->setScale(sf::Vector2f(scaleX, scaleY));
         window->draw(*m_background);
     } else {
-        sf::RectangleShape fallback(sf::Vector2f(1280, 720));
+        sf::RectangleShape fallback(sf::Vector2f(
+            static_cast<float>(window->getSize().x), 
+            static_cast<float>(window->getSize().y)
+        ));
         fallback.setFillColor(sf::Color(30, 30, 50));
         window->draw(fallback);
     }
     
     m_player.draw(*window);
     
-    // Dibujar texto de interacción si está cerca del ascensor
     if (m_cercaAscensor && m_textoInteraccion) {
+        sf::Vector2u winSize = window->getSize();
+        m_textoInteraccion->setPosition(sf::Vector2f(winSize.x / 2.f, winSize.y - 70.f));
         window->draw(*m_textoInteraccion);
-        
-        // Indicador visual del área del ascensor
-        sf::RectangleShape ascensorVisual(sf::Vector2f(m_ascensorArea.size.x, m_ascensorArea.size.y));
-        ascensorVisual.setPosition(sf::Vector2f(m_ascensorArea.position.x, m_ascensorArea.position.y));
-        ascensorVisual.setFillColor(sf::Color(255, 255, 0, 50));
-        ascensorVisual.setOutlineThickness(2.f);
-        ascensorVisual.setOutlineColor(sf::Color::Yellow);
-        window->draw(ascensorVisual);
     }
 }
 

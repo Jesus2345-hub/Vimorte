@@ -284,39 +284,84 @@ void SaveSelectState::dibujarTecladoVirtual(sf::RenderWindow& window) {
 void SaveSelectState::draw() {
     if (!window) return;
     
+    float winW = static_cast<float>(window->getSize().x);
+    float winH = static_cast<float>(window->getSize().y);
+    float centerX = winW / 2.f;
+    float centerY = winH / 2.f;
+    
+    m_background.setSize(sf::Vector2f(winW, winH));
     window->draw(m_background);
+    
+    float panelW = winW * 0.55f;
+    float panelH = winH * 0.83f;
+    m_panel.setSize(sf::Vector2f(panelW, panelH));
+    m_panel.setPosition(sf::Vector2f(centerX - panelW/2.f, winH * 0.08f));
     window->draw(m_panel);
     
-    if (m_title) window->draw(*m_title);
-    if (m_instructionText) window->draw(*m_instructionText);
-    if (m_selectedSlotText) window->draw(*m_selectedSlotText);
-    
-    // Dibujar slots
-    for (size_t i = 0; i < m_slotBoxes.size(); i++) {
-        window->draw(m_slotBoxes[i]);
-        if (m_slotTexts[i]) window->draw(*m_slotTexts[i]);
+    if (m_title) {
+        sf::FloatRect tb = m_title->getLocalBounds();
+        m_title->setOrigin(sf::Vector2f(tb.size.x/2.f, tb.size.y/2.f));
+        m_title->setPosition(sf::Vector2f(centerX, winH * 0.14f));
+        window->draw(*m_title);
     }
     
-    // Dibujar botón eliminar
-    window->draw(m_btnEliminar);
-    if (m_btnEliminarText) window->draw(*m_btnEliminarText);
+    if (m_instructionText) {
+        sf::FloatRect ib = m_instructionText->getLocalBounds();
+        m_instructionText->setOrigin(sf::Vector2f(ib.size.x/2.f, ib.size.y/2.f));
+        m_instructionText->setPosition(sf::Vector2f(centerX, winH * 0.94f));
+        window->draw(*m_instructionText);
+    }
     
-    // Dibujar input de nombre si estamos creando nueva partida
+    if (m_selectedSlotText) {
+        m_selectedSlotText->setPosition(sf::Vector2f(centerX - panelW/2.f + 50.f, winH * 0.21f));
+        window->draw(*m_selectedSlotText);
+    }
+    
+    float slotStartY = winH * 0.28f;
+    float slotSpacing = winH * 0.125f;
+    float slotWidth = panelW - 100.f;
+    float slotHeight = winH * 0.10f;
+    float slotX = centerX - slotWidth/2.f;
+    
+    for (size_t i = 0; i < m_slotBoxes.size(); i++) {
+        m_slotBoxes[i].setSize(sf::Vector2f(slotWidth, slotHeight));
+        m_slotBoxes[i].setPosition(sf::Vector2f(slotX, slotStartY + i * slotSpacing));
+        window->draw(m_slotBoxes[i]);
+        if (m_slotTexts[i]) {
+            m_slotTexts[i]->setPosition(sf::Vector2f(slotX + 20.f, slotStartY + i * slotSpacing + slotHeight * 0.3f));
+            window->draw(*m_slotTexts[i]);
+        }
+    }
+    
+    float btnW = 150.f;
+    float btnH = 40.f;
+    m_btnEliminar.setSize(sf::Vector2f(btnW, btnH));
+    m_btnEliminar.setPosition(sf::Vector2f(centerX + panelW/2.f - btnW - 30.f, winH * 0.86f));
+    window->draw(m_btnEliminar);
+    if (m_btnEliminarText) {
+        sf::FloatRect eb = m_btnEliminarText->getLocalBounds();
+        m_btnEliminarText->setOrigin(sf::Vector2f(eb.size.x/2.f, eb.size.y/2.f));
+        m_btnEliminarText->setPosition(sf::Vector2f(centerX + panelW/2.f - btnW/2.f - 30.f, winH * 0.86f + btnH/2.f));
+        window->draw(*m_btnEliminarText);
+    }
+    
     if (m_modoNuevaPartida) {
-        sf::RectangleShape inputBg(sf::Vector2f(400.f, 50.f));
-        inputBg.setPosition(sf::Vector2f(440.f, 500.f));
+        float inputW = winW * 0.35f;
+        float inputH = 50.f;
+        sf::RectangleShape inputBg(sf::Vector2f(inputW, inputH));
+        inputBg.setPosition(sf::Vector2f(centerX - inputW/2.f, winH * 0.70f));
         inputBg.setFillColor(sf::Color(0, 0, 0, 200));
         inputBg.setOutlineThickness(2.f);
         inputBg.setOutlineColor(sf::Color::Yellow);
         window->draw(inputBg);
         
         m_inputText->setString("Nombre: " + m_nombreInput + (m_nombreInput.empty() ? "_" : ""));
-        m_inputText->setPosition(sf::Vector2f(460.f, 512.f));
+        m_inputText->setPosition(sf::Vector2f(centerX - inputW/2.f + 20.f, winH * 0.70f + 12.f));
         window->draw(*m_inputText);
         
         sf::Text helpText(m_font, "Presiona ENTER para confirmar, ESC para cancelar", 14);
         helpText.setFillColor(sf::Color(150, 150, 150));
-        helpText.setPosition(sf::Vector2f(460.f, 560.f));
+        helpText.setPosition(sf::Vector2f(centerX - inputW/2.f + 20.f, winH * 0.78f));
         window->draw(helpText);
     }
 }

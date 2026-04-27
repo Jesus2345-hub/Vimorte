@@ -185,44 +185,75 @@ void PauseState::draw()
 {
     if (!window) return;
     
+    float winW = static_cast<float>(window->getSize().x);
+    float winH = static_cast<float>(window->getSize().y);
+    float centerX = winW / 2.f;
+    float centerY = winH / 2.f;
+    
+    m_background.setSize(sf::Vector2f(winW, winH));
     window->draw(m_background);
+    
+    float panelW = winW * 0.39f;
+    float panelH = winH * 0.76f;
+    m_panel.setSize(sf::Vector2f(panelW, panelH));
+    m_panel.setPosition(sf::Vector2f(centerX - panelW/2.f, winH * 0.12f));
     window->draw(m_panel);
     
-    if (m_title) window->draw(*m_title);
-    if (m_resumeText) window->draw(*m_resumeText);
-    if (m_saveText) window->draw(*m_saveText);
-    if (m_loadText) window->draw(*m_loadText);
-    if (m_configBtn) window->draw(*m_configBtn);
-    if (m_menuText) window->draw(*m_menuText);
-    if (m_exitText) window->draw(*m_exitText);
+    auto drawCenteredText = [&](std::unique_ptr<sf::Text>& text, float y) {
+        if (text) {
+            sf::FloatRect bounds = text->getLocalBounds();
+            text->setOrigin(sf::Vector2f(bounds.size.x/2.f, 0.f));
+            text->setPosition(sf::Vector2f(centerX, y));
+            window->draw(*text);
+        }
+    };
+    
+    float btnY = winH * 0.28f;
+    float btnSpacing = winH * 0.097f;
+    
+    drawCenteredText(m_resumeText, btnY);
+    drawCenteredText(m_saveText, btnY + btnSpacing);
+    drawCenteredText(m_loadText, btnY + btnSpacing * 2);
+    drawCenteredText(m_configBtn, btnY + btnSpacing * 3);
+    drawCenteredText(m_menuText, btnY + btnSpacing * 4);
+    drawCenteredText(m_exitText, btnY + btnSpacing * 5);
+    
+    if (m_title) {
+        sf::FloatRect tb = m_title->getLocalBounds();
+        m_title->setOrigin(sf::Vector2f(tb.size.x/2.f, 0.f));
+        m_title->setPosition(sf::Vector2f(centerX, winH * 0.15f));
+        window->draw(*m_title);
+    }
 
     if (mostrarConfig) {
-        sf::RectangleShape fondoAjustes({500.f, 350.f});
-        fondoAjustes.setPosition({390.f, 185.f});
-        fondoAjustes.setFillColor(sf::Color(20, 20, 20, 255)); 
+        float configW = panelW;
+        float configH = winH * 0.49f;
+        sf::RectangleShape fondoAjustes(sf::Vector2f(configW, configH));
+        fondoAjustes.setPosition(sf::Vector2f(centerX - configW/2.f, winH * 0.26f));
+        fondoAjustes.setFillColor(sf::Color(20, 20, 20, 255));
         fondoAjustes.setOutlineThickness(3);
         fondoAjustes.setOutlineColor(sf::Color::Red);
         window->draw(fondoAjustes);
 
-        auto drawBar = [&](std::string name, float val, float y, bool sel) {
-            sf::Text t(m_font, name + ": " + std::to_string((int)val), 20);
-            t.setPosition({420.f, y});
+        auto drawBar = [&](const std::string& name, float val, float y, bool sel) {
+            sf::Text t(m_font, name + ": " + std::to_string((int)val), 18);
+            t.setPosition(sf::Vector2f(centerX - configW/2.f + 30.f, y));
             t.setFillColor(sel ? sf::Color::Yellow : sf::Color::White);
             window->draw(t);
 
-            sf::RectangleShape fondoBarra({300.f, 10.f});
-            fondoBarra.setPosition({420.f, y + 40.f});
+            sf::RectangleShape fondoBarra(sf::Vector2f(configW - 80.f, 10.f));
+            fondoBarra.setPosition(sf::Vector2f(centerX - configW/2.f + 30.f, y + 35.f));
             fondoBarra.setFillColor(sf::Color(100, 100, 100));
             window->draw(fondoBarra);
 
-            sf::RectangleShape progreso({(val / 100.f) * 300.f, 10.f});
-            progreso.setPosition({420.f, y + 40.f});
+            sf::RectangleShape progreso(sf::Vector2f((val / 100.f) * (configW - 80.f), 10.f));
+            progreso.setPosition(sf::Vector2f(centerX - configW/2.f + 30.f, y + 35.f));
             progreso.setFillColor(sel ? sf::Color::Yellow : sf::Color::Red);
             window->draw(progreso);
         };
 
-        drawBar("GENERAL", game->getVolGeneral(), 220.f, seleccionConfig == 0);
-        drawBar("MUSICA", game->getVolMusica(), 300.f, seleccionConfig == 1);
-        drawBar("EFECTOS", game->getVolEfectos(), 380.f, seleccionConfig == 2);
+        drawBar("GENERAL", game->getVolGeneral(), winH * 0.31f, seleccionConfig == 0);
+        drawBar("MUSICA", game->getVolMusica(), winH * 0.42f, seleccionConfig == 1);
+        drawBar("EFECTOS", game->getVolEfectos(), winH * 0.53f, seleccionConfig == 2);
     }
 }

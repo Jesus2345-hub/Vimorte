@@ -92,15 +92,44 @@ void AdminMenuState::handleEvent(const sf::Event& event) {
 void AdminMenuState::update(float dt) {}
 
 void AdminMenuState::draw() {
+    if (!window) return;
+    
+    float winW = static_cast<float>(window->getSize().x);
+    float winH = static_cast<float>(window->getSize().y);
+    float centerX = winW / 2.f;
+    
+    m_background.setSize(sf::Vector2f(winW, winH));
     window->draw(m_background);
+    
+    float panelW = winW * 0.7f;
+    float panelH = winH * 0.76f;
+    m_panel.setSize(sf::Vector2f(panelW, panelH));
+    m_panel.setPosition(sf::Vector2f(centerX - panelW/2.f, winH * 0.12f));
     window->draw(m_panel);
-    window->draw(*m_title);
-    window->draw(*m_instructionText);
+    
+    if (m_title) {
+        m_title->setPosition(sf::Vector2f(centerX - panelW/2.f + 30.f, winH * 0.07f));
+        window->draw(*m_title);
+    }
+    
+    if (m_instructionText) {
+        m_instructionText->setPosition(sf::Vector2f(centerX - 100.f, winH * 0.94f));
+        window->draw(*m_instructionText);
+    }
+    
+    float nodeW = panelW - 60.f;
+    float nodeX = centerX - panelW/2.f + 30.f;
+    
     for (size_t i = 0; i < m_nodeBoxes.size(); ++i) {
-        float y = 140.f - m_scrollOffset + i * 45.f;
-        if (y >= 130.f && y <= 600.f) {
+        float y = winH * 0.19f - m_scrollOffset + i * 45.f;
+        if (y >= winH * 0.18f && y <= winH * 0.83f) {
+            m_nodeBoxes[i].setSize(sf::Vector2f(nodeW, 35.f));
+            m_nodeBoxes[i].setPosition(sf::Vector2f(nodeX, y));
             window->draw(m_nodeBoxes[i]);
-            window->draw(*m_nodeTexts[i]);
+            if (m_nodeTexts[i]) {
+                m_nodeTexts[i]->setPosition(sf::Vector2f(nodeX + 20.f, y + 8.f));
+                window->draw(*m_nodeTexts[i]);
+            }
         }
     }
 }

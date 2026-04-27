@@ -140,16 +140,68 @@ void ModoJuegoState::update(float dt) {
 void ModoJuegoState::draw() {
     if (!window) return;
     
+    float winW = static_cast<float>(window->getSize().x);
+    float winH = static_cast<float>(window->getSize().y);
+    float centerX = winW / 2.f;
+    float centerY = winH / 2.f;
+    
+    m_background.setSize(sf::Vector2f(winW, winH));
     window->draw(m_background);
+    
+    float panelW = winW * 0.7f;
+    float panelH = winH * 0.8f;
+    m_panel.setSize(sf::Vector2f(panelW, panelH));
+    m_panel.setPosition(sf::Vector2f(centerX - panelW/2.f, winH * 0.1f));
     window->draw(m_panel);
-    window->draw(*m_title);
-    window->draw(*m_description);
     
+    if (m_title) {
+        sf::FloatRect tb = m_title->getLocalBounds();
+        m_title->setOrigin(sf::Vector2f(tb.size.x/2.f, 0.f));
+        m_title->setPosition(sf::Vector2f(centerX, winH * 0.14f));
+        window->draw(*m_title);
+    }
+    
+    if (m_description) {
+        sf::FloatRect db = m_description->getLocalBounds();
+        m_description->setOrigin(sf::Vector2f(db.size.x/2.f, 0.f));
+        m_description->setPosition(sf::Vector2f(centerX, winH * 0.22f));
+        window->draw(*m_description);
+    }
+    
+    float btnW = panelW * 0.42f;
+    float btnH = panelH * 0.45f;
+    float btnY = winH * 0.36f;
+    float gap = panelW * 0.04f;
+    
+    m_botonAgradable.setSize(sf::Vector2f(btnW, btnH));
+    m_botonAgradable.setPosition(sf::Vector2f(centerX - btnW - gap/2.f, btnY));
     window->draw(m_botonAgradable);
-    window->draw(*m_opcionAgradableTitulo);
-    window->draw(*m_opcionAgradableDesc);
     
+    m_botonConsecuencias.setSize(sf::Vector2f(btnW, btnH));
+    m_botonConsecuencias.setPosition(sf::Vector2f(centerX + gap/2.f, btnY));
     window->draw(m_botonConsecuencias);
-    window->draw(*m_opcionConsecuenciasTitulo);
-    window->draw(*m_opcionConsecuenciasDesc);
+    
+    if (m_opcionAgradableTitulo) {
+        sf::FloatRect tb = m_opcionAgradableTitulo->getLocalBounds();
+        m_opcionAgradableTitulo->setOrigin(sf::Vector2f(tb.size.x/2.f, 0.f));
+        m_opcionAgradableTitulo->setPosition(sf::Vector2f(centerX - btnW/2.f - gap/2.f, btnY + 15.f));
+        window->draw(*m_opcionAgradableTitulo);
+    }
+    
+    if (m_opcionAgradableDesc) {
+        m_opcionAgradableDesc->setPosition(sf::Vector2f(centerX - btnW - gap/2.f + 15.f, btnY + 55.f));
+        window->draw(*m_opcionAgradableDesc);
+    }
+    
+    if (m_opcionConsecuenciasTitulo) {
+        sf::FloatRect tb = m_opcionConsecuenciasTitulo->getLocalBounds();
+        m_opcionConsecuenciasTitulo->setOrigin(sf::Vector2f(tb.size.x/2.f, 0.f));
+        m_opcionConsecuenciasTitulo->setPosition(sf::Vector2f(centerX + btnW/2.f + gap/2.f, btnY + 15.f));
+        window->draw(*m_opcionConsecuenciasTitulo);
+    }
+    
+    if (m_opcionConsecuenciasDesc) {
+        m_opcionConsecuenciasDesc->setPosition(sf::Vector2f(centerX + gap/2.f + 15.f, btnY + 55.f));
+        window->draw(*m_opcionConsecuenciasDesc);
+    }
 }

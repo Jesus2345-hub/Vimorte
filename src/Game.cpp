@@ -12,7 +12,29 @@
 
 Game::Game()
 {
-    window = std::make_unique<sf::RenderWindow>(sf::VideoMode({1280, 720}), "Vimorte", sf::Style::Titlebar | sf::Style::Close);
+    // Cargar configuración de pantalla ANTES de crear la ventana
+    Config::getInstance().cargar();
+    
+    if (Config::getInstance().isPantallaCompleta()) {
+        sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
+        window = std::make_unique<sf::RenderWindow>(
+            sf::VideoMode({desktop.size.x, desktop.size.y}), 
+            "Vimorte", 
+            sf::State::Fullscreen
+        );
+    } else {
+        window = std::make_unique<sf::RenderWindow>(
+            sf::VideoMode({1280, 720}), 
+            "Vimorte", 
+            sf::State::Windowed
+        );
+        sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
+        window->setPosition(sf::Vector2i(
+            (desktop.size.x - 1280) / 2,
+            (desktop.size.y - 720) / 2
+        ));
+    }
+    
     window->setFramerateLimit(60);
 
     // Cargar configuración de audio guardada
@@ -22,7 +44,15 @@ Game::Game()
     levelTree.buildTree();
 
     // Crear menú principal
-    states.push(std::make_unique<MenuState>(window.get(), this));
+   // Asegurar que la vista esté actualizada antes de crear el menú
+sf::Vector2u winSize = window->getSize();
+window->setView(sf::View(sf::FloatRect(
+    sf::Vector2f(0.f, 0.f),
+    sf::Vector2f(static_cast<float>(winSize.x), static_cast<float>(winSize.y))
+)));
+
+// Crear menú principal
+states.push(std::make_unique<MenuState>(window.get(), this));
 }
 
 Game::~Game()
@@ -111,10 +141,8 @@ void Game::detenerMusica()
 
 void Game::setVolGeneral(float v)
 {
-    if (v < 0.f)
-        v = 0.f;
-    if (v > 100.f)
-        v = 100.f;
+    if (v < 0.f) v = 0.f;
+    if (v > 100.f) v = 100.f;
     volGeneral = v;
     actualizarVolumenMusica();
     guardarConfiguracionAudio();
@@ -122,10 +150,8 @@ void Game::setVolGeneral(float v)
 
 void Game::setVolMusica(float v)
 {
-    if (v < 0.f)
-        v = 0.f;
-    if (v > 100.f)
-        v = 100.f;
+    if (v < 0.f) v = 0.f;
+    if (v > 100.f) v = 100.f;
     volMusica = v;
     actualizarVolumenMusica();
     guardarConfiguracionAudio();
@@ -133,10 +159,8 @@ void Game::setVolMusica(float v)
 
 void Game::setVolEfectos(float v)
 {
-    if (v < 0.f)
-        v = 0.f;
-    if (v > 100.f)
-        v = 100.f;
+    if (v < 0.f) v = 0.f;
+    if (v > 100.f) v = 100.f;
     volEfectos = v;
     guardarConfiguracionAudio();
 }
@@ -275,33 +299,30 @@ void Game::run()
                 window->close();
             }
 
-            // ===== NUEVO: Alternar entre ventana normal y maximizada con F11 =====
+            // ===== Alternar entre ventana normal y maximizada con F11 =====
             if (const auto *keyEvent = event->getIf<sf::Event::KeyPressed>())
-            {
-                if (keyEvent->code == sf::Keyboard::Key::F11)
-                {
-                    // Alternar entre normal y maximizado
-                    static bool isMaximized = false;
-                    isMaximized = !isMaximized;
-
-                    if (isMaximized)
-                    {
-                        // Obtener resolución del monitor actual
-                        sf::VideoMode desktopMode = sf::VideoMode::getDesktopMode();
-                        window->setSize(sf::Vector2u(desktopMode.size.x, desktopMode.size.y));
-                        window->setPosition(sf::Vector2i(0, 0));
-                    }
-                    else
-                    {
-                        window->setSize(sf::Vector2u(1280, 720));
-                        // Centrar la ventana
-                        sf::VideoMode desktopMode = sf::VideoMode::getDesktopMode();
-                        window->setPosition(sf::Vector2i(
-                            (desktopMode.size.x - 1280) / 2,
-                            (desktopMode.size.y - 720) / 2));
-                    }
-                }
-            }
+{
+    if (keyEvent->code == sf::Keyboard::Key::F11)
+    {
+        if (tienePartidaActiva())
+        {
+            guardarPartidaActual();
+        }
+        
+        Config::getInstance().alternarPantalla(window.get());
+        
+        sf::Vector2u newSize = window->getSize();
+        window->setView(sf::View(sf::FloatRect(
+            sf::Vector2f(0.f, 0.f),
+            sf::Vector2f(static_cast<float>(newSize.x), static_cast<float>(newSize.y))
+        )));
+        
+        while (!states.empty()) states.pop();
+        states.push(std::make_unique<MenuState>(window.get(), this));
+        
+        std::cout << "F11: " << newSize.x << "x" << newSize.y << std::endl;
+    }
+}
 
             if (!states.empty())
             {
@@ -318,7 +339,6 @@ void Game::run()
 
         if (!states.empty())
         {
-            // Dibujar estados en orden inverso (primero el fondo)
             std::vector<State *> paraDibujar;
             std::stack<std::unique_ptr<State>> temp;
 
@@ -333,7 +353,7 @@ void Game::run()
                 states.push(std::move(temp.top()));
                 temp.pop();
             }
-            // Dibujar desde el fondo hasta arriba
+            
             for (int i = paraDibujar.size() - 1; i >= 0; --i)
             {
                 window->setView(window->getDefaultView());
@@ -346,7 +366,6 @@ void Game::run()
 
 void Game::changeState(std::unique_ptr<State> state)
 {
-    // Vaciar completamente la pila
     while (!states.empty())
     {
         states.pop();
@@ -371,29 +390,28 @@ void Game::returnToMenu()
 {
     std::cout << "🏠 Volviendo al menú principal..." << std::endl;
 
-    // Detener música
     detenerMusica();
 
-    // IMPORTANTE: Vaciar la pila de estados COMPLETAMENTE
     while (!states.empty())
     {
         states.pop();
     }
 
-    // Limpiar el árbol de niveles pero NO reconstruirlo completamente
-    // Simplemente reiniciamos el puntero actual a la raíz
-    // Esto evita problemas con los stateFactories
-    levelTree.resetToRoot(); // Necesitamos añadir este método a LevelTree
+    levelTree.resetToRoot();
 
-    // Limpiar el slot activo para que no haya conflictos
-    // Nota: No borramos el saveManager, solo desactivamos la partida activa
-    // El saveManager tiene su propio currentSlotId que podemos mantener
-
-    // Crear NUEVO menú
     auto menuState = std::make_unique<MenuState>(window.get(), this);
     states.push(std::move(menuState));
 
     std::cout << "✅ Menú principal cargado correctamente" << std::endl;
+}
+
+void Game::setPantallaCompleta(bool fullscreen) {
+    Config::getInstance().setPantallaCompleta(fullscreen);
+    Config::getInstance().alternarPantalla(window.get());
+}
+
+void Game::aplicarConfiguracionPantalla() {
+    Config::getInstance().alternarPantalla(window.get());
 }
 
 void Game::reintentarCentinela()
@@ -403,7 +421,6 @@ void Game::reintentarCentinela()
     if (progress.modoElegido == GameProgressData::ModoJuego::CAMINO_AGRADABLE &&
         progress.tieneCheckpointCentinela)
     {
-
         levelTree.restorePath(progress.checkpointRutaArbol);
 
         progress.tieneCheckpointCentinela = false;
