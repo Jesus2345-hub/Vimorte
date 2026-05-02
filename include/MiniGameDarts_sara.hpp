@@ -7,7 +7,6 @@
 #include <memory>
 #include <random>
 
-
 class MinigameDarts {
 public:
     MinigameDarts();
@@ -24,22 +23,27 @@ public:
     void draw(sf::RenderWindow& window);
     void reset();
     void setVitalSigns(VitalSigns* signs) { m_vitalSigns = signs; }
+
 private:
+
+    float m_noiseOffsetX;
+    float m_noiseOffsetY;
+    // Radio actual en píxeles
+    float m_currentDartboardRadius;
+
+    sf::Texture m_backgroundTexture;
+    std::unique_ptr<sf::Sprite> m_backgroundForest;
     VitalSigns* m_vitalSigns = nullptr;
     sf::Texture m_dartboardTexture;
     std::unique_ptr<sf::Sprite> m_dartboardSprite;
+
     // Estados del juego
     bool m_fontLoaded;
     bool m_isActive;
     bool m_gameWon;
     int m_score;
-    int m_scoreToWin;
-    int m_throwsLeft;           // Tiros restantes (∞ si -1)
-    bool m_isDragging;
-    sf::Vector2f m_dragStart;
-    sf::Vector2f m_dragEnd;
-    sf::Vector2f m_crosshairPos; // Posición del cursor en el momento del lanzamiento
-    bool m_showTrajectory;
+    int m_throwsLeft;
+    bool m_hasThrown;               
 
     // Geometría
     sf::Vector2f m_position;
@@ -47,36 +51,41 @@ private:
 
     // UI
     sf::RectangleShape m_background;
-    sf::CircleShape m_target;        
-    std::vector<sf::CircleShape> m_rings; 
-    sf::RectangleShape m_dartLine;      
     sf::Font m_font;
     std::unique_ptr<sf::Text> m_titleText;
     std::unique_ptr<sf::Text> m_scoreText;
     std::unique_ptr<sf::Text> m_instructionText;
     std::unique_ptr<sf::Text> m_closeText;
     std::unique_ptr<sf::Text> m_throwsText;
-    std::unique_ptr<sf::Text> m_messageText;   
+    std::unique_ptr<sf::Text> m_messageText;
 
     // Animación de mensaje
     float m_messageTimer;
     std::string m_currentMessage;
     sf::Color m_messageColor;
 
-    // Centro de la diana (coordenadas absolutas)
+    // Centro de la diana
     sf::Vector2f m_targetCenter;
 
-    // Puntuaciones por anillo (radio normalizado)
+    // Puntuaciones por anillo
     struct RingScore {
-        float radius;   
-        int score;
-        sf::Color color;
-    };
+    float normalizedRadius; 
+    int score;
+    sf::Color color;
+};
     std::vector<RingScore> m_scoringRings;
 
-    // Aleatoriedad para desviaciones (simular pulso)
+    // -----  sistema de puntería móvil -----
+    sf::CircleShape m_aimingCircle;   // círculo que se mueve
+    float m_aimAngle;                 // ángulo para el movimiento (radianes)
+    float m_aimSpeed;                 // radianes por segundo
+    float m_aimAmplitude;             // amplitud del movimiento (píxeles)
+    // -------------------------------------------
+
+    // Aleatoriedad para desviación al lanzar
     std::random_device m_rd;
     std::mt19937 m_gen;
+    std::uniform_real_distribution<float> m_deviationDist;
 
     // Métodos auxiliares
     int calculateScore(const sf::Vector2f& hitPoint);

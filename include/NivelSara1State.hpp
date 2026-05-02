@@ -21,11 +21,15 @@ private:
     sf::FloatRect m_teleportZone;
     sf::Vector2f m_teleportDestination;
 
+    //
+    std::unique_ptr<sf::Text> m_textoCoordenadas;
+    //
 
-    VitalSigns m_vitalSigns;
-    VitalSigns m_vitalSignsStatic; 
+    VitalSigns m_vitalSignsAndres;
+    VitalSigns m_vitalSignsAndrea; 
 
-    
+    void verificarTeletransportePostJuego();
+
     float m_dartsTriggerRadius = 80.f;
     // Tutorial
     bool m_mostrarTutorial;
@@ -68,6 +72,8 @@ private:
         float tiempoRestante;
         sf::Color color;
     } m_msjActual;
+
+    void actualizarUIPosiciones();
 
     void mostrarMensaje(const std::string& texto, float duracion, sf::Color color);
     sf::Vector2u m_lastWindowSize;
