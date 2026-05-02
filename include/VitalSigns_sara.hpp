@@ -16,6 +16,9 @@ public:
     bool isStabilized() const;
 
 private:
+    sf::RectangleShape m_backgroundPanel;
+    bool m_showBackground = true;
+    float m_titleOffsetX = 0.f;
     // Valores
     float m_heartRate;
     float m_bloodPressure;
@@ -53,7 +56,10 @@ private:
     float m_marginLeft = 20.f;
     float m_marginBottom = 100.f;
 
-    // Métodos privados
+    float m_scaleFactor;
+    void updateScale();
+    bool m_anchorRight;
+
 public:
 
     void setLeftMargin(float margin) { m_marginLeft = margin; }
@@ -68,4 +74,6 @@ public:
     bool isOxygenNormal() const;
     void showMessage(const std::string& msg, sf::Color color);
     void updateMessage(float dt);
+    void setAnchorRight(bool anchorRight) { m_anchorRight = anchorRight; }
+    void setTitleOffsetX(float offset) { m_titleOffsetX = offset; }
 };

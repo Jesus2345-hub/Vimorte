@@ -11,7 +11,7 @@ VitalSigns::VitalSigns()
     : m_heartRate(30.f), m_bloodPressure(50.f), m_oxygen(70.f),
       m_opportunitiesLeft(999), m_gameOver(false), m_stabilized(false),
       m_fluctuationTimer(0.f), m_fluctuationInterval(2.f), m_messageTimer(0.f),
-      m_marginLeft(20.f), m_marginBottom(100.f)
+      m_marginLeft(20.f), m_marginBottom(100.f), m_anchorRight(false)
 {
     initUI();
 }
@@ -20,17 +20,21 @@ VitalSigns::VitalSigns()
 // Inicialización de la interfaz (textos y barras)
 // ============================================================
 void VitalSigns::initUI() {
-    // Cargar fuente (asegúrate de que la ruta sea correcta)
     if (!m_font.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf")) {
         std::cerr << "ERROR: No se pudo cargar la fuente para VitalSigns" << std::endl;
         return;
     }
 
-    // Título principal
-    m_titleText = std::make_unique<sf::Text>(m_font, "SIGNOS VITALES - ANDRES", 15);
-    m_titleText->setFillColor(sf::Color::White);
+    // Configurar fondo del panel
+    m_backgroundPanel.setFillColor(sf::Color(0, 0, 0, 180));  // Negro semitransparente
+    m_backgroundPanel.setOutlineThickness(2.f);
+    m_backgroundPanel.setOutlineColor(sf::Color(100, 100, 100));
 
-    // Textos de cada signo (se actualizarán más adelante)
+    // Escala inicial (se actualizará en draw)
+    m_scaleFactor = 1.0f;
+
+    // Crear textos con tamaños que luego se escalarán
+    m_titleText = std::make_unique<sf::Text>(m_font, " SIGNOS VITALES\n    -ANDRES-", 15);
     m_heartText = std::make_unique<sf::Text>(m_font, "", 16);
     m_bpText = std::make_unique<sf::Text>(m_font, "", 16);
     m_oxygenText = std::make_unique<sf::Text>(m_font, "", 16);
@@ -38,7 +42,6 @@ void VitalSigns::initUI() {
     m_messageText = std::make_unique<sf::Text>(m_font, "", 14);
     m_messageText->setFillColor(sf::Color::Yellow);
 
-    // Configuración visual de las barras verticales
     m_heartBar.setFillColor(sf::Color::Red);
     m_heartBar.setOutlineThickness(1.f);
     m_heartBar.setOutlineColor(sf::Color::White);
@@ -48,10 +51,6 @@ void VitalSigns::initUI() {
     m_oxygenBar.setFillColor(sf::Color::Cyan);
     m_oxygenBar.setOutlineThickness(1.f);
     m_oxygenBar.setOutlineColor(sf::Color::White);
-
-    // Inicializar textos y barras con los valores actuales
-    updateTexts();
-    updateBars();
 }
 
 // ============================================================
@@ -110,6 +109,10 @@ void VitalSigns::updateMessage(float dt) {
 void VitalSigns::update(float dt) {
     if (m_gameOver || m_stabilized) return;
     updateMessage(dt);
+    
+    // ACTUALIZAR TEXTOS CADA FRAME (para que respondan rápido a applyEffect)
+    updateTexts();
+    updateBars();
 
     m_fluctuationTimer += dt;
     if (m_fluctuationTimer >= m_fluctuationInterval) {
@@ -122,17 +125,13 @@ void VitalSigns::update(float dt) {
         m_bloodPressure = std::clamp(m_bloodPressure + dist(rng), 0.f, 200.f);
         m_oxygen = std::clamp(m_oxygen + dist(rng), 0.f, 100.f);
 
-        updateTexts();
-        updateBars();
-        // Verificar muerte o estabilización
+        // Verificar muerte
         if (m_heartRate <= 0 || m_bloodPressure <= 0 || m_oxygen <= 0) {
             m_gameOver = true;
             showMessage(" GAME OVER - El paciente ha muerto", sf::Color::Red);
         }
-        
     }
 }
-
 // ============================================================
 // Aplicar efecto de un dardo (puntos positivos o negativos)
 // ============================================================
@@ -166,47 +165,110 @@ void VitalSigns::applyEffect(int points) {
 // Dibujar toda la interfaz (siempre visible, esquina inferior izquierda)
 // ============================================================
 void VitalSigns::draw(sf::RenderWindow& window) {
-    // Fijar vista por defecto
     sf::View defaultView = window.getDefaultView();
     window.setView(defaultView);
 
     sf::Vector2u winSize = window.getSize();
-    float bottomY = static_cast<float>(winSize.y) - m_marginBottom;
-    float baseY = bottomY - m_barMaxHeight;
-    float barX = m_marginLeft;
+    float winW = static_cast<float>(winSize.x);
+    float winH = static_cast<float>(winSize.y);
+    
+    // Escalar basado en altura de referencia (720p = base)
+    float baseHeight = 720.f;
+    m_scaleFactor = winH / baseHeight;
+    m_scaleFactor = std::clamp(m_scaleFactor, 0.7f, 1.5f);
 
-    // Posicionar las barras
-    m_heartBar.setPosition(sf::Vector2f(barX, baseY + (m_barMaxHeight - m_heartBar.getSize().y)));
-    m_bpBar.setPosition(sf::Vector2f(barX + m_barWidth + m_barSpacing,
-                                     baseY + (m_barMaxHeight - m_bpBar.getSize().y)));
-    m_oxygenBar.setPosition(sf::Vector2f(barX + 2*(m_barWidth + m_barSpacing),
-                                         baseY + (m_barMaxHeight - m_oxygenBar.getSize().y)));
+    // --- Ajustar tamaños de fuente ---
+    if (m_titleText) {
+        m_titleText->setCharacterSize(static_cast<unsigned int>(15 * m_scaleFactor));
+    }
+    if (m_heartText) {
+        m_heartText->setCharacterSize(static_cast<unsigned int>(16 * m_scaleFactor));
+    }
+    if (m_bpText) {
+        m_bpText->setCharacterSize(static_cast<unsigned int>(16 * m_scaleFactor));
+    }
+    if (m_oxygenText) {
+        m_oxygenText->setCharacterSize(static_cast<unsigned int>(16 * m_scaleFactor));
+    }
+    if (m_messageText && m_messageTimer > 0.f) {
+        m_messageText->setCharacterSize(static_cast<unsigned int>(14 * m_scaleFactor));
+    }
 
-    // ===== TEXTOS EN VERTICAL (UNO DEBAJO DEL OTRO) =====
-    float textX = barX;  // misma X para todos
-    float startY = baseY + m_barMaxHeight + 5.f;  // posición Y inicial
-    float lineHeight = 30.f;  // espacio entre líneas
+    // --- Dimensiones escaladas ---
+    float scaledBarWidth = m_barWidth * m_scaleFactor;
+    float scaledBarMaxHeight = m_barMaxHeight * m_scaleFactor;
+    float scaledBarSpacing = m_barSpacing * m_scaleFactor;
+
+    float bottomY = static_cast<float>(winSize.y) - (m_marginBottom);
+    float baseY = bottomY - scaledBarMaxHeight;
+    
+    // Calcular X según anclaje
+    float barX;
+    if (m_anchorRight) 
+    {
+        float panelTotalWidth = scaledBarWidth * 3 + scaledBarSpacing * 2;
+        float extraOffset = 45.f;
+        barX = winW - panelTotalWidth - m_marginLeft - extraOffset;
+    } else {
+        barX = m_marginLeft;
+    }
+
+    // Asegurar que no se salga de la pantalla por la izquierda
+    barX = std::max(10.f, barX);
+    
+    // --- Calcular dimensiones del panel completo para el fondo ---
+    float panelWidth = scaledBarWidth * 3 + scaledBarSpacing * 2 + 20.f;  // +20 de padding
+    float startYText = baseY + scaledBarMaxHeight + (5.f * m_scaleFactor);
+    float lineHeight = 30.f * m_scaleFactor;
+    float panelHeight = (scaledBarMaxHeight + 10.f) + (lineHeight * 3) + 30.f;
+    
+    // Posición del fondo
+    float panelX = barX - 10.f;  // padding izquierdo
+    float panelY = baseY - (25.f * m_scaleFactor) - 5.f;  // desde el título hasta abajo
+    
+    // Dibujar fondo del panel
+    if (m_showBackground) {
+        m_backgroundPanel.setPosition(sf::Vector2f(panelX, panelY));
+        m_backgroundPanel.setSize(sf::Vector2f(panelWidth, panelHeight));
+        window.draw(m_backgroundPanel);
+    }
+
+    // Altura actual de las barras
+    float heartHeight = (m_heartRate / 150.f) * scaledBarMaxHeight;
+    float bpHeight = (m_bloodPressure / 200.f) * scaledBarMaxHeight;
+    float oxygenHeight = (m_oxygen / 100.f) * scaledBarMaxHeight;
+    
+    m_heartBar.setSize(sf::Vector2f(scaledBarWidth, heartHeight));
+    m_bpBar.setSize(sf::Vector2f(scaledBarWidth, bpHeight));
+    m_oxygenBar.setSize(sf::Vector2f(scaledBarWidth, oxygenHeight));
+
+    // Posicionar barras
+    m_heartBar.setPosition(sf::Vector2f(barX, baseY + (scaledBarMaxHeight - heartHeight)));
+    m_bpBar.setPosition(sf::Vector2f(barX + scaledBarWidth + scaledBarSpacing,
+                                     baseY + (scaledBarMaxHeight - bpHeight)));
+    m_oxygenBar.setPosition(sf::Vector2f(barX + 2 * (scaledBarWidth + scaledBarSpacing),
+                                         baseY + (scaledBarMaxHeight - oxygenHeight)));
+
+    // --- Textos ---
+    float textX = barX;
+    float startY = baseY + scaledBarMaxHeight + (5.f * m_scaleFactor);
+    float lineHeightText = 30.f * m_scaleFactor;
 
     if (m_heartText) 
         m_heartText->setPosition(sf::Vector2f(textX, startY));
     if (m_bpText) 
-        m_bpText->setPosition(sf::Vector2f(textX, startY + lineHeight));
+        m_bpText->setPosition(sf::Vector2f(textX, startY + lineHeightText));
     if (m_oxygenText) 
-        m_oxygenText->setPosition(sf::Vector2f(textX, startY + lineHeight * 2));
-
-    // Oportunidades justo debajo
+        m_oxygenText->setPosition(sf::Vector2f(textX, startY + lineHeightText * 2));
     if (m_opportunitiesText) 
-        m_opportunitiesText->setPosition(sf::Vector2f(textX, startY + lineHeight * 3 + 5.f));
-
-    // Mensaje temporal
+        m_opportunitiesText->setPosition(sf::Vector2f(textX, startY + lineHeightText * 3 + 5.f));
     if (m_messageText && m_messageTimer > 0.f)
-        m_messageText->setPosition(sf::Vector2f(textX, startY + lineHeight * 4 + 10.f));
+        m_messageText->setPosition(sf::Vector2f(textX, startY + lineHeightText * 4 + 10.f));
+    if (m_titleText) {
+        m_titleText->setPosition(sf::Vector2f(barX + m_titleOffsetX, baseY - (25.f * m_scaleFactor)));
+    }
 
-    // Título arriba de las barras
-    if (m_titleText) 
-        m_titleText->setPosition(sf::Vector2f(barX, baseY - 25.f));
-
-    // Dibujar todo
+    // --- Dibujar todo ---
     if (m_titleText) window.draw(*m_titleText);
     if (m_heartText) window.draw(*m_heartText);
     if (m_bpText) window.draw(*m_bpText);

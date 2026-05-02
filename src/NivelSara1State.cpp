@@ -13,8 +13,10 @@ NivelSara1State::NivelSara1State(sf::RenderWindow* window, Game* game)
     m_mostrarTutorial(false), 
     m_mostrarTutorialPorTecla(false), 
     m_escapeConsumed(false) ,
-    m_vitalSigns()
+    m_vitalSignsAndres()
 {
+    m_vitalSignsAndrea.setAnchorRight(true);  
+    m_vitalSignsAndres.setAnchorRight(false);
     
      // Verificar si es la primera vez para mostrar el tutorial
     if (game->tienePartidaActiva()) 
@@ -29,7 +31,7 @@ NivelSara1State::NivelSara1State(sf::RenderWindow* window, Game* game)
         }
     }
     m_player.loadAssets();
-    m_player.setPosition(900.f, 800.f);
+    m_player.setPosition(1212.f, 753.f);
     m_player.setSpeed(300.0f);
     // Cargar fondo 
     if (m_backgroundTexture.loadFromFile("assets/images/niveles/nivel_sara/background.png")) {
@@ -56,6 +58,7 @@ NivelSara1State::NivelSara1State(sf::RenderWindow* window, Game* game)
     
     m_puertaSalidaArea = sf::FloatRect(sf::Vector2f(1550.f, 1350.f), sf::Vector2f(120.f, 180.f));
     configurarColisiones();
+   
 
     // Configurar área de dardos 
     m_dartsArea = sf::FloatRect(sf::Vector2f(30.f, 40.f ), sf::Vector2f( 150.f,  150.f));   
@@ -63,24 +66,25 @@ NivelSara1State::NivelSara1State(sf::RenderWindow* window, Game* game)
 
     // Configurar minijuego de dardos
     sf::Vector2u winSize = window->getSize();
-float dartsW = winSize.x * 0.7f;
-float dartsH = winSize.y * 0.83f;
-m_dartsMinigame.setSize(sf::Vector2f(dartsW, dartsH));
-m_dartsMinigame.setPosition(sf::Vector2f(
-    (winSize.x - dartsW) / 2.f,
-    (winSize.y - dartsH) / 2.f
-));
-    m_dartsMinigame.setVitalSigns(&m_vitalSigns);
+    float dartsW = winSize.x * 0.8f;
+    float dartsH = winSize.y * 0.93f;
+    m_dartsMinigame.setSize(sf::Vector2f(dartsW, dartsH));
+    m_dartsMinigame.setPosition(sf::Vector2f(
+        (winSize.x - dartsW) / 2.f,
+        (winSize.y - dartsH) / 2.f
+    ));
+    m_dartsMinigame.setVitalSigns(&m_vitalSignsAndres);
     
-    // Configurar signos estáticos de Andrea (oscilan pero no se modifican con dardos)
+    // Configurar signos de Andrea (oscilan pero no se modifican con dardos)
     
     float panelWidth = 200.f;             
-    float marginRight = 20.f;             
+    float marginRight = 100.f;             
     float leftPos = winSize.x - panelWidth - marginRight;
 
-    m_vitalSignsStatic.setLeftMargin(leftPos);
-    m_vitalSignsStatic.setBottomMargin(100.f);   
-    m_vitalSignsStatic.setTitle("SIGNOS VITALES - ANDREA");
+    m_vitalSignsAndrea.setLeftMargin(leftPos);
+    m_vitalSignsAndrea.setBottomMargin(100.f);   
+    m_vitalSignsAndrea.setTitle("      SIGNOS VITALES\n         -ANDREA-");
+    m_vitalSignsAndrea.setTitleOffsetX(-50.f);
 
     // Fuente
     m_fontLoaded = m_font.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf");
@@ -89,10 +93,16 @@ m_dartsMinigame.setPosition(sf::Vector2f(
         m_textoInteraccion = std::make_unique<sf::Text>(m_font);
         m_textoInteraccion->setCharacterSize(20);
         m_textoInteraccion->setFillColor(sf::Color::White);
-
+        
         m_textoMensaje = std::make_unique<sf::Text>(m_font);
         m_textoMensaje->setCharacterSize(24);
         m_textoMensaje->setFillColor(sf::Color::Yellow);
+        //
+        m_textoCoordenadas = std::make_unique<sf::Text>(m_font);
+        m_textoCoordenadas->setCharacterSize(18); // Tamaño más pequeño para que no estorbe
+        m_textoCoordenadas->setFillColor(sf::Color::Cyan); // Color llamativo
+        m_textoCoordenadas->setPosition(sf::Vector2f(10.f, 10.f)); // Lo ponemos en la esquina superior izquierda
+        ////
     }
 
     // Guardado automático
@@ -103,21 +113,102 @@ m_dartsMinigame.setPosition(sf::Vector2f(
     }
      // Zona de teletransporte (coordenadas absolutas del mundo)
     m_teleportZone = sf::FloatRect(sf::Vector2f(70.f, 320.f), sf::Vector2f(60.f, 60.f));
-    m_teleportDestination = sf::Vector2f(1500.f, 350.f);
+    m_teleportDestination = sf::Vector2f(1460.f, 325.f);
      // Segundo teletransporte (coordenadas absolutas del mundo)
     m_teleportZone2 = sf::FloatRect(sf::Vector2f(1200.f, 120.f), sf::Vector2f(60.f, 60.f));
     m_teleportDestination2 = sf::Vector2f(450.f, 120.f);
+    actualizarUIPosiciones();
     std::cout << "NivelSara1State inicializado correctamente" << std::endl;
     game->setIsInLevel(true);
 }
-
+// ============================================================================
+// VERIFICAR TELETRANSPORTE DESPUÉS DE GANAR
+// ============================================================================
+void NivelSara1State::verificarTeletransportePostJuego() {
+    // Solo si el paciente está estabilizado
+    if (!m_vitalSignsAndres.isStabilized()) return;
+    
+    // Verificar si el jugador está cerca del área de dardos
+    bool cercaDartsTeletransporte = m_player.getHurtbox().findIntersection(m_dartsArea).has_value();
+    
+    static bool eTeletransportePresionado = false;
+    
+    if (cercaDartsTeletransporte && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::E)) {
+        if (!eTeletransportePresionado) {
+            eTeletransportePresionado = true;
+            
+            // Teletransportar a otra zona del mapa (ajusta estas coordenadas)
+            sf::Vector2f destinoTeletransporte(100.f, 400.f);  
+            m_player.setPosition(destinoTeletransporte.x, destinoTeletransporte.y);
+            
+            // Mensaje de confirmación
+            mostrarMensaje("Teletransportado... Ahora ve a ayudar a Andrea", 2.f, sf::Color::Green);
+            
+            std::cout << "Jugador teletransportado a: " << destinoTeletransporte.x << ", " << destinoTeletransporte.y << std::endl;
+        }
+    } else {
+        eTeletransportePresionado = false;
+    }
+}
 void NivelSara1State::configurarColisiones() {
     m_mapaFisico.clear();
     // Paredes exteriores
     m_mapaFisico.emplace_back(sf::Vector2f(30.f, 12.f), sf::Vector2f(m_worldSize.x - 60.f, 130.f));
     m_mapaFisico.emplace_back(sf::Vector2f(18.f, 12.f), sf::Vector2f(20.f, m_worldSize.y - 24.f));
     m_mapaFisico.emplace_back(sf::Vector2f(m_worldSize.x - 50.f, 12.f), sf::Vector2f(20.f, m_worldSize.y - 24.f));
-    m_mapaFisico.emplace_back(sf::Vector2f(30.f, m_worldSize.y - 60.f), sf::Vector2f(m_worldSize.x - 60.f, 30.f));
+
+     m_mapaFisico.emplace_back(sf::Vector2f(233.f, 186.f), sf::Vector2f(15.f, 303.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(248.f, 186.f), sf::Vector2f(71.f, 24.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(118.f, 461.f), sf::Vector2f(114.f, 27.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(118.f, 461.f), sf::Vector2f(24.f, 175.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(307.f, 451.f), sf::Vector2f(113.f, 34.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(307.f, 251.f), sf::Vector2f(15.f, 196.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(329.f, 251.f), sf::Vector2f(80.f, 12.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(417.f, 303.f), sf::Vector2f(15.f, 145.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(436.f, 303.f), sf::Vector2f(144.f, 25.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(225.f, 543.f), sf::Vector2f(15.f, 293.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(241.f, 543.f), sf::Vector2f(174.f, 31.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(331.f, 543.f), sf::Vector2f(15.f, 200.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(241.f, 807.f), sf::Vector2f(291.f, 27.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(523.f, 370.f), sf::Vector2f(9.f, 439.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(645.f, 253.f), sf::Vector2f(15.f, 194.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(630.f, 143.f), sf::Vector2f(78.f, 103.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(727.f, 143.f), sf::Vector2f(376.f, 372.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(420.f, 624.f), sf::Vector2f(98.f, 119.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(590.f, 413.f), sf::Vector2f(15.f, 145.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(513.f, 249.f), sf::Vector2f(149.f, 12.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(587.f, 625.f), sf::Vector2f(272.f, 113.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(1165.f, 212.f), sf::Vector2f(245.f, 69.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(1110.f, 212.f), sf::Vector2f(15.f, 24.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(1173.f, 323.f), sf::Vector2f(115.f, 248.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(1289.f, 458.f), sf::Vector2f(198.f, 220.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(1404.f, 650.f), sf::Vector2f(15.f, 800.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(1238.f, 650.f), sf::Vector2f(162.f, 24.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(1075.f, 670.f), sf::Vector2f(98.f, 300.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(965.f, 588.f), sf::Vector2f(272.f, 24.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(1173.f, 869.f), sf::Vector2f(231.f, 24.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(1257.f, 762.f), sf::Vector2f(55.f, 103.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(960.f, 590.f), sf::Vector2f(15.f, 306.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(793.f, 798.f), sf::Vector2f(166.f, 100.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(793.f, 738.f), sf::Vector2f(68.f, 62.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(18.f, 940.f), sf::Vector2f(1062.f, 62.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(1237.f, 624.f), sf::Vector2f(5.f, 5.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(119.f, 884.f), sf::Vector2f(586.f, 15.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(691.f, 797.f), sf::Vector2f(12.f, 92.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(586.f, 738.f), sf::Vector2f(15.f, 60.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(586.f, 800.f), sf::Vector2f(111.f, 24.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(120.f, 707.f), sf::Vector2f(15.f, 171.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(746.f, 586.f), sf::Vector2f(12.f, 12.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(1400.f, 295.f), sf::Vector2f(15.f, 113.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(1417.f, 380.f), sf::Vector2f(133.f, 25.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(1541.f, 424.f), sf::Vector2f(13.f, 220.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(1500.f, 647.f), sf::Vector2f(13.f, 22.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(1535.f, 143.f), sf::Vector2f(100.f, 266.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(1490.f, 150.f), sf::Vector2f(50.f, 102.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(167.f, 288.f), sf::Vector2f(15.f, 122.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(47.f, 288.f), sf::Vector2f(182.f, 24.f));
+     m_mapaFisico.emplace_back(sf::Vector2f(39.f, 142.f), sf::Vector2f(75.f, 114.f));
+
 }
 
 void NivelSara1State::verificarSalidaNivel() {
@@ -178,7 +269,14 @@ void NivelSara1State::handleEvent(const sf::Event& event) {
 }
 
 void NivelSara1State::update(float dt) {
-    
+    //pantalla
+    sf::Vector2u currentSize = window->getSize();
+    if (currentSize != m_lastWindowSize) {
+        m_lastWindowSize = currentSize;
+        actualizarUIPosiciones();
+        window->setView(window->getDefaultView());
+    }
+
     // Teletransporte si colisiona con la zona
     if (m_player.getHurtbox().findIntersection(m_teleportZone).has_value()) {
         m_player.setPosition(m_teleportDestination.x, m_teleportDestination.y);
@@ -198,19 +296,9 @@ void NivelSara1State::update(float dt) {
     }
 
     //ACTUALIZAR SIGNOS VITALES (siempre, incluso durante minijuego)
-    m_vitalSigns.update(dt);
-    m_vitalSignsStatic.update(dt);
-    // Comprobar si el paciente murió o se estabilizó mientras el minijuego estaba activo
-    if (m_dartsMinigame.isActive()) {
-        if (m_vitalSigns.isGameOver()) {
-            m_dartsMinigame.deactivate();
-            mostrarMensaje("El paciente ha muerto. Presiona R para reintentar", 3.f, sf::Color::White);
-        } else if (m_vitalSigns.isStabilized()) {
-            m_dartsMinigame.deactivate();
-            mostrarMensaje("Paciente estabilizado. Ya puedes salir por la puerta", 3.f, sf::Color::Green);
-        }
-    }
-
+    m_vitalSignsAndres.update(dt);
+    m_vitalSignsAndrea.update(dt);
+   
     sf::Vector2f posAnterior = m_player.getPosition();
     sf::Vector2u windowSize = window->getSize();
 
@@ -231,15 +319,15 @@ void NivelSara1State::update(float dt) {
         if (!rPresionado) {
             rPresionado = true;
             // Si el paciente murió, reiniciamos todo
-            if (m_vitalSigns.isGameOver()) {
-                m_vitalSigns.reset();
+            if (m_vitalSignsAndres.isGameOver()) {
+                m_vitalSignsAndres.reset();
             }
-            // Solo activamos si NO está estabilizado
-            if (!m_vitalSigns.isStabilized()) {
+            
+            if (!m_vitalSignsAndres.isStabilized()) {
                 m_dartsMinigame.reset();
                 m_dartsMinigame.activate();
             } else {
-                mostrarMensaje("El paciente ya esta estable. Sal por la puerta.", 2.f, sf::Color::Yellow);
+                mostrarMensaje("Paciente estabilizado. Ya puedes ir a Salvar a la\n   Dr. Andrea por la puerta gris", 2.f, sf::Color::Yellow);
             }
         }
     } else {
@@ -297,7 +385,8 @@ void NivelSara1State::update(float dt) {
 
     m_camera.setCenter(cameraPos);
 
-
+    verificarTeletransportePostJuego();
+    verificarSalidaNivel();
     verificarSalidaNivel();
 
     // Pausa: solo si el tutorial no está activo
@@ -322,6 +411,27 @@ void NivelSara1State::update(float dt) {
     if (m_skipPauseThisFrame) {
         m_skipPauseThisFrame = false;
     }
+
+
+// 1. Obtener la posición del mouse en coordenadas de la PANTALLA (píxeles)
+sf::Vector2i mousePosPantalla = sf::Mouse::getPosition(*window);
+
+// 2. ¡IMPORTANTE! Convertir a coordenadas del MUNDO (world) usando la vista actual de la cámara.
+// Esto es para que te dé las coordenadas correctas dentro de tu mapa, no las de la ventana.
+sf::Vector2f mousePosMundo = window->mapPixelToCoords(mousePosPantalla, m_camera);
+
+// 3. Crear el string de texto con las coordenadas
+std::string coordsText = "Mouse (Mundo): X=" + std::to_string((int)mousePosMundo.x) + 
+                         " Y=" + std::to_string((int)mousePosMundo.y);
+
+// Añadir también las coordenadas del jugador para referencia
+coordsText += "\nJugador (Player): X=" + std::to_string((int)m_player.getPosition().x) + 
+              " Y=" + std::to_string((int)m_player.getPosition().y);
+
+// 4. Actualizar el texto del Sprite
+if (m_textoCoordenadas) {
+    m_textoCoordenadas->setString(coordsText);
+}
 }
 
 void NivelSara1State::draw() {
@@ -375,17 +485,17 @@ void NivelSara1State::draw() {
         }
     }
 
-    // Elementos de depuración (colisiones)
-    window->setView(m_camera);
-    for (const auto& rect : m_mapaFisico) {
-        sf::RectangleShape bloque;
-        bloque.setPosition(sf::Vector2f(rect.position.x, rect.position.y));
-        bloque.setSize(sf::Vector2f(rect.size.x, rect.size.y));
-        bloque.setFillColor(sf::Color(255, 0, 0, 100));
-        bloque.setOutlineThickness(2.f);
-        bloque.setOutlineColor(sf::Color::Red);
-        window->draw(bloque);
-    }
+    // // Elementos de depuración (colisiones)
+    // window->setView(m_camera);
+    // for (const auto& rect : m_mapaFisico) {
+    //     sf::RectangleShape bloque;
+    //     bloque.setPosition(sf::Vector2f(rect.position.x, rect.position.y));
+    //     bloque.setSize(sf::Vector2f(rect.size.x, rect.size.y));
+    //     bloque.setFillColor(sf::Color(255, 0, 0, 100));
+    //     bloque.setOutlineThickness(2.f);
+    //     bloque.setOutlineColor(sf::Color::Red);
+    //     window->draw(bloque);
+    // }
     // Área de dardos (debug)
     sf::RectangleShape dartsRect(m_dartsArea.size);
     dartsRect.setPosition(m_dartsArea.position);
@@ -394,18 +504,18 @@ void NivelSara1State::draw() {
     dartsRect.setOutlineColor(sf::Color::Green);
     window->draw(dartsRect);
 
-    //teletrasnportacion
-    sf::RectangleShape teleRect(m_teleportZone.size);
-    teleRect.setPosition(m_teleportZone.position);
-    teleRect.setFillColor(sf::Color(255, 0, 255, 100)); 
-    window->draw(teleRect);
+    // //teletrasnportacion
+    // sf::RectangleShape teleRect(m_teleportZone.size);
+    // teleRect.setPosition(m_teleportZone.position);
+    // teleRect.setFillColor(sf::Color(255, 0, 255, 100)); 
+    // window->draw(teleRect);
 
-    sf::RectangleShape teleRect2(m_teleportZone2.size);
-    teleRect2.setPosition(m_teleportZone2.position);
-    teleRect2.setFillColor(sf::Color(0, 255, 255, 150));
-    teleRect2.setOutlineThickness(2.f);
-    teleRect2.setOutlineColor(sf::Color::Cyan);
-    window->draw(teleRect2);
+    // sf::RectangleShape teleRect2(m_teleportZone2.size);
+    // teleRect2.setPosition(m_teleportZone2.position);
+    // teleRect2.setFillColor(sf::Color(0, 255, 255, 150));
+    // teleRect2.setOutlineThickness(2.f);
+    // teleRect2.setOutlineColor(sf::Color::Cyan);
+    // window->draw(teleRect2);
 
     // Jugador
     m_player.draw(*window);
@@ -423,9 +533,9 @@ void NivelSara1State::draw() {
     }
 
     if (m_cercaDarts && !m_dartsMinigame.isActive() && m_textoInteraccion && m_fontLoaded) {
-    if (m_vitalSigns.isStabilized()) {
-        m_textoInteraccion->setString("Paciente estable. Ve a la puerta (E)");
-    } else if (m_vitalSigns.isGameOver()) {
+    if (m_vitalSignsAndres.isStabilized()) {
+        m_textoInteraccion->setString("Paciente estable. Ve a la puerta, presiona |E|");
+    } else if (m_vitalSignsAndres.isGameOver()) {
         m_textoInteraccion->setString("Paciente muerto. Presiona R para reintentar");
     } else {
         m_textoInteraccion->setString("Presiona R para jugar a los dardos");
@@ -442,19 +552,24 @@ void NivelSara1State::draw() {
         window->draw(*m_textoMensaje);
     }
 
-    // 3. Minijuego (si está activo) - SE DIBUJA PRIMERO QUE LOS SIGNOS VITALES
+    // Minijuego signos vitales dardos
     if (m_dartsMinigame.isActive()) {
         m_dartsMinigame.draw(*window);
     }
 
-    // 4. Signos vitales (se dibujan DESPUÉS del minijuego para que sus mensajes no queden tapados)
-    m_vitalSigns.draw(*window);
-    m_vitalSignsStatic.draw(*window);
+    // Signos vitales 
+    m_vitalSignsAndres.draw(*window);
+    m_vitalSignsAndrea.draw(*window);
 
-    // 5. Inventario (siempre al final)
+    // Inventario 
     Inventory* inv = m_player.getInventory();
     if (inv) inv->draw(*window);
-    
+
+    // //
+    // if (m_textoCoordenadas && m_fontLoaded) {
+    // window->draw(*m_textoCoordenadas);
+    // ///
+    // }
 }
 
 void NivelSara1State::mostrarMensaje(const std::string& texto, float duracion, sf::Color color) {
@@ -467,4 +582,33 @@ void NivelSara1State::mostrarMensaje(const std::string& texto, float duracion, s
     sf::FloatRect bounds = m_textoMensaje->getLocalBounds();
     m_textoMensaje->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
     std::cout << "MENSAJE: " << texto << std::endl;
+}
+void NivelSara1State::actualizarUIPosiciones() {
+    if (!window) return;
+
+    sf::Vector2u winSize = window->getSize();
+    float winW = static_cast<float>(winSize.x);
+    float winH = static_cast<float>(winSize.y);
+    
+    float scale = winH / 720.f;
+    scale = std::clamp(scale, 0.7f, 1.5f);
+
+    // Minijuego
+    float dartsW = winW * 0.8f;
+    float dartsH = winH * 0.93f;
+    m_dartsMinigame.setSize(sf::Vector2f(dartsW, dartsH));
+    m_dartsMinigame.setPosition(sf::Vector2f(
+        (winW - dartsW) * 0.5f,
+        (winH - dartsH) * 0.5f
+    ));
+
+    float marginBottom = 100.f * scale;
+    
+    // Andrés (izquierda)
+    m_vitalSignsAndres.setBottomMargin(marginBottom);
+    m_vitalSignsAndres.setLeftMargin(20.f * scale);
+    
+    
+    m_vitalSignsAndrea.setBottomMargin(marginBottom);
+    m_vitalSignsAndrea.setLeftMargin(scale-20.0);  
 }

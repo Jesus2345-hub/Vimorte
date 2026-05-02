@@ -39,7 +39,6 @@ add_executable(Vimorte ${SOURCES})
 # Decirle a CMake dónde buscar nuestras cabeceras
 target_include_directories(Vimorte PRIVATE 
     ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 # 8. ENLAZAR CON LAS LIBRERÍAS DE SFML
 target_link_libraries(Vimorte 
