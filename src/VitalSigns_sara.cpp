@@ -14,6 +14,7 @@ VitalSigns::VitalSigns()
       m_marginLeft(20.f), m_marginBottom(100.f), m_anchorRight(false)
 {
     initUI();
+    m_showBackground = false;
 }
 
 // ============================================================
@@ -25,31 +26,45 @@ void VitalSigns::initUI() {
         return;
     }
 
-    // Configurar fondo del panel
-    m_backgroundPanel.setFillColor(sf::Color(0, 0, 0, 180));  // Negro semitransparente
-    m_backgroundPanel.setOutlineThickness(2.f);
-    m_backgroundPanel.setOutlineColor(sf::Color(100, 100, 100));
+    // Configurar fondo del panel - MÁS VISIBLE
+    m_backgroundPanel.setFillColor(sf::Color(15, 15, 35, 240));  // Azul oscuro casi opaco
+    m_backgroundPanel.setOutlineThickness(3.f);
+    m_backgroundPanel.setOutlineColor(sf::Color(255, 200, 80));  // Borde dorado
 
     // Escala inicial (se actualizará en draw)
     m_scaleFactor = 1.0f;
 
     // Crear textos con tamaños que luego se escalarán
     m_titleText = std::make_unique<sf::Text>(m_font, " SIGNOS VITALES\n    -ANDRES-", 15);
+    m_titleText->setOutlineThickness(1.f);
+    m_titleText->setOutlineColor(sf::Color::Black);
+    
     m_heartText = std::make_unique<sf::Text>(m_font, "", 16);
+    m_heartText->setOutlineThickness(1.f);
+    m_heartText->setOutlineColor(sf::Color::Black);
+    
     m_bpText = std::make_unique<sf::Text>(m_font, "", 16);
+    m_bpText->setOutlineThickness(1.f);
+    m_bpText->setOutlineColor(sf::Color::Black);
+    
     m_oxygenText = std::make_unique<sf::Text>(m_font, "", 16);
+    m_oxygenText->setOutlineThickness(1.f);
+    m_oxygenText->setOutlineColor(sf::Color::Black);
+    
     m_opportunitiesText = std::make_unique<sf::Text>(m_font, "", 16);
     m_messageText = std::make_unique<sf::Text>(m_font, "", 14);
     m_messageText->setFillColor(sf::Color::Yellow);
+    m_messageText->setOutlineThickness(1.f);
+    m_messageText->setOutlineColor(sf::Color::Black);
 
     m_heartBar.setFillColor(sf::Color::Red);
-    m_heartBar.setOutlineThickness(1.f);
+    m_heartBar.setOutlineThickness(2.f);
     m_heartBar.setOutlineColor(sf::Color::White);
     m_bpBar.setFillColor(sf::Color(255, 100, 0));
-    m_bpBar.setOutlineThickness(1.f);
+    m_bpBar.setOutlineThickness(2.f);
     m_bpBar.setOutlineColor(sf::Color::White);
     m_oxygenBar.setFillColor(sf::Color::Cyan);
-    m_oxygenBar.setOutlineThickness(1.f);
+    m_oxygenBar.setOutlineThickness(2.f);
     m_oxygenBar.setOutlineColor(sf::Color::White);
 }
 
@@ -57,10 +72,24 @@ void VitalSigns::initUI() {
 // Actualizar los strings de los textos (formato amigable)
 // ============================================================
 void VitalSigns::updateTexts() {
-    if (m_heartText) m_heartText->setString("Corazon: " + std::to_string((int)m_heartRate) + " bpm");
-    if (m_bpText) m_bpText->setString("Presion: " + std::to_string((int)m_bloodPressure) + " mmHg");
-    if (m_oxygenText) m_oxygenText->setString("Oxigeno: " + std::to_string((int)m_oxygen) + " %");
-    // Ocultamos el texto de oportunidades (ya no es relevante)
+    if (m_heartText) {
+        m_heartText->setString("Corazon: " + std::to_string((int)m_heartRate) + " bpm");
+        m_heartText->setFillColor(sf::Color::White);
+        m_heartText->setOutlineThickness(1.f);
+        m_heartText->setOutlineColor(sf::Color::Black);
+    }
+    if (m_bpText) {
+        m_bpText->setString("Presion: " + std::to_string((int)m_bloodPressure) + " mmHg");
+        m_bpText->setFillColor(sf::Color::White);
+        m_bpText->setOutlineThickness(1.f);
+        m_bpText->setOutlineColor(sf::Color::Black);
+    }
+    if (m_oxygenText) {
+        m_oxygenText->setString("Oxigeno: " + std::to_string((int)m_oxygen) + " %");
+        m_oxygenText->setFillColor(sf::Color::White);
+        m_oxygenText->setOutlineThickness(1.f);
+        m_oxygenText->setOutlineColor(sf::Color::Black);
+    }
     if (m_opportunitiesText) m_opportunitiesText->setString("");
 }
 
@@ -172,12 +201,10 @@ void VitalSigns::draw(sf::RenderWindow& window) {
     float winW = static_cast<float>(winSize.x);
     float winH = static_cast<float>(winSize.y);
     
-    // Escalar basado en altura de referencia (720p = base)
     float baseHeight = 720.f;
     m_scaleFactor = winH / baseHeight;
     m_scaleFactor = std::clamp(m_scaleFactor, 0.7f, 1.5f);
 
-    // --- Ajustar tamaños de fuente ---
     if (m_titleText) {
         m_titleText->setCharacterSize(static_cast<unsigned int>(15 * m_scaleFactor));
     }
@@ -194,7 +221,6 @@ void VitalSigns::draw(sf::RenderWindow& window) {
         m_messageText->setCharacterSize(static_cast<unsigned int>(14 * m_scaleFactor));
     }
 
-    // --- Dimensiones escaladas ---
     float scaledBarWidth = m_barWidth * m_scaleFactor;
     float scaledBarMaxHeight = m_barMaxHeight * m_scaleFactor;
     float scaledBarSpacing = m_barSpacing * m_scaleFactor;
@@ -202,10 +228,8 @@ void VitalSigns::draw(sf::RenderWindow& window) {
     float bottomY = static_cast<float>(winSize.y) - (m_marginBottom);
     float baseY = bottomY - scaledBarMaxHeight;
     
-    // Calcular X según anclaje
     float barX;
-    if (m_anchorRight) 
-    {
+    if (m_anchorRight) {
         float panelTotalWidth = scaledBarWidth * 3 + scaledBarSpacing * 2;
         float extraOffset = 45.f;
         barX = winW - panelTotalWidth - m_marginLeft - extraOffset;
@@ -213,27 +237,32 @@ void VitalSigns::draw(sf::RenderWindow& window) {
         barX = m_marginLeft;
     }
 
-    // Asegurar que no se salga de la pantalla por la izquierda
     barX = std::max(10.f, barX);
     
-    // --- Calcular dimensiones del panel completo para el fondo ---
-    float panelWidth = scaledBarWidth * 3 + scaledBarSpacing * 2 + 20.f;  // +20 de padding
+    float panelWidth = scaledBarWidth * 3 + scaledBarSpacing * 2 + 20.f;
     float startYText = baseY + scaledBarMaxHeight + (5.f * m_scaleFactor);
     float lineHeight = 30.f * m_scaleFactor;
     float panelHeight = (scaledBarMaxHeight + 10.f) + (lineHeight * 3) + 30.f;
     
-    // Posición del fondo
-    float panelX = barX - 10.f;  // padding izquierdo
-    float panelY = baseY - (25.f * m_scaleFactor) - 5.f;  // desde el título hasta abajo
+    float panelX = barX - 10.f;
+    float panelY = baseY - (25.f * m_scaleFactor) - 5.f;
     
-    // Dibujar fondo del panel
-    if (m_showBackground) {
-        m_backgroundPanel.setPosition(sf::Vector2f(panelX, panelY));
-        m_backgroundPanel.setSize(sf::Vector2f(panelWidth, panelHeight));
-        window.draw(m_backgroundPanel);
-    }
+    // ============================================
+    // FONDO DEL PANEL - BIEN VISIBLE
+    // ============================================
+    m_backgroundPanel.setPosition(sf::Vector2f(panelX, panelY));
+    m_backgroundPanel.setSize(sf::Vector2f(panelWidth, panelHeight));
+    m_backgroundPanel.setFillColor(sf::Color(15, 15, 35, 230));  // CASI OPACO
+    window.draw(m_backgroundPanel);
+    
+    // Borde dorado para que resalte
+    sf::RectangleShape border(sf::Vector2f(panelWidth, panelHeight));
+    border.setPosition(sf::Vector2f(panelX, panelY));
+    border.setFillColor(sf::Color::Transparent);
+    border.setOutlineThickness(3.f);
+    border.setOutlineColor(sf::Color(255, 200, 80, 255));
+    window.draw(border);
 
-    // Altura actual de las barras
     float heartHeight = (m_heartRate / 150.f) * scaledBarMaxHeight;
     float bpHeight = (m_bloodPressure / 200.f) * scaledBarMaxHeight;
     float oxygenHeight = (m_oxygen / 100.f) * scaledBarMaxHeight;
@@ -242,37 +271,50 @@ void VitalSigns::draw(sf::RenderWindow& window) {
     m_bpBar.setSize(sf::Vector2f(scaledBarWidth, bpHeight));
     m_oxygenBar.setSize(sf::Vector2f(scaledBarWidth, oxygenHeight));
 
-    // Posicionar barras
     m_heartBar.setPosition(sf::Vector2f(barX, baseY + (scaledBarMaxHeight - heartHeight)));
     m_bpBar.setPosition(sf::Vector2f(barX + scaledBarWidth + scaledBarSpacing,
                                      baseY + (scaledBarMaxHeight - bpHeight)));
     m_oxygenBar.setPosition(sf::Vector2f(barX + 2 * (scaledBarWidth + scaledBarSpacing),
                                          baseY + (scaledBarMaxHeight - oxygenHeight)));
 
-    // --- Textos ---
     float textX = barX;
     float startY = baseY + scaledBarMaxHeight + (5.f * m_scaleFactor);
     float lineHeightText = 30.f * m_scaleFactor;
 
-    if (m_heartText) 
+    if (m_heartText) {
         m_heartText->setPosition(sf::Vector2f(textX, startY));
-    if (m_bpText) 
+        m_heartText->setFillColor(sf::Color::White);
+        m_heartText->setOutlineThickness(1.f);
+        m_heartText->setOutlineColor(sf::Color::Black);
+    }
+    if (m_bpText) {
         m_bpText->setPosition(sf::Vector2f(textX, startY + lineHeightText));
-    if (m_oxygenText) 
+        m_bpText->setFillColor(sf::Color::White);
+        m_bpText->setOutlineThickness(1.f);
+        m_bpText->setOutlineColor(sf::Color::Black);
+    }
+    if (m_oxygenText) {
         m_oxygenText->setPosition(sf::Vector2f(textX, startY + lineHeightText * 2));
-    if (m_opportunitiesText) 
+        m_oxygenText->setFillColor(sf::Color::White);
+        m_oxygenText->setOutlineThickness(1.f);
+        m_oxygenText->setOutlineColor(sf::Color::Black);
+    }
+    if (m_opportunitiesText) {
         m_opportunitiesText->setPosition(sf::Vector2f(textX, startY + lineHeightText * 3 + 5.f));
-    if (m_messageText && m_messageTimer > 0.f)
+    }
+    if (m_messageText && m_messageTimer > 0.f) {
         m_messageText->setPosition(sf::Vector2f(textX, startY + lineHeightText * 4 + 10.f));
+    }
     if (m_titleText) {
         m_titleText->setPosition(sf::Vector2f(barX + m_titleOffsetX, baseY - (25.f * m_scaleFactor)));
+        m_titleText->setOutlineThickness(1.f);
+        m_titleText->setOutlineColor(sf::Color::Black);
     }
 
-    // --- Dibujar todo ---
-    if (m_titleText) window.draw(*m_titleText);
-    if (m_heartText) window.draw(*m_heartText);
-    if (m_bpText) window.draw(*m_bpText);
-    if (m_oxygenText) window.draw(*m_oxygenText);
+    window.draw(*m_titleText);
+    window.draw(*m_heartText);
+    window.draw(*m_bpText);
+    window.draw(*m_oxygenText);
     if (m_opportunitiesText) window.draw(*m_opportunitiesText);
     if (m_messageText && m_messageTimer > 0.f) window.draw(*m_messageText);
     window.draw(m_heartBar);

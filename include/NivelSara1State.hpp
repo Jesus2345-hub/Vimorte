@@ -2,6 +2,7 @@
 #include "State.hpp"
 #include "entities/Player.hpp"
 #include "MiniGameDarts_sara.hpp"
+#include "MiniGameTetris.hpp"
 #include "VitalSigns_sara.hpp"
 #include <memory>
 #include <vector>
@@ -16,6 +17,8 @@ public:
     void draw() override;
 
 private:
+    
+
     sf::FloatRect m_teleportZone2;
     sf::Vector2f m_teleportDestination2;
     sf::FloatRect m_teleportZone;
@@ -52,11 +55,18 @@ private:
     //minijuego de dardos
     MinigameDarts m_dartsMinigame;
 
+    //minijuego Memoria
+    MiniGameTetris m_tetris;
+
     // Área de interacción con el tablón de dardos
     sf::FloatRect m_dartsArea;
     bool m_cercaDarts;
     bool m_skipPauseThisFrame;
     void configurarInteracciones();
+
+    // Área de interacción con el TETRIS 
+    sf::FloatRect m_tetrisArea;
+    bool m_cercaTetris;
 
     // Áreas de interacción
     sf::FloatRect m_puertaSalidaArea;
