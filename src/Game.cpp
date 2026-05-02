@@ -2,6 +2,7 @@
 #include "MenuState.hpp"
 #include "State.hpp"
 #include "Nivel1State.hpp"
+#include "Nivel2State.hpp"  
 #include "Lobby.hpp"
 #include "AdminMenuState.hpp"
 #include <optional>
