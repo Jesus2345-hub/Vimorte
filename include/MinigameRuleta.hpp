@@ -33,6 +33,28 @@ public:
     int* getDineroJugador() { return m_dineroJugador; }
     
 private:
+	// Animación de la ruleta
+// Animación de la ruleta
+bool m_girando = false;
+float m_anguloActual = 0.f;
+float m_velocidadGiro = 0.f;
+float m_anguloObjetivo = 0.f;
+sf::CircleShape m_circuloRuleta;
+std::vector<sf::Text> m_numerosRuleta;
+sf::RectangleShape m_flecha;
+
+std::vector<int> m_ordenRuleta;
+
+void inicializarRuletaAnimada();
+
+// Animación de la pelotita
+bool m_pelotitaGirando = false;
+float m_anguloPelotita = 0.f;
+float m_velocidadPelotita = 0.f;
+float m_anguloObjetivoPelotita = 0.f;
+sf::CircleShape m_pelotita;
+
+
     bool m_isActive = false;
     sf::Vector2f m_position;
     sf::Vector2f m_size;

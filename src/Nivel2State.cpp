@@ -79,6 +79,8 @@ Nivel2State::Nivel2State(sf::RenderWindow* window, Game* game)
     ));
     m_ruletaMinigame.setDineroJugador(&m_dinero);
     
+    actualizarPosicionRuleta();
+    
     // Cargar fuente
     m_fontLoaded = m_font.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf");
     if (!m_fontLoaded) {
@@ -190,6 +192,24 @@ void Nivel2State::verificarSalidaNivel() {
 }
 
 void Nivel2State::update(float dt) {
+    // Actualizar tamaño de la ruleta si cambia la ventana
+    sf::Vector2u currentSize = window->getSize();
+    static sf::Vector2u lastSize = currentSize;
+    if (currentSize != lastSize) {
+        lastSize = currentSize;
+        float ruletaW = currentSize.x * 0.8f;
+        float ruletaH = currentSize.y * 0.8f;
+        float ruletaX = (currentSize.x - ruletaW) / 2.f;
+        float ruletaY = (currentSize.y - ruletaH) / 2.f;
+        m_ruletaMinigame.setSize(sf::Vector2f(ruletaW, ruletaH));
+        m_ruletaMinigame.setPosition(sf::Vector2f(ruletaX, ruletaY));
+        
+        std::cout << "Ruleta actualizada: " << ruletaW << "x" << ruletaH 
+                  << " en (" << ruletaX << "," << ruletaY << ")" << std::endl;
+    }
+    
+    // ... resto del update ...
+
     // Mensaje temporal
     if (m_textoMensaje && m_msjActual.tiempoRestante > 0.0f) {
         m_msjActual.tiempoRestante -= dt;
@@ -479,4 +499,15 @@ void Nivel2State::mostrarMensaje(const std::string& texto, float duracion, sf::C
     m_textoMensaje->setFillColor(color);
     
     std::cout << "MENSAJE: " << texto << std::endl;
+}
+
+void Nivel2State::actualizarPosicionRuleta() {
+    sf::Vector2u windowSize = window->getSize();
+    float ruletaW = windowSize.x * 0.8f;
+    float ruletaH = windowSize.y * 0.8f;
+    float ruletaX = (windowSize.x - ruletaW) / 2.f;
+    float ruletaY = (windowSize.y - ruletaH) / 2.f;
+    
+    m_ruletaMinigame.setSize(sf::Vector2f(ruletaW, ruletaH));
+    m_ruletaMinigame.setPosition(sf::Vector2f(ruletaX, ruletaY));
 }

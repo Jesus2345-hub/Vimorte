@@ -5,10 +5,6 @@
 MinigameRuleta::MinigameRuleta() 
     : m_isActive(false), m_gen(m_rd())
 {
-    // Fondo oscuro
-    m_background.setFillColor(sf::Color(0, 0, 0, 220));
-    m_background.setOutlineThickness(3.f);
-    m_background.setOutlineColor(sf::Color(180, 150, 50));
     
     // Cargar fuente
     m_fontLoaded = m_font.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf");
@@ -28,23 +24,7 @@ void MinigameRuleta::setPosition(const sf::Vector2f& pos) {
 void MinigameRuleta::setSize(const sf::Vector2f& size) {
     m_size = size;
     m_background.setSize(size);
-    
-    // Cargar textura de la ruleta
-    if (m_ruletaTexture.loadFromFile("assets/images/niveles/nivel2/ruleta.jpg")) {
-        m_ruletaSprite = std::make_unique<sf::Sprite>(m_ruletaTexture);
-        
-        float escala = 0.7f;
-        m_ruletaSprite->setScale(sf::Vector2f(escala, escala));
-        
-        sf::FloatRect bounds = m_ruletaSprite->getLocalBounds();
-        m_ruletaSprite->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
-        m_ruletaSprite->setPosition(sf::Vector2f(
-            m_position.x + m_size.x * 0.3f,
-            m_position.y + m_size.y * 0.45f
-        ));
-    }
 }
-
 void MinigameRuleta::inicializarUI() {
     if (!m_fontLoaded) return;
     
@@ -203,6 +183,7 @@ void MinigameRuleta::inicializarUI() {
     m_textoVerde->setFillColor(sf::Color::White);
 }
 
+
 void MinigameRuleta::activate() {
     m_isActive = true;
     m_tipoApuesta = TipoApuesta::NINGUNA;
@@ -214,6 +195,15 @@ void MinigameRuleta::activate() {
     m_mostrandoTableroNumeros = false;
     m_mostrandoSelectorCuarto = false;
     m_mostrandoSelectorColor = false;
+    
+    inicializarRuletaAnimada();
+    
+    // Cargar la imagen de la ruleta
+    if (!m_ruletaSprite) {
+        if (m_ruletaTexture.loadFromFile("assets/images/niveles/nivel2/ruleta.jpg")) {
+            m_ruletaSprite = std::make_unique<sf::Sprite>(m_ruletaTexture);
+        }
+    }
 }
 
 void MinigameRuleta::deactivate() {
@@ -252,12 +242,40 @@ void MinigameRuleta::girarRuleta() {
     if (m_tipoApuesta == TipoApuesta::CUARTO && m_cuartoElegido < 0) return;
     if (m_tipoApuesta == TipoApuesta::COLOR && m_colorElegido == ColorElegido::NINGUNO) return;
     
+    
+      // Iniciar animación de giro
+    m_girando = true;
+    m_velocidadGiro = 720.f + (rand() % 720); // Velocidad aleatoria
+    m_anguloObjetivo = m_numeroGanador * (360.f / 37.f);
+    
     // Cobrar apuesta
     *m_dineroJugador -= m_apuesta;
     
     // Generar número ganador (0-36)
     std::uniform_int_distribution<int> dist(0, 36);
     m_numeroGanador = dist(m_gen);
+    
+    // Calcular ángulo objetivo de la pelotita
+int indiceGanador = 0;
+for (int i = 0; i < 37; i++) {
+    if (m_ordenRuleta[i] == m_numeroGanador) {
+        indiceGanador = i;
+        break;
+    }
+}
+float anguloObjetivo = indiceGanador * (360.f / 37.f) + (360.f / 74.f);
+
+// Iniciar animación de la pelotita (varias vueltas + ángulo final)
+m_pelotitaGirando = true;
+m_anguloPelotita = 0.f;
+m_velocidadPelotita = 1500.f; // 3 vueltas completas
+m_anguloObjetivoPelotita = anguloObjetivo + 1800.f; // 5 vueltas + posición final
+    
+    
+    // Iniciar animación de giro
+m_girando = true;
+m_velocidadGiro = 720.f + (rand() % 720);
+m_anguloObjetivo = m_numeroGanador * (360.f / 37.f);
     
     // Calcular ganancia
     int ganancia = m_apuesta; // Se devuelve la apuesta base
@@ -320,8 +338,7 @@ void MinigameRuleta::girarRuleta() {
             break;
     }
     
-    m_mostrandoResultado = true;
-    m_tiempoResultado = 3.0f;
+  
     
     // Resetear selección
     m_tipoApuesta = TipoApuesta::NINGUNA;
@@ -452,6 +469,34 @@ void MinigameRuleta::handleEvent(const sf::Event& event, const sf::RenderWindow&
 void MinigameRuleta::update(float dt) {
     if (!m_isActive) return;
     
+    // Animación de la pelotita
+    if (m_pelotitaGirando) {
+        // Avanzar la pelotita (independiente del framerate)
+        m_anguloPelotita += m_velocidadPelotita * dt;
+        
+        // Frenar gradualmente
+        m_velocidadPelotita *= std::pow(0.997f, dt * 60.f);
+        
+        // Calcular cuánto falta para llegar al objetivo
+        float distanciaFaltante = m_anguloObjetivoPelotita - m_anguloPelotita;
+        
+        // Si ya pasó el objetivo o está muy cerca, detener
+        if (distanciaFaltante <= 5.f) {
+            m_pelotitaGirando = false;
+            m_anguloPelotita = m_anguloObjetivoPelotita;
+            m_mostrandoResultado = true;
+            m_tiempoResultado = 3.0f;
+        }
+        
+        // Si se pasó, ajustar
+        if (m_anguloPelotita > m_anguloObjetivoPelotita) {
+            m_pelotitaGirando = false;
+            m_anguloPelotita = m_anguloObjetivoPelotita;
+            m_mostrandoResultado = true;
+            m_tiempoResultado = 3.0f;
+        }
+    }
+    
     if (m_mostrandoResultado) {
         m_tiempoResultado -= dt;
         if (m_tiempoResultado <= 0.0f) {
@@ -463,61 +508,234 @@ void MinigameRuleta::update(float dt) {
 void MinigameRuleta::draw(sf::RenderWindow& window) {
     if (!m_isActive) return;
     
-    // Fondo
-    window.draw(m_background);
-    
-    // Ruleta (imagen)
+    // Ruleta (imagen de fondo)
     if (m_ruletaSprite) {
+        float escalaX = m_size.x / m_ruletaTexture.getSize().x;
+        float escalaY = m_size.y / m_ruletaTexture.getSize().y;
+        float escala = std::min(escalaX, escalaY);
+        
+        m_ruletaSprite->setScale(sf::Vector2f(escala, escala));
+        
+        sf::FloatRect bounds = m_ruletaSprite->getLocalBounds();
+        m_ruletaSprite->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
+        m_ruletaSprite->setPosition(sf::Vector2f(
+            m_position.x + m_size.x / 2.f,
+            m_position.y + m_size.y / 2.f
+        ));
         window.draw(*m_ruletaSprite);
     }
     
-    // Título
-    if (m_tituloText) {
-        m_tituloText->setPosition(sf::Vector2f(
-            m_position.x + m_size.x / 2.f - 100.f,
-            m_position.y + 20.f
-        ));
-        window.draw(*m_tituloText);
+    // ===== RULETA FIJA CON PELOTITA GIRANDO =====
+    float proporcionX = m_size.x / 1280.f;
+    float proporcionY = m_size.y / 720.f;
+
+    sf::Vector2f centroRuleta(
+        m_position.x + m_size.x - (1100.f * proporcionX),
+        m_position.y + m_size.y / 2.f - (30.f * proporcionY)
+    );
+
+    // Factor de escala para F11
+    float escalaRuleta = std::min(m_size.x / 800.f, m_size.y / 600.f);
+    float radioBorde = 195.f * escalaRuleta;
+    float radioPista = 185.f * escalaRuleta;
+    float radioNumeros = 150.f * escalaRuleta;
+    float radioPelotita = 165.f * escalaRuleta;
+    float radioCentro = 40.f * escalaRuleta;
+    float radioAro = 45.f * escalaRuleta;
+
+    // Círculo exterior
+    sf::CircleShape bordeExterior(radioBorde);
+    bordeExterior.setOrigin(sf::Vector2f(radioBorde, radioBorde));
+    bordeExterior.setPosition(centroRuleta);
+    bordeExterior.setFillColor(sf::Color(80, 40, 20));
+    bordeExterior.setOutlineThickness(3.f * escalaRuleta);
+    bordeExterior.setOutlineColor(sf::Color(120, 80, 40));
+    window.draw(bordeExterior);
+
+    // Pista negra
+    sf::CircleShape pista(radioPista);
+    pista.setOrigin(sf::Vector2f(radioPista, radioPista));
+    pista.setPosition(centroRuleta);
+    pista.setFillColor(sf::Color(15, 10, 5));
+    window.draw(pista);
+
+    // Sectores de colores (FIJOS, no giran)
+    for (int i = 0; i < 37; i++) {
+        float anguloInicio = (i * (360.f / 37.f)) * 3.14159f / 180.f;
+        float anguloFin = ((i + 1) * (360.f / 37.f)) * 3.14159f / 180.f;
+        
+        sf::VertexArray sector(sf::PrimitiveType::TriangleFan, 3);
+        sector[0].position = centroRuleta;
+        
+        int numero = m_ordenRuleta[i];
+        sf::Color colorSector;
+        if (numero == 0) {
+            colorSector = sf::Color(0, 140, 0);
+        } else if (esRojo(numero)) {
+            colorSector = sf::Color(190, 0, 0);
+        } else {
+            colorSector = sf::Color(25, 25, 25);
+        }
+        
+        sector[0].color = colorSector;
+        sector[1].position = centroRuleta + sf::Vector2f(
+            radioPista * std::cos(anguloInicio),
+            radioPista * std::sin(anguloInicio)
+        );
+        sector[1].color = colorSector;
+        sector[2].position = centroRuleta + sf::Vector2f(
+            radioPista * std::cos(anguloFin),
+            radioPista * std::sin(anguloFin)
+        );
+        sector[2].color = colorSector;
+        
+        window.draw(sector);
+    }
+
+    // Líneas separadoras
+    for (int i = 0; i < 37; i++) {
+        float angulo = (i * (360.f / 37.f)) * 3.14159f / 180.f;
+        
+        sf::VertexArray linea(sf::PrimitiveType::Lines, 2);
+        linea[0].position = centroRuleta;
+        linea[0].color = sf::Color(80, 70, 50);
+        linea[1].position = centroRuleta + sf::Vector2f(
+            radioPista * std::cos(angulo),
+            radioPista * std::sin(angulo)
+        );
+        linea[1].color = sf::Color(80, 70, 50);
+        window.draw(linea);
+    }
+
+    // Números (FIJOS)
+    for (int i = 0; i < 37; i++) {
+        m_numerosRuleta[i].setFillColor(sf::Color::White);
+        m_numerosRuleta[i].setOutlineThickness(1.f);
+        m_numerosRuleta[i].setOutlineColor(sf::Color::Black);
+        m_numerosRuleta[i].setCharacterSize(13 * escalaRuleta);
+        
+        float angulo = (i * (360.f / 37.f) + (360.f / 74.f)) * 3.14159f / 180.f;
+        float x = centroRuleta.x + radioNumeros * std::cos(angulo);
+        float y = centroRuleta.y + radioNumeros * std::sin(angulo);
+        
+        sf::FloatRect tb = m_numerosRuleta[i].getLocalBounds();
+        m_numerosRuleta[i].setOrigin(sf::Vector2f(tb.size.x / 2.f, tb.size.y / 2.f));
+        m_numerosRuleta[i].setPosition(sf::Vector2f(x, y));
+        m_numerosRuleta[i].setString(std::to_string(m_ordenRuleta[i]));
+        
+        window.draw(m_numerosRuleta[i]);
+    }
+
+    // Círculo interior
+    sf::CircleShape centroInterior(radioCentro);
+    centroInterior.setOrigin(sf::Vector2f(radioCentro, radioCentro));
+    centroInterior.setPosition(centroRuleta);
+    centroInterior.setFillColor(sf::Color(50, 25, 10));
+    centroInterior.setOutlineThickness(3.f * escalaRuleta);
+    centroInterior.setOutlineColor(sf::Color(180, 150, 50));
+    window.draw(centroInterior);
+
+    // Aro metálico
+    sf::CircleShape aroMetalico(radioAro);
+    aroMetalico.setOrigin(sf::Vector2f(radioAro, radioAro));
+    aroMetalico.setPosition(centroRuleta);
+    aroMetalico.setFillColor(sf::Color::Transparent);
+    aroMetalico.setOutlineThickness(2.f * escalaRuleta);
+    aroMetalico.setOutlineColor(sf::Color(200, 200, 200));
+    window.draw(aroMetalico);
+
+    // Flecha arriba
+    m_flecha.setSize(sf::Vector2f(6.f * escalaRuleta, 25.f * escalaRuleta));
+    m_flecha.setOrigin(sf::Vector2f(3.f * escalaRuleta, 25.f * escalaRuleta));
+    m_flecha.setPosition(sf::Vector2f(centroRuleta.x, centroRuleta.y - radioBorde));
+    window.draw(m_flecha);
+
+    // Pelotita girando
+    if (m_pelotitaGirando || m_mostrandoResultado) {
+        float anguloPelotita = fmod(m_anguloPelotita, 360.f) * 3.14159f / 180.f;
+        
+        m_pelotita.setRadius(7.f * escalaRuleta);
+        m_pelotita.setOrigin(sf::Vector2f(7.f * escalaRuleta, 7.f * escalaRuleta));
+        
+        sf::Vector2f posPelotita(
+            centroRuleta.x + radioPelotita * std::cos(anguloPelotita),
+            centroRuleta.y + radioPelotita * std::sin(anguloPelotita)
+        );
+        
+        m_pelotita.setPosition(posPelotita);
+        window.draw(m_pelotita);
+    }
+
+    // Iluminar franja ganadora
+    if (m_mostrandoResultado) {
+        int indiceGanador = 0;
+        for (int i = 0; i < 37; i++) {
+            if (m_ordenRuleta[i] == m_numeroGanador) {
+                indiceGanador = i;
+                break;
+            }
+        }
+        
+        float anguloInicioFranja = (indiceGanador * (360.f / 37.f)) * 3.14159f / 180.f;
+        float anguloFinFranja = ((indiceGanador + 1) * (360.f / 37.f)) * 3.14159f / 180.f;
+        
+        sf::VertexArray franjaIluminada(sf::PrimitiveType::TriangleFan, 3);
+        franjaIluminada[0].position = centroRuleta;
+        franjaIluminada[0].color = sf::Color(255, 255, 100, 100);
+        franjaIluminada[1].position = centroRuleta + sf::Vector2f(
+            radioPista * std::cos(anguloInicioFranja),
+            radioPista * std::sin(anguloInicioFranja)
+        );
+        franjaIluminada[1].color = sf::Color(255, 255, 100, 100);
+        franjaIluminada[2].position = centroRuleta + sf::Vector2f(
+            radioPista * std::cos(anguloFinFranja),
+            radioPista * std::sin(anguloFinFranja)
+        );
+        franjaIluminada[2].color = sf::Color(255, 255, 100, 100);
+        window.draw(franjaIluminada);
     }
     
-    // Instrucciones
-    if (m_instruccionesText) {
-        m_instruccionesText->setPosition(sf::Vector2f(
-            m_position.x + 30.f,
-            m_position.y + m_size.y - 50.f
-        ));
-        window.draw(*m_instruccionesText);
-    }
-    
-    // Dinero
-    if (m_dineroText && m_dineroJugador) {
-        m_dineroText->setString("Tu dinero: $" + std::to_string(*m_dineroJugador));
-        m_dineroText->setPosition(sf::Vector2f(
-            m_position.x + 30.f,
-            m_position.y + 20.f
-        ));
-        window.draw(*m_dineroText);
-    }
-    
-    // Texto de apuesta
-    if (m_apuestaText) {
-        m_apuestaText->setString("Apuesta: $" + std::to_string(m_apuesta));
-        m_apuestaText->setPosition(sf::Vector2f(
-            m_position.x + m_size.x * 0.55f,
-            m_position.y + 250.f
-        ));
-        window.draw(*m_apuestaText);
-    }
-    
-    // ===== DIBUJAR BOTONES PRINCIPALES =====
+    // ===== BOTONES DEBAJO DE LA IMAGEN =====
+    float btnWidth = 180.f;
+    float btnHeight = 40.f;
+    float btnSpacing = 50.f;
+    float marginBottom = 10.f;
+
+    // Centrar los botones horizontalmente debajo de la imagen
+    float btnX = m_position.x + m_size.x / 1.5f - (btnWidth * 3 + 20.f) / 2.f;
+    float btnY = m_position.y + m_size.y - btnHeight * 2 - btnSpacing + 30.f;
+
+    // Primera fila: Número Exacto | Cuarto | Color
+    m_btnNumeroExacto.setSize(sf::Vector2f(btnWidth, btnHeight));
+    m_btnNumeroExacto.setPosition(sf::Vector2f(btnX, btnY));
+
+    m_btnCuarto.setSize(sf::Vector2f(btnWidth, btnHeight));
+    m_btnCuarto.setPosition(sf::Vector2f(btnX + btnWidth + 10.f, btnY));
+
+    m_btnColor.setSize(sf::Vector2f(btnWidth, btnHeight));
+    m_btnColor.setPosition(sf::Vector2f(btnX + (btnWidth + 10.f) * 2, btnY));
+
+    // Segunda fila: [-] [Apuesta: $X] [+] | [GIRAR]
+    float fila2Y = btnY + btnHeight + 10.f;
+
+    m_btnDisminuir.setSize(sf::Vector2f(40.f, 35.f));
+    m_btnDisminuir.setPosition(sf::Vector2f(btnX, fila2Y));
+
+    m_btnAumentar.setSize(sf::Vector2f(40.f, 35.f));
+    m_btnAumentar.setPosition(sf::Vector2f(btnX + btnWidth - 40.f, fila2Y));
+
+    m_btnGirar.setSize(sf::Vector2f(btnWidth * 2 + 10.f, 40.f));
+    m_btnGirar.setPosition(sf::Vector2f(btnX + btnWidth + 10.f, fila2Y));
+
+    // Dibujar botones
     window.draw(m_btnNumeroExacto);
     window.draw(m_btnCuarto);
     window.draw(m_btnColor);
     window.draw(m_btnDisminuir);
     window.draw(m_btnAumentar);
     window.draw(m_btnGirar);
-    
-    // Textos de botones
+
+    // Función para centrar texto
     auto centerTextInButton = [](sf::Text& text, const sf::RectangleShape& btn) {
         sf::FloatRect tb = text.getLocalBounds();
         text.setOrigin(sf::Vector2f(tb.size.x / 2.f, tb.size.y / 2.f));
@@ -526,36 +744,75 @@ void MinigameRuleta::draw(sf::RenderWindow& window) {
             btn.getPosition().y + btn.getSize().y / 2.f
         ));
     };
+
+    // Textos de botones
+    if (m_textoBtnExacto) { centerTextInButton(*m_textoBtnExacto, m_btnNumeroExacto); window.draw(*m_textoBtnExacto); }
+    if (m_textoBtnCuarto) { centerTextInButton(*m_textoBtnCuarto, m_btnCuarto); window.draw(*m_textoBtnCuarto); }
+    if (m_textoBtnColor) { centerTextInButton(*m_textoBtnColor, m_btnColor); window.draw(*m_textoBtnColor); }
+    if (m_textoBtnDisminuir) { 
+        sf::FloatRect tb = m_textoBtnDisminuir->getLocalBounds();
+        m_textoBtnDisminuir->setOrigin(sf::Vector2f(tb.size.x / 2.f, tb.size.y / 2.f));
+        m_textoBtnDisminuir->setPosition(sf::Vector2f(
+            m_btnDisminuir.getPosition().x + 20.f,
+            m_btnDisminuir.getPosition().y + 17.5f
+        ));
+        window.draw(*m_textoBtnDisminuir); 
+    }
+    if (m_textoBtnAumentar) { 
+        sf::FloatRect tb = m_textoBtnAumentar->getLocalBounds();
+        m_textoBtnAumentar->setOrigin(sf::Vector2f(tb.size.x / 2.f, tb.size.y / 2.f));
+        m_textoBtnAumentar->setPosition(sf::Vector2f(
+            m_btnAumentar.getPosition().x + 20.f,
+            m_btnAumentar.getPosition().y + 17.5f
+        ));
+        window.draw(*m_textoBtnAumentar); 
+    }
+    if (m_textoBtnGirar) { centerTextInButton(*m_textoBtnGirar, m_btnGirar); window.draw(*m_textoBtnGirar); }
+
+    // Texto de apuesta entre - y +
+    if (m_apuestaText) {
+        m_apuestaText->setString("Apuesta: $" + std::to_string(m_apuesta));
+        sf::FloatRect tb = m_apuestaText->getLocalBounds();
+        m_apuestaText->setOrigin(sf::Vector2f(tb.size.x / 2.f, tb.size.y / 2.f));
+        m_apuestaText->setPosition(sf::Vector2f(
+            m_btnDisminuir.getPosition().x + 40.f + (m_btnAumentar.getPosition().x - m_btnDisminuir.getPosition().x - 40.f) / 2.f,
+            fila2Y + 17.5f
+        ));
+        window.draw(*m_apuestaText);
+    }
     
-    if (m_textoBtnExacto) {
-        centerTextInButton(*m_textoBtnExacto, m_btnNumeroExacto);
-        window.draw(*m_textoBtnExacto);
-    }
-    if (m_textoBtnCuarto) {
-        centerTextInButton(*m_textoBtnCuarto, m_btnCuarto);
-        window.draw(*m_textoBtnCuarto);
-    }
-    if (m_textoBtnColor) {
-        centerTextInButton(*m_textoBtnColor, m_btnColor);
-        window.draw(*m_textoBtnColor);
-    }
-    if (m_textoBtnDisminuir) {
-        centerTextInButton(*m_textoBtnDisminuir, m_btnDisminuir);
-        window.draw(*m_textoBtnDisminuir);
-    }
-    if (m_textoBtnAumentar) {
-        centerTextInButton(*m_textoBtnAumentar, m_btnAumentar);
-        window.draw(*m_textoBtnAumentar);
-    }
-    if (m_textoBtnGirar) {
-        centerTextInButton(*m_textoBtnGirar, m_btnGirar);
-        window.draw(*m_textoBtnGirar);
+    // Título centrado arriba
+    if (m_tituloText) {
+        sf::FloatRect tb = m_tituloText->getLocalBounds();
+        m_tituloText->setOrigin(sf::Vector2f(tb.size.x / 2.f, 0.f));
+        m_tituloText->setPosition(sf::Vector2f(
+            m_position.x + m_size.x / 2.f,
+            m_position.y + 10.f
+        ));
+        window.draw(*m_tituloText);
     }
     
-    // ===== SELECTOR DE NÚMEROS =====
+    // Dinero (esquina superior izquierda)
+    if (m_dineroText && m_dineroJugador) {
+        m_dineroText->setString("Tu dinero: $" + std::to_string(*m_dineroJugador));
+        m_dineroText->setPosition(sf::Vector2f(m_position.x + 15.f, m_position.y + 10.f));
+        window.draw(*m_dineroText);
+    }
+    
+    // Instrucciones (abajo)
+    if (m_instruccionesText) {
+        m_instruccionesText->setPosition(sf::Vector2f(
+            m_position.x + 15.f,
+            m_position.y + m_size.y - 40.f
+        ));
+        window.draw(*m_instruccionesText);
+    }
+    
+    // Selector de números
+        // Selector de números
     if (m_mostrandoTableroNumeros) {
-        float numX = m_position.x + 30.f;
-        float numY = m_position.y + 80.f;
+        float numX = m_position.x + 15.f;
+        float numY = m_position.y + m_size.y * 0.80f;
         
         for (size_t i = 0; i < m_botonesNumeros.size(); i++) {
             int col = i % 10;
@@ -563,16 +820,14 @@ void MinigameRuleta::draw(sf::RenderWindow& window) {
             
             m_botonesNumeros[i].setPosition(sf::Vector2f(numX + col * 42.f, numY + row * 35.f));
             
-            // Color según número
             if (i == 0) {
-                m_botonesNumeros[i].setFillColor(sf::Color(0, 100, 0, 200)); // Verde
+                m_botonesNumeros[i].setFillColor(sf::Color(0, 100, 0, 200));
             } else if (esRojo(i)) {
                 m_botonesNumeros[i].setFillColor(sf::Color(180, 0, 0, 200));
             } else {
                 m_botonesNumeros[i].setFillColor(sf::Color(30, 30, 30, 200));
             }
             
-            // Resaltar seleccionado
             if ((int)i == m_numeroElegido) {
                 m_botonesNumeros[i].setOutlineColor(sf::Color::Yellow);
                 m_botonesNumeros[i].setOutlineThickness(3.f);
@@ -585,29 +840,22 @@ void MinigameRuleta::draw(sf::RenderWindow& window) {
             }
             
             window.draw(m_botonesNumeros[i]);
-            
             if (m_textosNumeros[i]) {
-                sf::FloatRect tb = m_textosNumeros[i]->getLocalBounds();
-                m_textosNumeros[i]->setOrigin(sf::Vector2f(tb.size.x / 2.f, tb.size.y / 2.f));
-                m_textosNumeros[i]->setPosition(sf::Vector2f(
-                    m_botonesNumeros[i].getPosition().x + 19.f,
-                    m_botonesNumeros[i].getPosition().y + 15.f
-                ));
+                centerTextInButton(*m_textosNumeros[i], m_botonesNumeros[i]);
                 window.draw(*m_textosNumeros[i]);
             }
         }
     }
     
-    // ===== SELECTOR DE CUARTOS =====
+    // Selector de cuartos
     if (m_mostrandoSelectorCuarto) {
-        float cy = m_position.y + 300.f;
-        float cx = m_position.x + 30.f;
+        float cy = m_position.y + m_size.y * 0.80f;
+        float cx = m_position.x + 15.f;
         
         m_btnCuarto1.setPosition(sf::Vector2f(cx, cy));
         m_btnCuarto2.setPosition(sf::Vector2f(cx, cy + 40.f));
         m_btnCuarto3.setPosition(sf::Vector2f(cx, cy + 80.f));
         
-        // Resaltar seleccionado
         m_btnCuarto1.setFillColor(m_cuartoElegido == 0 ? sf::Color(0, 150, 0, 200) : sf::Color(50, 50, 50, 200));
         m_btnCuarto2.setFillColor(m_cuartoElegido == 1 ? sf::Color(0, 150, 0, 200) : sf::Color(50, 50, 50, 200));
         m_btnCuarto3.setFillColor(m_cuartoElegido == 2 ? sf::Color(0, 150, 0, 200) : sf::Color(50, 50, 50, 200));
@@ -616,30 +864,20 @@ void MinigameRuleta::draw(sf::RenderWindow& window) {
         window.draw(m_btnCuarto2);
         window.draw(m_btnCuarto3);
         
-        if (m_textoCuarto1) {
-            centerTextInButton(*m_textoCuarto1, m_btnCuarto1);
-            window.draw(*m_textoCuarto1);
-        }
-        if (m_textoCuarto2) {
-            centerTextInButton(*m_textoCuarto2, m_btnCuarto2);
-            window.draw(*m_textoCuarto2);
-        }
-        if (m_textoCuarto3) {
-            centerTextInButton(*m_textoCuarto3, m_btnCuarto3);
-            window.draw(*m_textoCuarto3);
-        }
+        if (m_textoCuarto1) { centerTextInButton(*m_textoCuarto1, m_btnCuarto1); window.draw(*m_textoCuarto1); }
+        if (m_textoCuarto2) { centerTextInButton(*m_textoCuarto2, m_btnCuarto2); window.draw(*m_textoCuarto2); }
+        if (m_textoCuarto3) { centerTextInButton(*m_textoCuarto3, m_btnCuarto3); window.draw(*m_textoCuarto3); }
     }
     
-    // ===== SELECTOR DE COLORES =====
+    // Selector de colores
     if (m_mostrandoSelectorColor) {
-        float cy = m_position.y + 300.f;
-        float cx = m_position.x + 30.f;
+        float cy = m_position.y + m_size.y * 0.80f;
+        float cx = m_position.x + 15.f;
         
         m_btnRojo.setPosition(sf::Vector2f(cx, cy));
         m_btnNegro.setPosition(sf::Vector2f(cx, cy + 40.f));
         m_btnVerde.setPosition(sf::Vector2f(cx, cy + 80.f));
         
-        // Resaltar seleccionado
         m_btnRojo.setOutlineThickness(m_colorElegido == ColorElegido::ROJO ? 3.f : 1.f);
         m_btnRojo.setOutlineColor(m_colorElegido == ColorElegido::ROJO ? sf::Color::Yellow : sf::Color::Red);
         
@@ -653,26 +891,16 @@ void MinigameRuleta::draw(sf::RenderWindow& window) {
         window.draw(m_btnNegro);
         window.draw(m_btnVerde);
         
-                if (m_textoRojo) {
-            centerTextInButton(*m_textoRojo, m_btnRojo);
-            window.draw(*m_textoRojo);
-        }
-        if (m_textoNegro) {
-            centerTextInButton(*m_textoNegro, m_btnNegro);
-            window.draw(*m_textoNegro);
-        }
-        if (m_textoVerde) {
-            centerTextInButton(*m_textoVerde, m_btnVerde);
-            window.draw(*m_textoVerde);
-        }
+        if (m_textoRojo) { centerTextInButton(*m_textoRojo, m_btnRojo); window.draw(*m_textoRojo); }
+        if (m_textoNegro) { centerTextInButton(*m_textoNegro, m_btnNegro); window.draw(*m_textoNegro); }
+        if (m_textoVerde) { centerTextInButton(*m_textoVerde, m_btnVerde); window.draw(*m_textoVerde); }
     }
     
-    // ===== RESULTADO =====
+    // Resultado
     if (m_mostrandoResultado && m_resultadoText) {
         m_resultadoText->setString(m_mensajeResultado);
-        m_resultadoText->setFillColor(sf::Color::Yellow);
+        m_resultadoText->setFillColor(sf::Color::White);
         
-        // Centrar el texto
         sf::FloatRect bounds = m_resultadoText->getLocalBounds();
         m_resultadoText->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
         m_resultadoText->setPosition(sf::Vector2f(
@@ -680,11 +908,22 @@ void MinigameRuleta::draw(sf::RenderWindow& window) {
             m_position.y + m_size.y / 2.f + 150.f
         ));
         
+        sf::RectangleShape fondoMensaje(sf::Vector2f(bounds.size.x + 40.f, bounds.size.y + 30.f));
+        fondoMensaje.setFillColor(sf::Color(0, 0, 0, 200));
+        fondoMensaje.setOutlineThickness(2.f);
+        fondoMensaje.setOutlineColor(sf::Color::Yellow);
+        fondoMensaje.setOrigin(sf::Vector2f((bounds.size.x + 40.f) / 2.f, (bounds.size.y + 30.f) / 2.f));
+        fondoMensaje.setPosition(sf::Vector2f(
+            m_position.x + m_size.x / 2.f,
+            m_position.y + m_size.y / 2.f + 150.f
+        ));
+        window.draw(fondoMensaje);
+        
         window.draw(*m_resultadoText);
         
-        // Mostrar el número ganador grande
+        // Número ganador
         sf::Text numeroGanadorText(m_font, std::to_string(m_numeroGanador), 60);
-        numeroGanadorText.setFillColor(sf::Color::Yellow);
+        numeroGanadorText.setFillColor(sf::Color::White);
         numeroGanadorText.setStyle(sf::Text::Bold);
         
         sf::FloatRect numBounds = numeroGanadorText.getLocalBounds();
@@ -694,7 +933,57 @@ void MinigameRuleta::draw(sf::RenderWindow& window) {
             m_position.y + m_size.y / 2.f + 50.f
         ));
         
+                // Y fondo para el número también
+        sf::RectangleShape fondoNumero(sf::Vector2f(numBounds.size.x + 40.f, numBounds.size.y + 30.f));
+        fondoNumero.setFillColor(sf::Color(0, 0, 0, 200));
+        fondoNumero.setOutlineThickness(2.f);
+        fondoNumero.setOutlineColor(sf::Color::Yellow);
+        fondoNumero.setOrigin(sf::Vector2f((numBounds.size.x + 40.f) / 2.f, (numBounds.size.y + 30.f) / 2.f));
+        fondoNumero.setPosition(sf::Vector2f(
+            m_position.x + m_size.x / 2.f,
+            m_position.y + m_size.y / 2.f + 50.f
+        ));
+        window.draw(fondoNumero);
+
+        
         window.draw(numeroGanadorText);
     }
 }
-       
+
+void MinigameRuleta::inicializarRuletaAnimada() {
+    if (!m_fontLoaded) return;
+    
+    // Orden real de la ruleta europea
+    m_ordenRuleta = {0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26};
+    
+    
+    float radio = 180.f;
+    m_circuloRuleta.setRadius(radio);
+    m_circuloRuleta.setPointCount(64);
+    m_circuloRuleta.setFillColor(sf::Color(60, 30, 20));
+    m_circuloRuleta.setOutlineThickness(4.f);
+    m_circuloRuleta.setOutlineColor(sf::Color(180, 150, 50));
+    m_circuloRuleta.setOrigin(sf::Vector2f(radio, radio));
+    
+    // Crear números
+    m_numerosRuleta.clear();
+    for (int i = 0; i < 37; i++) {
+        sf::Text num(m_font, std::to_string(i), 13);
+        num.setStyle(sf::Text::Bold);
+        m_numerosRuleta.push_back(num);
+    }
+    
+    // Flecha
+    m_flecha.setSize(sf::Vector2f(6.f, 25.f));
+    m_flecha.setFillColor(sf::Color::Yellow);
+    m_flecha.setOrigin(sf::Vector2f(3.f, 25.f));
+    
+   // Pelotita
+m_pelotita.setRadius(7.f);
+m_pelotita.setFillColor(sf::Color::White);
+m_pelotita.setOutlineThickness(1.f);
+m_pelotita.setOutlineColor(sf::Color(180, 180, 180));
+m_pelotita.setOrigin(sf::Vector2f(7.f, 7.f));
+
+
+}
