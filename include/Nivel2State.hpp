@@ -4,6 +4,7 @@
 #include "State.hpp"
 #include "entities/Player.hpp"
 #include "MinigameRuleta.hpp"
+#include "MinigameBartender.hpp"
 #include <SFML/Graphics.hpp>
 #include <vector>
 #include <memory>
@@ -57,6 +58,7 @@ private:
     
     // Minijuegos
     MinigameRuleta m_ruletaMinigame;
+    MinigameBartender m_bartenderMinigame;
     
     // Fuente y textos
     sf::Font m_font;

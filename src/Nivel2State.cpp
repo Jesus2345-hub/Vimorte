@@ -13,7 +13,7 @@ Nivel2State::Nivel2State(sf::RenderWindow* window, Game* game)
       m_cercaBlackjack(false),
       m_cercaPuertaSalida(false),
       m_cercaVendedor(false),
-      m_dinero(10), // Empieza con $10
+      m_dinero(10),
       m_tieneLlave(false),
       m_fontLoaded(false)
 {
@@ -26,15 +26,13 @@ Nivel2State::Nivel2State(sf::RenderWindow* window, Game* game)
     m_player.setPosition(400.f, 600.f);
     m_player.setSpeed(300.0f);
     
-    // Verificar si es la primera vez para mostrar el tutorial
+    // Tutorial
     if (game->tienePartidaActiva()) {
         const auto& items = game->getSaveManager().getCurrentProgress().itemsRecolectados;
         auto it = std::find(items.begin(), items.end(), "TutorialNivel2Visto");
-        
         if (it == items.end()) {
             m_mostrarTutorial = true;
             game->getSaveManager().addItemRecolectado("TutorialNivel2Visto");
-            std::cout << "Primer ingreso: Mostrando tutorial Nivel 2" << std::endl;
         }
     }
     
@@ -44,24 +42,20 @@ Nivel2State::Nivel2State(sf::RenderWindow* window, Game* game)
         sf::Vector2u textureSize = m_backgroundTexture.getSize();
         m_worldSize = sf::Vector2f(static_cast<float>(textureSize.x),
                                     static_cast<float>(textureSize.y));
-        std::cout << "Nivel 2 cargado. Tamaño: " << m_worldSize.x << "x" << m_worldSize.y << std::endl;
     } else {
-        std::cerr << "Error: No se pudo cargar background del nivel 2" << std::endl;
         m_worldSize = sf::Vector2f(2000.f, 1500.f);
         m_background = nullptr;
     }
     
     // Cámara fija 1280x720
     sf::Vector2u windowSize = window->getSize();
-    float fixedWidth = 1280.f;
-    float fixedHeight = 720.f;
     m_camera = sf::View(
         sf::Vector2f(m_worldSize.x / 2.f, m_worldSize.y / 2.f),
-        sf::Vector2f(fixedWidth, fixedHeight)
+        sf::Vector2f(1280.f, 720.f)
     );
     m_lastWindowSize = windowSize;
     
-    // Áreas de interacción (ajustar según el fondo)
+    // Áreas de interacción
     m_barArea = sf::FloatRect(sf::Vector2f(100.f, 100.f), sf::Vector2f(200.f, 150.f));
     m_ruletaArea = sf::FloatRect(sf::Vector2f(600.f, 200.f), sf::Vector2f(300.f, 200.f));
     m_slotMachineArea = sf::FloatRect(sf::Vector2f(1000.f, 100.f), sf::Vector2f(150.f, 150.f));
@@ -71,22 +65,24 @@ Nivel2State::Nivel2State(sf::RenderWindow* window, Game* game)
     
     configurarColisiones();
     
-    // Configurar minijuego de ruleta
-    m_ruletaMinigame.setSize(sf::Vector2f(800.f, 600.f));
-    m_ruletaMinigame.setPosition(sf::Vector2f(
-        (windowSize.x - 800.f) / 2.f,
-        (windowSize.y - 600.f) / 2.f
-    ));
+    // ========== CONFIGURAR MINIJUEGOS ==========
+    float minijuegoW = windowSize.x * 0.8f;
+    float minijuegoH = windowSize.y * 0.8f;
+    float minijuegoX = (windowSize.x - minijuegoW) / 2.f;
+    float minijuegoY = (windowSize.y - minijuegoH) / 2.f;
+    
+    // Ruleta
+    m_ruletaMinigame.setSize(sf::Vector2f(minijuegoW, minijuegoH));
+    m_ruletaMinigame.setPosition(sf::Vector2f(minijuegoX, minijuegoY));
     m_ruletaMinigame.setDineroJugador(&m_dinero);
     
-    actualizarPosicionRuleta();
+    // Bartender
+    m_bartenderMinigame.setSize(sf::Vector2f(minijuegoW, minijuegoH));
+    m_bartenderMinigame.setPosition(sf::Vector2f(minijuegoX, minijuegoY));
+    m_bartenderMinigame.setDineroJugador(&m_dinero);
     
-    // Cargar fuente
+    // Fuente
     m_fontLoaded = m_font.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf");
-    if (!m_fontLoaded) {
-        std::cerr << "ERROR en Nivel2State: No se pudo cargar la fuente" << std::endl;
-    }
-    
     if (m_fontLoaded) {
         m_textoInteraccion = std::make_unique<sf::Text>(m_font);
         m_textoInteraccion->setCharacterSize(18);
@@ -106,12 +102,11 @@ Nivel2State::Nivel2State(sf::RenderWindow* window, Game* game)
     if (game->tienePartidaActiva()) {
         game->getSaveManager().setNivelActual(2, 2);
         game->guardarPartidaActual();
-        std::cout << "Partida guardada en Nivel 2" << std::endl;
     }
     
-    std::cout << "Nivel2State inicializado. Dinero inicial: $" << m_dinero << std::endl;
     game->setIsInLevel(true);
 }
+
 
 void Nivel2State::configurarColisiones() {
     m_mapaFisico.clear();
@@ -158,6 +153,20 @@ void Nivel2State::handleEvent(const sf::Event& event) {
         }
     }
     
+    // Minijuego de bartender
+    if (m_bartenderMinigame.isActive()) {
+        m_bartenderMinigame.handleEvent(event, *window);
+        if (event.is<sf::Event::KeyPressed>()) {
+            const auto& keyEvent = event.getIf<sf::Event::KeyPressed>();
+            if (keyEvent->code == sf::Keyboard::Key::Escape) {
+                m_bartenderMinigame.deactivate();
+                m_escapeConsumed = true;
+                return;
+            }
+        }
+        return;
+    }
+    
     // Minijuego de ruleta
     if (m_ruletaMinigame.isActive()) {
         m_ruletaMinigame.handleEvent(event, *window);
@@ -169,6 +178,13 @@ void Nivel2State::handleEvent(const sf::Event& event) {
                 return;
             }
         }
+        return;
+    }
+    
+    // Inventario
+    Inventory* inv = m_player.getInventory();
+    if (inv) {
+        inv->handleEvent(event, *window);
     }
 }
 
@@ -192,23 +208,22 @@ void Nivel2State::verificarSalidaNivel() {
 }
 
 void Nivel2State::update(float dt) {
-    // Actualizar tamaño de la ruleta si cambia la ventana
+    // Actualizar tamaño de los minijuegos si cambia la ventana
     sf::Vector2u currentSize = window->getSize();
     static sf::Vector2u lastSize = currentSize;
     if (currentSize != lastSize) {
         lastSize = currentSize;
-        float ruletaW = currentSize.x * 0.8f;
-        float ruletaH = currentSize.y * 0.8f;
-        float ruletaX = (currentSize.x - ruletaW) / 2.f;
-        float ruletaY = (currentSize.y - ruletaH) / 2.f;
-        m_ruletaMinigame.setSize(sf::Vector2f(ruletaW, ruletaH));
-        m_ruletaMinigame.setPosition(sf::Vector2f(ruletaX, ruletaY));
+        float minijuegoW = currentSize.x * 0.8f;
+        float minijuegoH = currentSize.y * 0.8f;
+        float minijuegoX = (currentSize.x - minijuegoW) / 2.f;
+        float minijuegoY = (currentSize.y - minijuegoH) / 2.f;
         
-        std::cout << "Ruleta actualizada: " << ruletaW << "x" << ruletaH 
-                  << " en (" << ruletaX << "," << ruletaY << ")" << std::endl;
+        m_ruletaMinigame.setSize(sf::Vector2f(minijuegoW, minijuegoH));
+        m_ruletaMinigame.setPosition(sf::Vector2f(minijuegoX, minijuegoY));
+        
+        m_bartenderMinigame.setSize(sf::Vector2f(minijuegoW, minijuegoH));
+        m_bartenderMinigame.setPosition(sf::Vector2f(minijuegoX, minijuegoY));
     }
-    
-    // ... resto del update ...
 
     // Mensaje temporal
     if (m_textoMensaje && m_msjActual.tiempoRestante > 0.0f) {
@@ -233,9 +248,39 @@ void Nivel2State::update(float dt) {
     m_cercaBar = m_player.getHurtbox().findIntersection(m_barArea).has_value();
     m_cercaVendedor = m_player.getHurtbox().findIntersection(m_vendedorArea).has_value();
     
+    // ========== BARTENDER ACTIVO ==========
+    if (m_bartenderMinigame.isActive()) {
+        m_bartenderMinigame.update(dt);
+        m_player.update(dt);
+        
+        sf::Vector2f playerPos = m_player.getPosition();
+        sf::Vector2f cameraPos = playerPos;
+        float halfWidth = 1280.f / 2.f;
+        float halfHeight = 720.f / 2.f;
+        cameraPos.x = std::clamp(cameraPos.x, halfWidth, m_worldSize.x - halfWidth);
+        cameraPos.y = std::clamp(cameraPos.y, halfHeight, m_worldSize.y - halfHeight);
+        m_camera.setCenter(cameraPos);
+        return;
+    }
+    
+    // ========== RULETA ACTIVA ==========
+    if (m_ruletaMinigame.isActive()) {
+        m_ruletaMinigame.update(dt);
+        m_player.update(dt);
+        
+        sf::Vector2f playerPos = m_player.getPosition();
+        sf::Vector2f cameraPos = playerPos;
+        float halfWidth = 1280.f / 2.f;
+        float halfHeight = 720.f / 2.f;
+        cameraPos.x = std::clamp(cameraPos.x, halfWidth, m_worldSize.x - halfWidth);
+        cameraPos.y = std::clamp(cameraPos.y, halfHeight, m_worldSize.y - halfHeight);
+        m_camera.setCenter(cameraPos);
+        return;
+    }
+    
     // Activar ruleta
     static bool rPresionado = false;
-    if (m_cercaRuleta && !m_ruletaMinigame.isActive()) {
+    if (m_cercaRuleta) {
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R)) {
             if (!rPresionado) {
                 rPresionado = true;
@@ -247,9 +292,23 @@ void Nivel2State::update(float dt) {
         }
     }
     
+    // Activar bartender
+    static bool rBartenderPresionado = false;
+    if (m_cercaBar) {
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R)) {
+            if (!rBartenderPresionado) {
+                rBartenderPresionado = true;
+                m_bartenderMinigame.activate();
+                std::cout << "Bartender activado!" << std::endl;
+            }
+        } else {
+            rBartenderPresionado = false;
+        }
+    }
+    
     // Comprar llave
     static bool ePresionadoVendedor = false;
-    if (m_cercaVendedor && !m_ruletaMinigame.isActive() && !m_tieneLlave) {
+    if (m_cercaVendedor && !m_tieneLlave) {
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::E)) {
             if (!ePresionadoVendedor) {
                 ePresionadoVendedor = true;
@@ -257,7 +316,6 @@ void Nivel2State::update(float dt) {
                     m_dinero -= 100;
                     m_tieneLlave = true;
                     mostrarMensaje("Has comprado la llave! Ve a la puerta de salida.", 3.0f, sf::Color::Green);
-                    std::cout << "Llave comprada!" << std::endl;
                 } else {
                     mostrarMensaje("Necesitas $100 para comprar la llave. Tienes $" + std::to_string(m_dinero), 2.0f, sf::Color::Red);
                 }
@@ -265,34 +323,6 @@ void Nivel2State::update(float dt) {
         } else {
             ePresionadoVendedor = false;
         }
-    }
-    
-    // Ruleta activa
-    if (m_ruletaMinigame.isActive()) {
-        m_ruletaMinigame.update(dt);
-        m_player.update(dt);
-        
-        // Cámara fija
-        sf::Vector2f playerPos = m_player.getPosition();
-        sf::Vector2f cameraPos = playerPos;
-        float halfWidth = 1280.f / 2.f;
-        float halfHeight = 720.f / 2.f;
-        
-        if (halfWidth * 2.f >= m_worldSize.x) {
-            cameraPos.x = m_worldSize.x / 2.f;
-        } else {
-            if (cameraPos.x < halfWidth) cameraPos.x = halfWidth;
-            if (cameraPos.x > m_worldSize.x - halfWidth) cameraPos.x = m_worldSize.x - halfWidth;
-        }
-        if (halfHeight * 2.f >= m_worldSize.y) {
-            cameraPos.y = m_worldSize.y / 2.f;
-        } else {
-            if (cameraPos.y < halfHeight) cameraPos.y = halfHeight;
-            if (cameraPos.y > m_worldSize.y - halfHeight) cameraPos.y = m_worldSize.y - halfHeight;
-        }
-        m_camera.setCenter(cameraPos);
-        
-        return;
     }
     
     // Movimiento
@@ -327,19 +357,8 @@ void Nivel2State::update(float dt) {
     sf::Vector2f cameraPos = playerPos;
     float halfWidth = 1280.f / 2.f;
     float halfHeight = 720.f / 2.f;
-    
-    if (halfWidth * 2.f >= m_worldSize.x) {
-        cameraPos.x = m_worldSize.x / 2.f;
-    } else {
-        if (cameraPos.x < halfWidth) cameraPos.x = halfWidth;
-        if (cameraPos.x > m_worldSize.x - halfWidth) cameraPos.x = m_worldSize.x - halfWidth;
-    }
-    if (halfHeight * 2.f >= m_worldSize.y) {
-        cameraPos.y = m_worldSize.y / 2.f;
-    } else {
-        if (cameraPos.y < halfHeight) cameraPos.y = halfHeight;
-        if (cameraPos.y > m_worldSize.y - halfHeight) cameraPos.y = m_worldSize.y - halfHeight;
-    }
+    cameraPos.x = std::clamp(cameraPos.x, halfWidth, m_worldSize.x - halfWidth);
+    cameraPos.y = std::clamp(cameraPos.y, halfHeight, m_worldSize.y - halfHeight);
     m_camera.setCenter(cameraPos);
     
     verificarSalidaNivel();
@@ -424,11 +443,11 @@ void Nivel2State::draw() {
             window->draw(*m_textoInteraccion);
         };
         
-        if (m_cercaRuleta && !m_ruletaMinigame.isActive()) {
+        if (m_cercaRuleta && !m_ruletaMinigame.isActive() && !m_bartenderMinigame.isActive()) {
             drawInteractionText("Presiona R para jugar a la ruleta");
         }
         
-        if (m_cercaBar && !m_ruletaMinigame.isActive()) {
+        if (m_cercaBar && !m_bartenderMinigame.isActive() && !m_ruletaMinigame.isActive()) {
             drawInteractionText("Presiona R para trabajar de bartender");
         }
         
@@ -454,9 +473,19 @@ void Nivel2State::draw() {
         window->draw(*m_textoMensaje);
     }
     
-    // Minijuegos
+    // ========== MINIJUEGOS ==========
+    if (m_bartenderMinigame.isActive()) {
+        m_bartenderMinigame.draw(*window);
+    }
+    
     if (m_ruletaMinigame.isActive()) {
         m_ruletaMinigame.draw(*window);
+    }
+    
+    // Inventario
+    Inventory* inv = m_player.getInventory();
+    if (inv) {
+        inv->draw(*window);
     }
     
     // Tutorial
@@ -487,7 +516,6 @@ void Nivel2State::draw() {
         }
     }
 }
-
 void Nivel2State::mostrarMensaje(const std::string& texto, float duracion, sf::Color color) {
     if (!m_textoMensaje) return;
     
