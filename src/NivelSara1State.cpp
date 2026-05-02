@@ -372,7 +372,6 @@ void NivelSara1State::update(float dt) {
                 else if (!m_vitalSignsAndrea.isStabilized()) {
                     m_tetris.reset();
                     m_tetris.activate();
-                    mostrarMensaje("¡Replica el patron del suelo!", 2.f, sf::Color::Green);
                 }
             }
         } else {

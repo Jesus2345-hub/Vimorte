@@ -115,7 +115,7 @@ void MiniGameTetris::loadNextPattern() {
         
         // Actualizar textos de UI
         if (m_hintText) {
-            m_hintText->setString("¡MEMORIZA EL PATRON!");
+            m_hintText->setString("MEMORIZA EL PATRON");
             m_hintText->setFillColor(sf::Color::Yellow);
         }
         
@@ -129,7 +129,7 @@ void MiniGameTetris::loadNextPattern() {
         // Juego completado
         m_gameWon = true;
         if (m_titleText) m_titleText->setString("COMPLETADO");
-        showTemporaryMessage("Has completado los 3 patrones!", sf::Color::Green, 2.f);
+        showTemporaryMessage("Has completado los 3 patrones...", sf::Color::Green, 2.f);
         
         if (m_vitalSigns) {
             m_vitalSigns->stabilize();
@@ -182,7 +182,7 @@ void MiniGameTetris::initUI() {
     m_hintText->setFillColor(sf::Color::Yellow);
     
     m_patternCounterText = std::make_unique<sf::Text>(m_font);
-    m_patternCounterText->setFillColor(sf::Color::Cyan);
+    m_patternCounterText->setFillColor(sf::Color::White);
     m_patternCounterText->setStyle(sf::Text::Bold);
     
     m_closeText = std::make_unique<sf::Text>(m_font);
@@ -441,7 +441,7 @@ void MiniGameTetris::handleEvent(const sf::Event& event, const sf::RenderWindow&
                 if (!m_waitingForVerification && !m_roundCompleted && isGridComplete()) {
                     verifyPattern();
                 } else if (!isGridComplete()) {
-                    showTemporaryMessage("¡Completa todos los espacios primero!", Colors::Orange, 1.5f);
+                    showTemporaryMessage("Completa todos los espacios primero", Colors::Orange, 1.5f);
                 }
                 return;
             }
@@ -508,7 +508,7 @@ void MiniGameTetris::handleEvent(const sf::Event& event, const sf::RenderWindow&
                         placeBlock(m_selectedBlockIndex, gridCell.y, gridCell.x);
                         showTemporaryMessage("Bloque colocado", sf::Color::Green, 0.5f);
                     } else {
-                        showTemporaryMessage("¡Casilla ocupada!", Colors::Orange, 0.8f);
+                        showTemporaryMessage("Casilla ocupada", Colors::Orange, 0.8f);
                     }
                 }
             }
@@ -584,7 +584,7 @@ void MiniGameTetris::placeBlock(int blockIndex, int row, int col) {
 // Verificar si el patrón del jugador es correcto
 void MiniGameTetris::verifyPattern() {
     if (!isGridComplete()) {
-        showTemporaryMessage("¡Completa todos los espacios primero!", Colors::Orange, 1.5f);
+        showTemporaryMessage("Completa todos los espacios primero", Colors::Orange, 1.5f);
         return;
     }
     
@@ -613,7 +613,7 @@ void MiniGameTetris::verifyPattern() {
     
     // Procesar resultado
     if (allCorrect) {
-        showTemporaryMessage("¡PATRON CORRECTO!", sf::Color::Green, 1.5f);
+        showTemporaryMessage("PATRON CORRECTO", sf::Color::Green, 1.5f);
         m_currentPatternIndex++;
         m_patternsCompleted++;
         m_roundCompleted = true;
@@ -707,7 +707,7 @@ void MiniGameTetris::update(float dt) {
         if (m_patternVisibleTimer <= 0.f) {
             m_isPatternVisible = false;
             if (m_hintText) {
-                m_hintText->setString("¡El patron ha desaparecido! Replica de memoria");
+                m_hintText->setString("El patron ha desaparecido. Replica de memoria");
                 m_hintText->setFillColor(sf::Color::Red);
             }
         }
@@ -802,7 +802,7 @@ void MiniGameTetris::draw(sf::RenderWindow& window) {
     
     if (m_patternCounterText) {
         m_patternCounterText->setCharacterSize(static_cast<unsigned int>(24 * scale));
-        m_patternCounterText->setPosition(sf::Vector2f(screenW - 120, screenH * 0.03f));
+        m_patternCounterText->setPosition(sf::Vector2f(screenW - 1220, screenH * 0.03f + 20.f));
         window.draw(*m_patternCounterText);
     }
     
@@ -869,7 +869,7 @@ void MiniGameTetris::draw(sf::RenderWindow& window) {
     if (m_messageText && !m_messageText->getString().isEmpty()) {
         m_messageText->setCharacterSize(static_cast<unsigned int>(28 * scale));
         sf::FloatRect bounds = m_messageText->getLocalBounds();
-        m_messageText->setPosition(sf::Vector2f(screenW / 2 - bounds.size.x / 2, screenH * 0.18f));
+        m_messageText->setPosition(sf::Vector2f(screenW / 2 - bounds.size.x / 2, screenH * 0.80f));
         window.draw(*m_messageText);
     }
 }
