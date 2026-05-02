@@ -1,4 +1,5 @@
 #include "Game.hpp"
+#include "Config.hpp"
 #include "MenuState.hpp"
 #include "State.hpp"
 #include "Nivel1State.hpp"
@@ -14,29 +15,32 @@
 Game::Game()
 {
     // Cargar configuración de pantalla ANTES de crear la ventana
-    Config::getInstance().cargar();
-    
-    if (Config::getInstance().isPantallaCompleta()) {
+    Config::cargar();
+
+    if (Config::isPantallaCompleta())
+    {
         sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
         window = std::make_unique<sf::RenderWindow>(
-            sf::VideoMode({desktop.size.x, desktop.size.y}), 
-            "Vimorte", 
-            sf::State::Fullscreen
-        );
-    } else {
+            sf::VideoMode({desktop.size.x, desktop.size.y}),
+            "Vimorte",
+            sf::State::Fullscreen);
+    }
+    else
+    {
         window = std::make_unique<sf::RenderWindow>(
-            sf::VideoMode({1280, 720}), 
-            "Vimorte", 
-            sf::State::Windowed
-        );
+            sf::VideoMode({1280, 720}),
+            "Vimorte",
+            sf::State::Windowed);
         sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
         window->setPosition(sf::Vector2i(
             (desktop.size.x - 1280) / 2,
-            (desktop.size.y - 720) / 2
-        ));
+            (desktop.size.y - 720) / 2));
     }
-    
-    window->setFramerateLimit(60);
+
+    sf::Vector2u winSize = window->getSize();
+    window->setView(sf::View(sf::FloatRect(
+        sf::Vector2f(0.f, 0.f),
+        sf::Vector2f(static_cast<float>(winSize.x), static_cast<float>(winSize.y)))));
 
     // Cargar configuración de audio guardada
     cargarConfiguracionAudio();
@@ -45,15 +49,7 @@ Game::Game()
     levelTree.buildTree();
 
     // Crear menú principal
-   // Asegurar que la vista esté actualizada antes de crear el menú
-sf::Vector2u winSize = window->getSize();
-window->setView(sf::View(sf::FloatRect(
-    sf::Vector2f(0.f, 0.f),
-    sf::Vector2f(static_cast<float>(winSize.x), static_cast<float>(winSize.y))
-)));
-
-// Crear menú principal
-states.push(std::make_unique<MenuState>(window.get(), this));
+    states.push(std::make_unique<MenuState>(window.get(), this));
 }
 
 Game::~Game()
@@ -142,8 +138,10 @@ void Game::detenerMusica()
 
 void Game::setVolGeneral(float v)
 {
-    if (v < 0.f) v = 0.f;
-    if (v > 100.f) v = 100.f;
+    if (v < 0.f)
+        v = 0.f;
+    if (v > 100.f)
+        v = 100.f;
     volGeneral = v;
     actualizarVolumenMusica();
     guardarConfiguracionAudio();
@@ -151,8 +149,10 @@ void Game::setVolGeneral(float v)
 
 void Game::setVolMusica(float v)
 {
-    if (v < 0.f) v = 0.f;
-    if (v > 100.f) v = 100.f;
+    if (v < 0.f)
+        v = 0.f;
+    if (v > 100.f)
+        v = 100.f;
     volMusica = v;
     actualizarVolumenMusica();
     guardarConfiguracionAudio();
@@ -160,8 +160,10 @@ void Game::setVolMusica(float v)
 
 void Game::setVolEfectos(float v)
 {
-    if (v < 0.f) v = 0.f;
-    if (v > 100.f) v = 100.f;
+    if (v < 0.f)
+        v = 0.f;
+    if (v > 100.f)
+        v = 100.f;
     volEfectos = v;
     guardarConfiguracionAudio();
 }
@@ -302,33 +304,34 @@ void Game::run()
 
             // ===== Alternar entre ventana normal y maximizada con F11 =====
             if (const auto *keyEvent = event->getIf<sf::Event::KeyPressed>())
-{
-    if (keyEvent->code == sf::Keyboard::Key::F11)
-    {
-        if (tienePartidaActiva())
-        {
-            guardarPartidaActual();
-        }
-        
-        Config::getInstance().alternarPantalla(window.get());
-        
-        sf::Vector2u newSize = window->getSize();
-        window->setView(sf::View(sf::FloatRect(
-            sf::Vector2f(0.f, 0.f),
-            sf::Vector2f(static_cast<float>(newSize.x), static_cast<float>(newSize.y))
-        )));
-        
-        // Si NO estamos en un nivel, recrear el menú para que se centre
-        if (!m_isInLevel)
-        {
-            while (!states.empty()) states.pop();
-            states.push(std::make_unique<MenuState>(window.get(), this));
-        }
-        
-        std::cout << "F11: " << newSize.x << "x" << newSize.y 
-                  << (m_isInLevel ? " (nivel)" : " (menú recreado)") << std::endl;
-    }
-}
+            {
+                if (keyEvent->code == sf::Keyboard::Key::F11)
+                {
+                    if (tienePartidaActiva())
+                    {
+                        guardarPartidaActual();
+                    }
+
+                    Config::alternarPantalla(window.get());
+
+                    sf::Vector2u newSize = window->getSize();
+                    window->setView(sf::View(sf::FloatRect(
+                        sf::Vector2f(0.f, 0.f),
+                        sf::Vector2f(static_cast<float>(newSize.x), static_cast<float>(newSize.y)))));
+
+                    // Notificar al MenuState que redimensione (si es el estado actual)
+                    if (!states.empty())
+                    {
+                        if (auto *menuState = dynamic_cast<MenuState *>(states.top().get()))
+                        {
+                            menuState->redimensionar(static_cast<float>(newSize.x), static_cast<float>(newSize.y));
+                        }
+                    }
+
+                    std::cout << "F11: " << newSize.x << "x" << newSize.y
+                              << (m_isInLevel ? " (nivel)" : " (menu)") << std::endl;
+                }
+            }
 
             if (!states.empty())
             {
@@ -359,7 +362,7 @@ void Game::run()
                 states.push(std::move(temp.top()));
                 temp.pop();
             }
-            
+
             for (int i = paraDibujar.size() - 1; i >= 0; --i)
             {
                 window->setView(window->getDefaultView());
@@ -405,20 +408,22 @@ void Game::returnToMenu()
 
     levelTree.resetToRoot();
 
-    m_isInLevel = false;  // ← ESTA LÍNEA ES NUEVA
+    m_isInLevel = false; // ← ESTA LÍNEA ES NUEVA
 
     auto menuState = std::make_unique<MenuState>(window.get(), this);
     states.push(std::move(menuState));
 
     std::cout << "✅ Menú principal cargado correctamente" << std::endl;
 }
-void Game::setPantallaCompleta(bool fullscreen) {
-    Config::getInstance().setPantallaCompleta(fullscreen);
-    Config::getInstance().alternarPantalla(window.get());
+void Game::setPantallaCompleta(bool fullscreen)
+{
+    Config::setPantallaCompleta(fullscreen);
+    Config::alternarPantalla(window.get());
 }
 
-void Game::aplicarConfiguracionPantalla() {
-    Config::getInstance().alternarPantalla(window.get());
+void Game::aplicarConfiguracionPantalla()
+{
+    Config::alternarPantalla(window.get());
 }
 
 void Game::reintentarCentinela()

@@ -26,6 +26,7 @@ public:
     void update(float deltaTiempo) override;
     void draw() override;
     void handleEvent(const sf::Event& event) override;
+    void redimensionar(float ancho, float alto);
 };
 
 #endif
