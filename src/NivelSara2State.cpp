@@ -1,0 +1,737 @@
+#include "NivelSara2State.hpp"
+#include "PauseState.hpp"
+#include "MuerteCentinelaState.hpp"
+#include "CoordenadasDebug.hpp"
+#include <iostream>
+#include <cmath>
+#include <algorithm>
+
+NivelSara2State::NivelSara2State(sf::RenderWindow *window, Game *game)
+    : State(window, game),
+      m_background(nullptr),
+      m_textoInteraccion(nullptr),
+      m_mostrarPuertaSalida(true),
+      m_cercaPuertaSalida(false),
+      m_escapeConsumed(false),
+      m_mostrarTutorial(false),
+      m_mostrarTutorialPorTecla(false),
+      m_msjActual(),
+      m_fontLoaded(false)
+{
+    m_cercaBloqueInteractivo = false;
+    m_mensajeEmergenteActivo = false;
+    m_bloqueActualIndex = -1;
+    m_msjActual.texto = "";
+    m_msjActual.tiempoRestante = 0.0f;
+    m_msjActual.color = sf::Color::Yellow;
+
+    m_player.loadAssets();
+    m_player.setPosition(315.f, 435.f);
+    m_player.setSpeed(300.0f);
+
+    // Verificar si es la primera vez para mostrar el tutorial
+    if (game->tienePartidaActiva())
+    {
+        const auto &items = game->getSaveManager().getCurrentProgress().itemsRecolectados;
+        auto it = std::find(items.begin(), items.end(), "TutorialSara2Visto");
+
+        if (it == items.end())
+        {
+            m_mostrarTutorial = true;
+            game->getSaveManager().addItemRecolectado("TutorialSara2Visto");
+            std::cout << "Primer ingreso a NivelSara2: Mostrando tutorial" << std::endl;
+        }
+    }
+
+    if (m_backgroundTexture.loadFromFile("assets/images/niveles/nivel_sara2/background.png"))
+    {
+        m_background = std::make_unique<sf::Sprite>(m_backgroundTexture);
+        sf::Vector2u textureSize = m_backgroundTexture.getSize();
+        m_worldSize = sf::Vector2f(static_cast<float>(textureSize.x),
+                                   static_cast<float>(textureSize.y));
+        std::cout << "NivelSara2 cargado. Tamaño: " << m_worldSize.x << "x" << m_worldSize.y << std::endl;
+    }
+    else
+    {
+        std::cerr << "Error: No se pudo cargar background.jpg para NivelSara2" << std::endl;
+        m_worldSize = sf::Vector2f(1754.f, 1587.f);
+    }
+
+    sf::Vector2u windowSize = window->getSize();
+
+    // Cámara con tamaño
+    float fixedWidth = 1280.f;
+    float fixedHeight = 720.f;
+    m_camera = sf::View(
+        sf::Vector2f(m_worldSize.x / 2.f, m_worldSize.y / 2.f),
+        sf::Vector2f(fixedWidth, fixedHeight));
+    m_lastWindowSize = windowSize;
+
+    // ========== ÁREAS DE INTERACCIÓN ==========
+    m_puertaSalidaArea = sf::FloatRect(sf::Vector2f(1550.f, 1350.f), sf::Vector2f(120.f, 180.f));
+
+    configurarColisiones();
+    configurarMinijuegoCriminal();
+    configurarBloquesInteractivos();
+    // ========== CARGA DE FUENTE ==========
+    m_fontLoaded = m_font.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf");
+    if (!m_fontLoaded)
+    {
+        std::cerr << "ERROR en NivelSara2State: No se pudo cargar la fuente" << std::endl;
+    }
+
+    if (m_fontLoaded)
+    {
+        m_textoInteraccion = std::make_unique<sf::Text>(m_font);
+        m_textoInteraccion->setString("Interacción");
+        m_textoInteraccion->setCharacterSize(20);
+        m_textoInteraccion->setFillColor(sf::Color::White);
+        m_textoInteraccion->setPosition(sf::Vector2f(windowSize.x / 2.f, windowSize.y - 70.f));
+
+        sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
+        m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
+
+        m_textoMensaje = std::make_unique<sf::Text>(m_font);
+        m_textoMensaje->setCharacterSize(24);
+        m_textoMensaje->setFillColor(sf::Color::Yellow);
+    }
+    else
+    {
+        m_textoInteraccion = nullptr;
+        m_textoMensaje = nullptr;
+    }
+
+    // ========== GUARDADO AUTOMÁTICO ==========
+    if (game->tienePartidaActiva())
+    {
+        game->getSaveManager().setNivelActual(5, 1);
+        game->guardarPartidaActual();
+        std::cout << "Partida guardada automáticamente en NivelSara2" << std::endl;
+    }
+
+    std::cout << "NivelSara2State inicializado correctamente" << std::endl;
+    game->setIsInLevel(true);
+    // ===== ACTIVAR DEBUG DE COORDENADAS SIEMPRE =====
+    CoordenadasDebug::getInstance().setVisible(true);
+}
+void NivelSara2State::configurarBloquesInteractivos()
+{
+    m_bloquesInteractivos.clear();
+    
+    m_bloquesInteractivos.push_back({
+        sf::FloatRect(sf::Vector2f(280.f, 944.f), sf::Vector2f(100.f, 100.f)),
+        "Andrea Tiene horas buscando sus joyas\n mas preciosas.\nHa perdido toda esperanza....\n encuentralos y debajo de los asiento"
+    });
+    // Agrega mas si es necesario
+}
+void NivelSara2State::handleEvent(const sf::Event &event)
+{
+    // ===== PRIORIDAD: SI HAY MENSAJE EMERGENTE, ESCAPE LO CIERRA =====
+    if (m_mensajeEmergenteActivo) {
+        if (const auto *keyPressed = event.getIf<sf::Event::KeyPressed>()) {
+            if (keyPressed->code == sf::Keyboard::Key::Escape) {
+                m_mensajeEmergenteActivo = false;
+                m_bloqueActualIndex = -1;
+                std::cout << "Mensaje emergente cerrado con Escape" << std::endl;
+                return;  // No procesar más eventos
+            }
+        }
+        return;  // No procesar nada más mientras el mensaje está activo
+    }
+    
+    // ===== TECLAS GLOBALES (solo si NO hay mensaje activo) =====
+    if (const auto *keyPressed = event.getIf<sf::Event::KeyPressed>())
+    {
+        if (keyPressed->code == sf::Keyboard::Key::Escape)
+        {
+            if (m_mostrarTutorial || m_mostrarTutorialPorTecla)
+            {
+                m_mostrarTutorial = false;
+                m_mostrarTutorialPorTecla = false;
+                return;
+            }
+            // Si no hay mensaje, aquí NO abrimos pausa - eso se maneja en update()
+        }
+
+        if (keyPressed->code == sf::Keyboard::Key::M)
+        {
+            std::cout << "M presionada - Activando tutorial" << std::endl;
+            if (game->tienePartidaActiva())
+            {
+                const auto &items = game->getSaveManager().getCurrentProgress().itemsRecolectados;
+                auto it = std::find(items.begin(), items.end(), "TutorialSara2Visto");
+                if (it != items.end())
+                {
+                    m_mostrarTutorialPorTecla = true;
+                }
+                else
+                {
+                    m_mostrarTutorial = true;
+                }
+            }
+            else
+            {
+                m_mostrarTutorialPorTecla = true;
+            }
+        }
+    }
+
+    Inventory *inv = m_player.getInventory();
+    if (inv)
+    {
+        inv->handleEvent(event, *window);
+    }
+    // Manejar eventos del minijuego criminal
+    if (m_criminalMinigame.isActive()) {
+        m_criminalMinigame.handleEvent(event, *window);
+        if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>()) {
+            if (keyPressed->code == sf::Keyboard::Key::Escape) {
+                m_criminalMinigame.deactivate();
+                return;
+            }
+        }
+        return;
+    }
+}
+void NivelSara2State::configurarMinijuegoCriminal()
+{
+    m_criminalArea = sf::FloatRect(sf::Vector2f(800.f, 600.f), sf::Vector2f(150.f, 150.f));
+    m_cercaCriminalArea = false;
+    m_criminalGameCompleted = false;
+    
+    // ========== CONFIGURAR 10 OBJETOS PARA LA PLAYA ==========
+    std::vector<ObjetoBuscar> objetos;
+    
+    objetos.emplace_back("Collar Perdido", 
+        sf::FloatRect(sf::Vector2f(200.f, 300.f), sf::Vector2f(60.f, 60.f)),
+        "assets/images/niveles/nivel_sara2/objetos/collar.png",
+        "Un collar de perlas abandonado en la arena");
+    
+    objetos.emplace_back("Carta Mojada", 
+        sf::FloatRect(sf::Vector2f(500.f, 450.f), sf::Vector2f(50.f, 70.f)),
+        "assets/images/niveles/nivel_sara2/objetos/carta.png",
+        "Una carta que revela información crucial");
+    
+    objetos.emplace_back("Reloj Arena", 
+        sf::FloatRect(sf::Vector2f(350.f, 200.f), sf::Vector2f(45.f, 70.f)),
+        "assets/images/niveles/nivel_sara2/objetos/reloj.png",
+        "Un reloj detenido a la hora del crimen");
+    
+    objetos.emplace_back("Medalla", 
+        sf::FloatRect(sf::Vector2f(700.f, 550.f), sf::Vector2f(40.f, 40.f)),
+        "assets/images/niveles/nivel_sara2/objetos/medalla.png",
+        "Una medalla con iniciales grabadas");
+    
+    objetos.emplace_back("Botella", 
+        sf::FloatRect(sf::Vector2f(100.f, 500.f), sf::Vector2f(35.f, 55.f)),
+        "assets/images/niveles/nivel_sara2/objetos/botella.png",
+        "Una botella con un mensaje dentro");
+    
+    objetos.emplace_back("Diario", 
+        sf::FloatRect(sf::Vector2f(850.f, 350.f), sf::Vector2f(55.f, 70.f)),
+        "assets/images/niveles/nivel_sara2/objetos/diario.png",
+        "El diario personal de la víctima");
+    
+    objetos.emplace_back("Anillo", 
+        sf::FloatRect(sf::Vector2f(600.f, 150.f), sf::Vector2f(30.f, 30.f)),
+        "assets/images/niveles/nivel_sara2/objetos/anillo.png",
+        "Un anillo de compromiso manchado");
+    
+    objetos.emplace_back("Foto", 
+        sf::FloatRect(sf::Vector2f(950.f, 500.f), sf::Vector2f(50.f, 60.f)),
+        "assets/images/niveles/nivel_sara2/objetos/foto.png",
+        "Una foto que muestra al culpable");
+    
+    objetos.emplace_back("Cuchillo", 
+        sf::FloatRect(sf::Vector2f(400.f, 600.f), sf::Vector2f(45.f, 35.f)),
+        "assets/images/niveles/nivel_sara2/objetos/cuchillo.png",
+        "Posible arma del crimen, enterrada en la arena");
+    
+    objetos.emplace_back("Bolso", 
+        sf::FloatRect(sf::Vector2f(150.f, 150.f), sf::Vector2f(50.f, 45.f)),
+        "assets/images/niveles/nivel_sara2/objetos/bolso.png",
+        "Un bolso que pertenecía a la víctima");
+    
+    // ========== CONFIGURAR SOSPECHOSOS ==========
+    std::vector<Sospechoso> sospechosos;
+    
+    sospechosos.emplace_back("Capitán Rodrigo", 
+        sf::FloatRect(sf::Vector2f(300.f, 650.f), sf::Vector2f(80.f, 100.f)), 
+        "El capitán del barco. Tenía acceso a todo, pero parece honesto.", 
+        false);
+    
+    sospechosos.emplace_back("Isabella la adivina", 
+        sf::FloatRect(sf::Vector2f(750.f, 620.f), sf::Vector2f(70.f, 90.f)), 
+        "Siempre supo que algo pasaría. ¡ES LA CULPABLE!", 
+        true);
+    
+    sospechosos.emplace_back("Don Julio el pescador", 
+        sf::FloatRect(sf::Vector2f(550.f, 680.f), sf::Vector2f(80.f, 90.f)), 
+        "Vio todo desde su bote, pero jura que no fue él.", 
+        false);
+    
+    // Configurar el minijuego
+    sf::Vector2u windowSize = window->getSize();
+    float minijuegoW = windowSize.x * 0.85f;
+    float minijuegoH = windowSize.y * 0.85f;
+    float minijuegoX = (windowSize.x - minijuegoW) / 2.f;
+    float minijuegoY = (windowSize.y - minijuegoH) / 2.f;
+    
+    m_criminalMinigame.setSize(sf::Vector2f(minijuegoW, minijuegoH));
+    m_criminalMinigame.setPosition(sf::Vector2f(minijuegoX, minijuegoY));
+    
+    m_criminalMinigame.init("assets/images/niveles/nivel_sara2/playa_fondo.png", 
+                            std::move(objetos), std::move(sospechosos));
+    m_criminalMinigame.setDebugMode(true);
+    
+    m_criminalMinigame.setOnCompleteCallback([this](bool exito) {
+        if (exito && !m_criminalGameCompleted) {
+            m_criminalGameCompleted = true;
+            mostrarMensaje("CASO RESUELTO. Has encontrado las 10 pistas y al culpable.", 5.0f);
+        }
+    });
+}
+void NivelSara2State::verificarEntradaCentinela()
+{
+    LevelNode *currentNode = game->getLevelTree().getCurrentNode();
+    if (currentNode && currentNode->hasCentinela())
+    {
+        // Lógica para centinela
+    }
+}
+
+void NivelSara2State::verificarSalidaNivel()
+{
+    m_cercaPuertaSalida = m_player.getHurtbox().findIntersection(m_puertaSalidaArea).has_value();
+
+    static bool ePresionado = false;
+    if (m_cercaPuertaSalida)
+    {
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::E))
+        {
+            if (!ePresionado)
+            {
+                ePresionado = true;
+                std::cout << "Saliendo de NivelSara2..." << std::endl;
+                game->avanzarNivel();
+            }
+        }
+        else
+        {
+            ePresionado = false;
+        }
+    }
+}
+
+void NivelSara2State::update(float dt)
+{
+    // ===== SI HAY MENSAJE EMERGENTE, NO ACTUALIZAR MOVIMIENTO =====
+    if (m_mensajeEmergenteActivo)
+    {
+        return;
+    }
+    
+    // Resto del update normal...
+    if (m_textoMensaje && m_msjActual.tiempoRestante > 0.0f)
+    {
+        m_msjActual.tiempoRestante -= dt;
+        if (m_msjActual.tiempoRestante <= 0.0f)
+        {
+            m_textoMensaje->setString("");
+        }
+    }
+
+    sf::Vector2f posAnterior = m_player.getPosition();
+
+    // ========== DETECCIÓN DE BLOQUES INTERACTIVOS ==========
+    m_cercaBloqueInteractivo = false;
+    int bloqueIndex = -1;
+
+    for (size_t i = 0; i < m_bloquesInteractivos.size(); i++) {
+        if (m_player.getHurtbox().findIntersection(m_bloquesInteractivos[i].area).has_value()) {
+            m_cercaBloqueInteractivo = true;
+            bloqueIndex = i;
+            break;
+        }
+    }
+    // ========== DETECCIÓN DE ÁREA DEL MINIJUEGO CRIMINAL ==========
+    m_cercaCriminalArea = m_player.getHurtbox().findIntersection(m_criminalArea).has_value();
+
+    static bool cCriminalPresionado = false;
+    if (m_cercaCriminalArea && !m_criminalGameCompleted && !m_criminalMinigame.isActive() 
+        && !m_mensajeEmergenteActivo) {
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::C)) {
+            if (!cCriminalPresionado) {
+                cCriminalPresionado = true;
+                m_criminalMinigame.activate();
+                std::cout << "Activando minijuego Criminal Case" << std::endl;
+            }
+        } else {
+            cCriminalPresionado = false;
+        }
+    }
+
+    // Manejar minijuego criminal activo
+    if (m_criminalMinigame.isActive()) {
+        m_criminalMinigame.update(dt);
+        return;  // No mover al jugador mientras el minijuego está activo
+    }
+    // Detectar tecla R para mostrar mensaje (solo si NO hay mensaje activo)
+    static bool rPresionado = false;
+    if (m_cercaBloqueInteractivo && bloqueIndex != -1 && !m_mensajeEmergenteActivo) {
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R)) {
+            if (!rPresionado) {
+                rPresionado = true;
+                m_mensajeEmergenteActivo = true;
+                m_bloqueActualIndex = bloqueIndex;
+                std::cout << "Mostrando mensaje del bloque " << bloqueIndex << std::endl;
+            }
+        } else {
+            rPresionado = false;
+        }
+    } else {
+        rPresionado = false;
+    }
+
+    // ========== MOVIMIENTO (solo si no hay mensaje activo) ==========
+    Inventory *inv = m_player.getInventory();
+    if (!inv || !inv->isOpen())
+    {
+        sf::Vector2f movimiento(0.f, 0.f);
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W) ||
+            sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up))
+            movimiento.y -= 1.f;
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S) ||
+            sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down))
+            movimiento.y += 1.f;
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A) ||
+            sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left))
+            movimiento.x -= 1.f;
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D) ||
+            sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right))
+            movimiento.x += 1.f;
+
+        if (movimiento.x != 0.f || movimiento.y != 0.f)
+        {
+            float length = std::sqrt(movimiento.x * movimiento.x + movimiento.y * movimiento.y);
+            movimiento /= length;
+        }
+
+        m_player.move(movimiento, dt);
+    }
+
+    m_player.update(dt);
+
+    // ========== COLISIONES ==========
+    for (const auto &obj : m_mapaFisico)
+    {
+        if (m_player.getHurtbox().findIntersection(obj.getBounds()).has_value())
+        {
+            m_player.setPosition(posAnterior.x, posAnterior.y);
+            break;
+        }
+    }
+    // ===== ACTUALIZAR COORDENADAS DEBUG =====
+    CoordenadasDebug::getInstance().actualizar(window, m_camera, m_player.getPosition());
+    
+    // ========== CÁMARA ==========
+    sf::Vector2f playerPos = m_player.getPosition();
+    sf::Vector2f cameraPos = playerPos;
+
+    float halfWidth = 1280.f / 2.f;
+    float halfHeight = 720.f / 2.f;
+
+    if (halfWidth * 2.f >= m_worldSize.x)
+    {
+        cameraPos.x = m_worldSize.x / 2.f;
+    }
+    else
+    {
+        if (cameraPos.x < halfWidth)
+            cameraPos.x = halfWidth;
+        if (cameraPos.x > m_worldSize.x - halfWidth)
+            cameraPos.x = m_worldSize.x - halfWidth;
+    }
+
+    if (halfHeight * 2.f >= m_worldSize.y)
+    {
+        cameraPos.y = m_worldSize.y / 2.f;
+    }
+    else
+    {
+        if (cameraPos.y < halfHeight)
+            cameraPos.y = halfHeight;
+        if (cameraPos.y > m_worldSize.y - halfHeight)
+            cameraPos.y = m_worldSize.y - halfHeight;
+    }
+
+    m_camera.setCenter(cameraPos);
+
+    verificarSalidaNivel();
+    verificarEntradaCentinela();
+
+    // ========== PAUSA (solo si NO hay mensaje activo) ==========
+    if (!m_mostrarTutorial && !m_mostrarTutorialPorTecla && !m_mensajeEmergenteActivo)
+    {
+        static bool escapeProcesado_ = false;
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape))
+        {
+            if (!escapeProcesado_)
+            {
+                escapeProcesado_ = true;
+                game->pushState(std::make_unique<PauseState>(window, game));
+            }
+        }
+        else
+        {
+            escapeProcesado_ = false;
+        }
+    }
+
+    if (!sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape))
+    {
+        m_escapeConsumed = false;
+    }
+}
+void NivelSara2State::draw()
+{
+    if (!window)
+        return;
+
+    // Declarar winW y winH al inicio (para que estén disponibles en toda la función)
+    float winW = static_cast<float>(window->getSize().x);
+    float winH = static_cast<float>(window->getSize().y);
+
+    window->setView(m_camera);
+
+    if (m_background)
+    {
+        window->draw(*m_background);
+    }
+    else
+    {
+        sf::RectangleShape fallback(m_worldSize);
+        fallback.setFillColor(sf::Color(50, 30, 30));
+        window->draw(fallback);
+    }
+
+    m_player.draw(*window);
+    m_player.drawHurtbox(*window);
+
+    // Debug: colisiones
+    for (const auto &obj : m_mapaFisico)
+    {
+        sf::RectangleShape colision;
+        colision.setPosition(sf::Vector2f(obj.getBounds().position.x, obj.getBounds().position.y));
+        colision.setSize(sf::Vector2f(obj.getBounds().size.x, obj.getBounds().size.y));
+        colision.setFillColor(sf::Color(255, 0, 0, 100));
+        colision.setOutlineThickness(2.f);
+        colision.setOutlineColor(sf::Color::Red);
+        window->draw(colision);
+    }
+    
+    // Dibujar bloques interactivos (modo debug)
+    for (const auto &bloque : m_bloquesInteractivos)
+    {
+        sf::RectangleShape bloqueDebug(sf::Vector2f(bloque.area.size.x, bloque.area.size.y));
+        bloqueDebug.setPosition(sf::Vector2f(bloque.area.position.x, bloque.area.position.y));
+        bloqueDebug.setFillColor(sf::Color(0, 255, 255, 100));
+        bloqueDebug.setOutlineThickness(2.f);
+        bloqueDebug.setOutlineColor(sf::Color::Cyan);
+        window->draw(bloqueDebug);
+    }
+    
+    if (m_mostrarPuertaSalida)
+    {
+        sf::RectangleShape salidaDebug(sf::Vector2f(m_puertaSalidaArea.size.x, m_puertaSalidaArea.size.y));
+        salidaDebug.setPosition(sf::Vector2f(m_puertaSalidaArea.position.x, m_puertaSalidaArea.position.y));
+        salidaDebug.setFillColor(sf::Color(0, 255, 0, 50));
+        salidaDebug.setOutlineThickness(3.f);
+        salidaDebug.setOutlineColor(sf::Color::Green);
+        window->draw(salidaDebug);
+    }
+
+    window->setView(window->getDefaultView());
+
+    // ===== DIBUJAR COORDENADAS DEBUG =====
+    CoordenadasDebug::getInstance().dibujar(*window);
+
+    // ===== MENSAJE EMERGENTE (encima de todo) =====
+    if (m_mensajeEmergenteActivo && m_bloqueActualIndex >= 0 && m_bloqueActualIndex < (int)m_bloquesInteractivos.size())
+    {
+        // Fondo semitransparente
+        sf::RectangleShape overlay(sf::Vector2f(window->getSize().x, window->getSize().y));
+        overlay.setFillColor(sf::Color(0, 0, 0, 200));
+        window->draw(overlay);
+        
+        if (m_fontLoaded)
+        {
+            // Cuadro de diálogo
+            sf::RectangleShape dialogBox(sf::Vector2f(600.f, 300.f));
+            dialogBox.setFillColor(sf::Color(30, 30, 30, 240));
+            dialogBox.setOutlineThickness(3.f);
+            dialogBox.setOutlineColor(sf::Color::White);
+            dialogBox.setOrigin(sf::Vector2f(300.f, 150.f));
+            dialogBox.setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y / 2.f));
+            window->draw(dialogBox);
+            
+            // Texto del mensaje
+            sf::Text mensajeText(m_font);
+            mensajeText.setString(m_bloquesInteractivos[m_bloqueActualIndex].mensaje);
+            mensajeText.setCharacterSize(20);
+            mensajeText.setFillColor(sf::Color::White);
+            mensajeText.setOrigin(sf::Vector2f(
+                mensajeText.getLocalBounds().size.x / 2.f,
+                mensajeText.getLocalBounds().size.y / 2.f
+            ));
+            mensajeText.setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y / 2.f - 30.f));
+            window->draw(mensajeText);
+            
+            // Texto de instrucción
+            sf::Text instruccionText(m_font);
+            instruccionText.setString("[ESC] Cerrar");
+            instruccionText.setCharacterSize(16);
+            instruccionText.setFillColor(sf::Color(200, 200, 200));
+            instruccionText.setOrigin(sf::Vector2f(
+                instruccionText.getLocalBounds().size.x / 2.f,
+                instruccionText.getLocalBounds().size.y / 2.f
+            ));
+            instruccionText.setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y / 2.f + 80.f));
+            window->draw(instruccionText);
+        }
+    }
+    
+    if (m_fontLoaded && m_textoInteraccion)
+    {
+        if (m_cercaPuertaSalida)
+        {
+            m_textoInteraccion->setString("Presiona E para avanzar al siguiente nivel");
+            sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
+            m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
+            m_textoInteraccion->setPosition(sf::Vector2f(winW / 2.f, winH - 70.f));
+            window->draw(*m_textoInteraccion);
+        }
+        if (m_cercaBloqueInteractivo && !m_mensajeEmergenteActivo)
+        {
+            m_textoInteraccion->setString("Presiona R. Andrea quiere decirte algo");
+            sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
+            m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
+            m_textoInteraccion->setPosition(sf::Vector2f(winW / 2.f, winH - 100.f));
+            window->draw(*m_textoInteraccion);
+        }
+        
+        // Texto para el minijuego criminal
+        if (m_cercaCriminalArea && !m_criminalGameCompleted && !m_criminalMinigame.isActive()) {
+            m_textoInteraccion->setString("Presiona C para investigar el crimen en la playa");
+            sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
+            m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
+            m_textoInteraccion->setPosition(sf::Vector2f(winW / 2.f, winH - 130.f));
+            window->draw(*m_textoInteraccion);
+        }
+    }
+
+    if (m_textoMensaje && m_msjActual.tiempoRestante > 0.0f && !m_textoMensaje->getString().isEmpty())
+    {
+        sf::Vector2u winSize = window->getSize();
+        m_textoMensaje->setPosition(sf::Vector2f(winSize.x / 2.f, winSize.y / 3.f));
+        window->draw(*m_textoMensaje);
+    }
+
+    if (m_mostrarTutorial || m_mostrarTutorialPorTecla)
+    {
+        sf::RectangleShape overlay(sf::Vector2f(window->getSize().x, window->getSize().y));
+        overlay.setFillColor(sf::Color(0, 0, 0, 200));
+        window->draw(overlay);
+
+        if (m_fontLoaded)
+        {
+            sf::Text tutorialText(m_font);
+            tutorialText.setString(
+                "BIENVENIDA AL NIVEL 5\n\n"
+                "Has llegado lejos... pero esto no ha terminado.\n\n"
+                "Hay un gran caso que resolver.. estás a cargo de esta mision...\n recorre el mapa y descubrelo\n"
+                "\n\n"
+                "[ESC] Cerrar | [M] Ayuda");
+            tutorialText.setCharacterSize(20);
+            tutorialText.setFillColor(sf::Color::White);
+            sf::FloatRect textBounds = tutorialText.getLocalBounds();
+            tutorialText.setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
+            tutorialText.setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y / 2.f));
+            window->draw(tutorialText);
+        }
+    }
+
+    Inventory *inv = m_player.getInventory();
+    if (inv)
+    {
+        inv->draw(*window);
+    }
+    
+    // Dibujar minijuego criminal si está activo
+    if (m_criminalMinigame.isActive()) {
+        m_criminalMinigame.draw(*window);
+    }
+}
+
+void NivelSara2State::configurarColisiones()
+{
+    m_mapaFisico.clear();
+
+    // Límites del mapa basados en el tamaño del mundo (background)
+    float mapWidth = m_worldSize.x;
+    float mapHeight = m_worldSize.y;
+
+    // Pared superior (borde de arriba)
+    m_mapaFisico.emplace_back(0.f, 0.f, mapWidth, 250.f);
+    
+    // Pared inferior (borde de abajo)
+    m_mapaFisico.emplace_back(0.f, mapHeight - 30.f, mapWidth, 30.f);
+    
+    // Pared izquierda (borde izquierdo)
+    m_mapaFisico.emplace_back(0.f, 0.f, 30.f, mapHeight);
+    
+    // Pared derecha (borde derecho)
+    m_mapaFisico.emplace_back(mapWidth - 30.f, 0.f, 30.f, mapHeight);
+
+    std::cout << "Colisiones configuradas" << std::endl;
+}
+
+void NivelSara2State::jugadorHaMuerto()
+{
+    LevelNode *currentNode = game->getLevelTree().getCurrentNode();
+    if (currentNode && currentNode->type == LevelType::CENTINELA)
+    {
+        GameProgressData &progress = game->getSaveManager().getCurrentProgress();
+        game->getSaveManager().addMuerte();
+        if (progress.modoElegido == GameProgressData::ModoJuego::CAMINO_AGRADABLE)
+        {
+            std::cout << "Muerte en centinela (modo agradable)" << std::endl;
+        }
+        else
+        {
+            std::cout << "Muerte en centinela (modo consecuencias)" << std::endl;
+        }
+    }
+    else
+    {
+        game->pushState(std::make_unique<PauseState>(window, game));
+    }
+}
+
+void NivelSara2State::mostrarMensaje(const std::string &texto, float duracion, sf::Color color)
+{
+    if (!m_textoMensaje)
+        return;
+
+    m_msjActual.texto = texto;
+    m_msjActual.tiempoRestante = duracion;
+    m_msjActual.color = color;
+
+    m_textoMensaje->setString(texto);
+    m_textoMensaje->setFillColor(color);
+
+    sf::FloatRect bounds = m_textoMensaje->getLocalBounds();
+    m_textoMensaje->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
+
+    std::cout << "MENSAJE: " << texto << std::endl;
+}
