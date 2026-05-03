@@ -20,54 +20,38 @@ public:
     void actualizarPosicionRuleta();
 
 private:
-    // Jugador
     Player m_player;
-    
-    // Fondo
     sf::Texture m_backgroundTexture;
     std::unique_ptr<sf::Sprite> m_background;
     sf::Vector2f m_worldSize;
-    
-    // Cámara
     sf::View m_camera;
     sf::Vector2u m_lastWindowSize;
     
-    // Colisiones
     std::vector<sf::FloatRect> m_mapaFisico;
     void configurarColisiones();
     
-    // Áreas de interacción
-    sf::FloatRect m_barArea;        // Bartender
-    sf::FloatRect m_ruletaArea;     // Ruleta
-    sf::FloatRect m_slotMachineArea; // Tragaperras
-    sf::FloatRect m_blackjackArea;  // Blackjack
+    sf::FloatRect m_barArea;
+    sf::FloatRect m_ruletaArea;
     sf::FloatRect m_puertaSalidaArea;
-    sf::FloatRect m_vendedorArea;   // Donde comprar la llave
+    sf::FloatRect m_vendedorArea;
     
-    // Estados de cercanía
     bool m_cercaBar = false;
     bool m_cercaRuleta = false;
-    bool m_cercaSlotMachine = false;
-    bool m_cercaBlackjack = false;
     bool m_cercaPuertaSalida = false;
     bool m_cercaVendedor = false;
     
-    // Dinero y llave
     int m_dinero = 0;
     bool m_tieneLlave = false;
     
-    // Minijuegos
     MinigameRuleta m_ruletaMinigame;
     MinigameBartender m_bartenderMinigame;
     
-    // Fuente y textos
     sf::Font m_font;
     bool m_fontLoaded = false;
     std::unique_ptr<sf::Text> m_textoInteraccion;
     std::unique_ptr<sf::Text> m_textoDinero;
     std::unique_ptr<sf::Text> m_textoMensaje;
     
-    // Tutorial
     bool m_mostrarTutorial = false;
     bool m_mostrarTutorialPorTecla = false;
     bool m_escapeConsumed = false;

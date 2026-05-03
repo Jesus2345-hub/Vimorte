@@ -429,3 +429,13 @@ bool Inventory::tryCollectItem(const std::string& itemName, const sf::Color& col
 void Inventory::addDefaultItems() {
     // Vacío por defecto
 }
+
+// ============================================================
+// OBTENER ITEM POR ÍNDICE - Devuelve el item en la posición dada
+// ============================================================
+Item* Inventory::getItem(int index) {
+    if (index >= 0 && index < (int)m_items.size() && m_items[index]) {
+        return m_items[index].get();
+    }
+    return nullptr;
+}

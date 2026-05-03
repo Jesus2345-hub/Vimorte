@@ -68,4 +68,6 @@ public:
     
     bool tryCollectItem(const std::string& itemName, const sf::Color& color);
     void addDefaultItems();
+    
+    Item* getItem(int index);
 };
