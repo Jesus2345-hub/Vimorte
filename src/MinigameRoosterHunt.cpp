@@ -6,11 +6,16 @@
 MinigameRoosterHunt::MinigameRoosterHunt()
     : m_isActive(false), m_gameWon(false), m_score(0), m_scoreToWin(5),
       m_ammo(10), m_gen(m_rd()), m_spawnTimer(0.f), m_spawnInterval(1.5f),
-      m_messageTimer(0.f), m_roosterScale(0.25f)
+      m_messageTimer(0.f), m_roosterScale(0.25f), m_roosterSpeedMin(200.f), m_roosterSpeedMax(400.f)
 {
     m_background.setFillColor(sf::Color(0, 0, 0, 200));
     m_background.setOutlineThickness(3.f);
     m_background.setOutlineColor(sf::Color(100, 100, 100));
+
+    
+    if (!m_deadTexture.loadFromFile("assets/images/niveles/nivel6/gallo/dead.png")) {
+        std::cerr << "❌ Error cargando dead.png" << std::endl;
+    }
 
     // Cargar texturas de vuelo
     for (int i = 0; i < 4; i++)
@@ -26,6 +31,7 @@ MinigameRoosterHunt::MinigameRoosterHunt()
             std::cerr << "❌ Error cargando: " << path << std::endl;
         }
     }
+
 }
 
 void MinigameRoosterHunt::setPosition(const sf::Vector2f &pos)
@@ -127,139 +133,150 @@ void MinigameRoosterHunt::reset()
         m_titleText->setFillColor(sf::Color::Yellow);
     }
 }
-void MinigameRoosterHunt::spawnRooster()
-{
-    if (m_flyTextures.empty())
-        return;
 
+void MinigameRoosterHunt::spawnRooster() {
+    if (m_flyTextures.empty()) return;
+    
     FlyingRooster rooster;
     rooster.sprite = std::make_unique<sf::Sprite>(m_flyTextures[0]);
-    rooster.sprite->setScale(sf::Vector2f(m_roosterScale, m_roosterScale)); // ← USAR VARIABLE
-
+    rooster.sprite->setScale(sf::Vector2f(m_roosterScale, m_roosterScale));
+    
     sf::FloatRect bounds = rooster.sprite->getLocalBounds();
     rooster.sprite->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
-
-    std::uniform_real_distribution<float> xDist(m_position.x + 80.f, m_position.x + m_size.x - 80.f);
-    std::uniform_real_distribution<float> speedXDist(-80.f, 80.f);
-    std::uniform_real_distribution<float> speedYDist(-300.f, -150.f);
-
+    
+    // Spawn desde abajo del MINIJUEGO (no de toda la pantalla)
+    std::uniform_real_distribution<float> xDist(
+        m_position.x + 80.f, 
+        m_position.x + m_size.x - 80.f
+    );
+    std::uniform_real_distribution<float> speedXDist(-100.f, 100.f);
+    std::uniform_real_distribution<float> speedYDist(
+        -(m_roosterSpeedMax), 
+        -(m_roosterSpeedMin)
+    );
+    
     float spawnX = xDist(m_gen);
-
-    rooster.sprite->setPosition(sf::Vector2f(spawnX, m_position.y + m_size.y + 50.f));
+    float spawnY = m_position.y + m_size.y + 30.f;  // Justo debajo del minijuego
+    
+    rooster.sprite->setPosition(sf::Vector2f(spawnX, spawnY));
     rooster.velocity = sf::Vector2f(speedXDist(m_gen), speedYDist(m_gen));
     rooster.frameTime = 0.f;
     rooster.currentFrame = 0;
     rooster.alive = true;
+    rooster.dying = false;
     rooster.speed = std::abs(rooster.velocity.y);
-
-    float flipX = (rooster.velocity.x >= 0) ? m_roosterScale : -m_roosterScale; // ← USAR VARIABLE
-    rooster.sprite->setScale(sf::Vector2f(flipX, m_roosterScale));              // ← USAR VARIABLE
-
+    
+    float flipX = (rooster.velocity.x >= 0) ? m_roosterScale : -m_roosterScale;
+    rooster.sprite->setScale(sf::Vector2f(flipX, m_roosterScale));
+    
     m_roosters.push_back(std::move(rooster));
 }
 
-void MinigameRoosterHunt::updateRoosters(float dt)
-{
+void MinigameRoosterHunt::updateRoosters(float dt) {
     std::uniform_real_distribution<float> dirChangeDist(-1.f, 1.f);
-
-    for (auto &r : m_roosters)
-    {
-        if (!r.alive)
-            continue;
-
-        // Mover
+    
+    for (auto& r : m_roosters) {
+        if (!r.alive) continue;
+        
         sf::Vector2f pos = r.sprite->getPosition();
+        
+        // Si está muriendo (cayendo)
+        if (r.dying) {
+            r.velocity.y += 500.f * dt;  // Aceleración de caída
+            pos += r.velocity * dt;
+            r.sprite->setPosition(pos);
+            
+            // Eliminar cuando sale del minijuego por abajo
+            if (pos.y > m_position.y + m_size.y + 100.f) {
+                r.alive = false;
+            }
+            continue;
+        }
+        
+        // Movimiento normal
         pos += r.velocity * dt;
         r.sprite->setPosition(pos);
-
-        // Cambio de dirección aleatorio (como Duck Hunt)
-        if (m_gen() % 100 < 3)
-        { // 3% de probabilidad cada frame
-            r.velocity.x += dirChangeDist(m_gen) * 50.f;
-            r.velocity.y += dirChangeDist(m_gen) * 30.f;
-
-            // Limitar velocidad
-            r.velocity.x = std::clamp(r.velocity.x, -200.f, 200.f);
-            r.velocity.y = std::clamp(r.velocity.y, -350.f, 100.f);
+        
+        // Cambio de dirección aleatorio
+        if (m_gen() % 100 < 4) {
+            r.velocity.x += dirChangeDist(m_gen) * 60.f;
+            r.velocity.y += dirChangeDist(m_gen) * 40.f;
+            
+            r.velocity.x = std::clamp(r.velocity.x, -250.f, 250.f);
+            r.velocity.y = std::clamp(r.velocity.y, -(m_roosterSpeedMax), 150.f);
         }
-
-        // Gravedad suave (opcional)
-        r.velocity.y += 50.f * dt;
-
-        // Animación
+        
+        // Gravedad suave
+        r.velocity.y += 40.f * dt;
+        
+        // Animación de vuelo
         r.frameTime += dt;
-        if (r.frameTime >= 0.1f)
-        {
+        if (r.frameTime >= 0.08f) {
             r.frameTime = 0.f;
             r.currentFrame = (r.currentFrame + 1) % m_flyTextures.size();
             r.sprite->setTexture(m_flyTextures[r.currentFrame]);
-
-            // Mantener orientación
+            
             float flipX = (r.velocity.x >= 0) ? m_roosterScale : -m_roosterScale;
             r.sprite->setScale(sf::Vector2f(flipX, m_roosterScale));
         }
-
-        // Rebotar en bordes laterales
-        if (pos.x < m_position.x + 20.f)
-        {
+        
+        // Rebote en bordes
+        if (pos.x < m_position.x + 20.f) {
             r.velocity.x = std::abs(r.velocity.x);
         }
-        if (pos.x > m_position.x + m_size.x - 20.f)
-        {
+        if (pos.x > m_position.x + m_size.x - 20.f) {
             r.velocity.x = -std::abs(r.velocity.x);
         }
-
-        // Rebotar en borde superior
-        if (pos.y < m_position.y + 60.f)
-        {
+        if (pos.y < m_position.y + 60.f) {
             r.velocity.y = std::abs(r.velocity.y) * 0.5f;
         }
-
-        // Eliminar si sale por arriba o laterales
-        if (pos.y < m_position.y - 100.f ||
-            pos.x < m_position.x - 150.f ||
-            pos.x > m_position.x + m_size.x + 150.f)
-        {
+        
+        // Salir por arriba o laterales
+        if (pos.y < m_position.y - 100.f || 
+            pos.x < m_position.x - 150.f || 
+            pos.x > m_position.x + m_size.x + 150.f) {
             r.alive = false;
         }
     }
-
+    
     // Limpiar muertos
     m_roosters.erase(
         std::remove_if(m_roosters.begin(), m_roosters.end(),
-                       [](const FlyingRooster &r)
-                       { return !r.alive; }),
-        m_roosters.end());
+            [](const FlyingRooster& r) { return !r.alive; }),
+        m_roosters.end()
+    );
 }
 
-void MinigameRoosterHunt::shoot(const sf::Vector2f &mousePos)
-{
-    if (m_ammo <= 0 || m_gameWon)
-        return;
-
+void MinigameRoosterHunt::shoot(const sf::Vector2f& mousePos) {
+    if (m_ammo <= 0 || m_gameWon) return;
+    
     m_ammo--;
-    if (m_ammoText)
-        m_ammoText->setString("Balas: " + std::to_string(m_ammo));
-
+    if (m_ammoText) m_ammoText->setString("Balas: " + std::to_string(m_ammo));
+    
     bool hit = false;
-    for (auto &r : m_roosters)
-    {
-        if (!r.alive)
-            continue;
-        if (r.sprite->getGlobalBounds().contains(mousePos))
-        {
-            r.alive = false;
+    for (auto& r : m_roosters) {
+        if (!r.alive || r.dying) continue;
+        if (r.sprite->getGlobalBounds().contains(mousePos)) {
+            // ¡Impacto! El gallo muere y cae
+            r.dying = true;
+            r.velocity = sf::Vector2f(
+                (r.velocity.x >= 0 ? -50.f : 50.f),  // Pequeño impulso lateral
+                50.f  // Empieza a caer
+            );
+            
+            // Cambiar a textura de muerto
+            r.sprite->setTexture(m_deadTexture);
+            float flipX = (r.velocity.x >= 0) ? m_roosterScale : -m_roosterScale;
+            r.sprite->setScale(sf::Vector2f(flipX, m_roosterScale));
+            
             m_score++;
             hit = true;
-
-            if (m_scoreText)
-                m_scoreText->setString("Gallos: " + std::to_string(m_score) + "/" + std::to_string(m_scoreToWin));
-
-            if (m_score >= m_scoreToWin)
-            {
+            
+            if (m_scoreText) m_scoreText->setString("Gallos: " + std::to_string(m_score) + "/" + std::to_string(m_scoreToWin));
+            
+            if (m_score >= m_scoreToWin) {
                 m_gameWon = true;
-                if (m_titleText)
-                {
+                if (m_titleText) {
                     m_titleText->setString("¡VICTORIA! Cazaste " + std::to_string(m_scoreToWin) + " gallos");
                     m_titleText->setFillColor(sf::Color::Green);
                 }
@@ -268,17 +285,13 @@ void MinigameRoosterHunt::shoot(const sf::Vector2f &mousePos)
             break;
         }
     }
-
-    if (!hit)
-    {
+    
+    if (!hit) {
         showMessage("¡Fallaste!", sf::Color::Red);
     }
-
-    // Sin balas
-    if (m_ammo <= 0 && !m_gameWon)
-    {
-        if (m_titleText)
-        {
+    
+    if (m_ammo <= 0 && !m_gameWon) {
+        if (m_titleText) {
             m_titleText->setString("SIN BALAS - ESC para salir");
             m_titleText->setFillColor(sf::Color::Red);
         }

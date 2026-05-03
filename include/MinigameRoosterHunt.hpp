@@ -19,21 +19,26 @@ private:
     // Punto de mira (mira del rifle)
     sf::Texture m_crosshairTexture;
     std::unique_ptr<sf::Sprite> m_crosshair;
+
+    // Gallo muerto
+    sf::Texture m_deadTexture;
     
-    // Gallos volando
     struct FlyingRooster {
         std::unique_ptr<sf::Sprite> sprite;
         sf::Vector2f velocity;
         float frameTime;
         int currentFrame;
         bool alive;
+        bool dying;
         float speed;
     };
     std::vector<FlyingRooster> m_roosters;
     std::vector<sf::Texture> m_flyTextures;
     
     float m_roosterScale;
-    
+    float m_roosterSpeedMin;
+    float m_roosterSpeedMax;
+
     // Estado
     bool m_isActive;
     bool m_gameWon;
