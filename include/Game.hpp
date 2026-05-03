@@ -40,6 +40,7 @@ public:
     ~Game();
     void run();
     
+    void completarNivelActual(int siguienteNivelId);
     // Gestión de estados
     void pushState(std::unique_ptr<State> state);
     void popState();

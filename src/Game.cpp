@@ -443,12 +443,30 @@ void Game::reintentarCentinela()
         if (newState)
         {
             changeState(std::move(newState));
-            std::cout << "🔄 Reintentando desde el checkpoint antes del centinela" << std::endl;
+            std::cout << "Reintentando desde el checkpoint antes del centinela" << std::endl;
         }
     }
     else
     {
-        std::cout << "💀 Has fallado. Las consecuencias son permanentes." << std::endl;
+        std::cout << " Has fallado. Las consecuencias son permanentes." << std::endl;
         returnToMenu();
+    }
+}
+void Game::completarNivelActual(int siguienteNivelId) {
+    if (tienePartidaActiva()) {
+        saveManager.setNivelActual(siguienteNivelId, siguienteNivelId);
+        guardarPartidaActual();
+    }
+    
+    // Intentar avanzar normalmente
+    if (!levelTree.goToNextLevel()) {
+        // Si falla, forzar salto al siguiente nivel
+        std::string siguienteNivel = "nivel" + std::to_string(siguienteNivelId);
+        levelTree.jumpToNode(siguienteNivel);
+    }
+    
+    auto newState = levelTree.createCurrentState(window.get(), this);
+    if (newState) {
+        changeState(std::move(newState));
     }
 }

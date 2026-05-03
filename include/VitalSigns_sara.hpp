@@ -14,7 +14,11 @@ public:
 
     bool isGameOver() const;
     bool isStabilized() const;
-
+    void setPosition(const sf::Vector2f& pos) { 
+        m_position = pos; 
+        m_useAbsolutePosition = true;
+    }
+    void useRelativePosition(bool use) { m_useAbsolutePosition = !use; }
 private:
     sf::RectangleShape m_backgroundPanel;
     bool m_showBackground = true;
@@ -59,6 +63,9 @@ private:
     float m_scaleFactor;
     void updateScale();
     bool m_anchorRight;
+
+sf::Vector2f m_position;      // Posición absoluta
+    bool m_useAbsolutePosition;   // Si usa posición absoluta o márgenes
 
 public:
 
