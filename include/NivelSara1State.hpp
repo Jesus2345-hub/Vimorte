@@ -17,28 +17,6 @@ public:
     void draw() override;
 
 private:
-    
-
-    sf::FloatRect m_teleportZone2;
-    sf::Vector2f m_teleportDestination2;
-    sf::FloatRect m_teleportZone;
-    sf::Vector2f m_teleportDestination;
-
-    //
-    std::unique_ptr<sf::Text> m_textoCoordenadas;
-    //
-
-    VitalSigns m_vitalSignsAndres;
-    VitalSigns m_vitalSignsAndrea; 
-
-    void verificarTeletransportePostJuego();
-
-    float m_dartsTriggerRadius = 80.f;
-    // Tutorial
-    bool m_mostrarTutorial;
-    bool m_mostrarTutorialPorTecla;
-    bool m_escapeConsumed;
-    bool m_fontLoaded; 
     // Mundo
     std::unique_ptr<sf::Sprite> m_background;
     sf::Texture m_backgroundTexture;
@@ -52,39 +30,55 @@ private:
     std::vector<sf::FloatRect> m_mapaFisico;
     void configurarColisiones();
 
-    //minijuego de dardos
+    // Minijuegos
     MinigameDarts m_dartsMinigame;
-
-    //minijuego Memoria
     MiniGameTetris m_tetris;
 
-    // Área de interacción con el tablón de dardos
-    sf::FloatRect m_dartsArea;
-    bool m_cercaDarts;
-    bool m_skipPauseThisFrame;
-    void configurarInteracciones();
-
-    // Área de interacción con el TETRIS 
-    sf::FloatRect m_tetrisArea;
-    bool m_cercaTetris;
-
     // Áreas de interacción
-    sf::FloatRect m_puertaSalidaArea;
-    bool m_cercaPuertaSalida;
-    void verificarSalidaNivel();
+    sf::FloatRect m_dartsArea;
+    sf::FloatRect m_tetrisArea;
+    sf::FloatRect m_ascensorArea;      // Área para salir del nivel
+    sf::FloatRect m_teleportZone;
+    sf::Vector2f m_teleportDestination;
+    sf::FloatRect m_teleportZone2;
+    sf::Vector2f m_teleportDestination2;
+
+    // Estados de cercanía
+    bool m_cercaDarts;
+    bool m_cercaTetris;
+    bool m_cercaAscensor;
+
+    // Pacientes
+    VitalSigns m_vitalSignsAndres;
+    VitalSigns m_vitalSignsAndrea;
+    bool m_ambosEstabilizados;
+    float m_mensajeVictoriaTimer;
+    bool m_mostrandoMensajeVictoria;
+
+    // Tutorial
+    bool m_mostrarTutorial;
+    bool m_mostrarTutorialPorTecla;
+    bool m_escapeConsumed;
+    bool m_fontLoaded;
 
     // UI y textos
     sf::Font m_font;
     std::unique_ptr<sf::Text> m_textoInteraccion;
     std::unique_ptr<sf::Text> m_textoMensaje;
+    std::unique_ptr<sf::Text> m_textoCoordenadas;
+    
     struct MensajeTemporal {
         std::string texto;
         float tiempoRestante;
         sf::Color color;
     } m_msjActual;
 
+    // Métodos
+    void verificarSalidaNivel();           
+    void verificarTeletransportePostJuego();
     void actualizarUIPosiciones();
-
     void mostrarMensaje(const std::string& texto, float duracion, sf::Color color);
+    
     sf::Vector2u m_lastWindowSize;
+    bool m_skipPauseThisFrame;
 };
