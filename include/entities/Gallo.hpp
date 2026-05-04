@@ -8,7 +8,8 @@ public:
     enum class Estado {
         IDLE,
         CAMINANDO,
-        COMIENDO
+        COMIENDO,
+        BLOQUEADO
     };
     
 private:
@@ -47,6 +48,7 @@ public:
     void draw(sf::RenderWindow& window);
     sf::FloatRect getBounds() const;
     sf::Vector2f getPosition() const;
+    void verificarColisionJugador(const sf::FloatRect& playerBounds);
     
 private:
     void cambiarEstado(Estado nuevo);

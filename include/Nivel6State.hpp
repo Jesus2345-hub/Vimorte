@@ -9,6 +9,9 @@
 #include <memory>
 #include <vector>
 #include "MinigameRoosterHunt.hpp"
+#include "MinigameTicTacToe.hpp"
+#include "entities/Joven.hpp"
+#include "entities/Abuelita.hpp"
 
 class Nivel6State : public State 
 {
@@ -22,6 +25,12 @@ private:
 
     // Minijuego RoosterHunt
     MinigameRoosterHunt m_roosterHuntMinigame;
+
+    // Tic Tac Toe
+    MinigameTicTacToe m_tictactoeMinigame;
+    bool m_gallinaObtenida;
+    bool m_dientesObtenidos;
+
     // Objeto recogible (rifle)
     bool m_rifleRecogido;                        
     sf::FloatRect m_rifleArea;                   
@@ -32,6 +41,16 @@ private:
     sf::FloatRect m_galloArea;
     bool m_cercaGallo;
 
+    // Joven dormido
+    Joven m_joven;              
+    sf::FloatRect m_jovenArea;
+    bool m_cercaJoven;   
+
+    // Abuelita
+    Abuelita m_abuelita;
+    sf::FloatRect m_abuelitaArea;
+    bool m_cercaAbuelita;
+    bool m_llaveObtenida;
 
     // Sistema de colisiones
     std::vector<Obstaculo> m_mapaFisico;
@@ -62,6 +81,9 @@ private:
     sf::FloatRect m_puertaSalidaArea;
     bool m_cercaPuertaSalida;
     bool m_mostrarPuertaSalida;
+
+    sf::Clock m_tiempoUltimaR;
+    bool m_bloquearR;
     
     // Métodos
     void verificarSalidaNivel();

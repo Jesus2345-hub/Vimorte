@@ -86,58 +86,64 @@ void Gallo::setPosition(float x, float y)
     m_sprite->setPosition(m_position);
 }
 
-void Gallo::cambiarEstado(Estado nuevo) {
-    if (m_estado == nuevo) return;
-    
+void Gallo::cambiarEstado(Estado nuevo)
+{
+    if (m_estado == nuevo)
+        return;
+
     m_estado = nuevo;
     m_frameActual = 0;
     m_tiempoFrame = 0.f;
-    
-    switch (m_estado) {
-        case Estado::IDLE:
-            m_sprite->setTexture(m_idleTexture);
-            break;
+
+    switch (m_estado)
+    {
+    case Estado::IDLE:
+    case Estado::BLOQUEADO: // ← Usar misma textura que IDLE
+        m_sprite->setTexture(m_idleTexture);
+        break;
+    case Estado::CAMINANDO:
+        if (!m_walkTextures.empty())
+            m_sprite->setTexture(m_walkTextures[0]);
+        break;
+    case Estado::COMIENDO:
+        if (!m_eatTextures.empty())
+            m_sprite->setTexture(m_eatTextures[0]);
+        break;
+    }
+
+    m_sprite->setScale(m_escala);
+    float flipX = m_mirandoDerecha ? m_escala.x : -m_escala.x;
+    m_sprite->setScale(sf::Vector2f(flipX, m_escala.y));
+}
+
+void Gallo::actualizarAnimacion(float dt)
+{
+    m_tiempoFrame += dt;
+
+    if (m_tiempoFrame >= m_duracionFrame)
+    {
+        m_tiempoFrame = 0.f;
+
+        switch (m_estado)
+        {
         case Estado::CAMINANDO:
             if (!m_walkTextures.empty())
-                m_sprite->setTexture(m_walkTextures[0]);
+            {
+                m_frameActual = (m_frameActual + 1) % m_walkTextures.size();
+                m_sprite->setTexture(m_walkTextures[m_frameActual]);
+            }
             break;
         case Estado::COMIENDO:
             if (!m_eatTextures.empty())
-                m_sprite->setTexture(m_eatTextures[0]);
+            {
+                m_frameActual = (m_frameActual + 1) % m_eatTextures.size();
+                m_sprite->setTexture(m_eatTextures[m_frameActual]);
+            }
             break;
-    }
-    
-    // REAPLICAR ESCALA después de cambiar textura
-    m_sprite->setScale(m_escala);
-    
-    // Reaplicar flip horizontal
-    float flipX = m_mirandoDerecha ? 1.f : -1.f;
-    m_sprite->setScale(sf::Vector2f(flipX * m_escala.x, m_escala.y));
-}
-
-void Gallo::actualizarAnimacion(float dt) {
-    m_tiempoFrame += dt;
-    
-    if (m_tiempoFrame >= m_duracionFrame) {
-        m_tiempoFrame = 0.f;
-        
-        switch (m_estado) {
-            case Estado::CAMINANDO:
-                if (!m_walkTextures.empty()) {
-                    m_frameActual = (m_frameActual + 1) % m_walkTextures.size();
-                    m_sprite->setTexture(m_walkTextures[m_frameActual]);
-                }
-                break;
-            case Estado::COMIENDO:
-                if (!m_eatTextures.empty()) {
-                    m_frameActual = (m_frameActual + 1) % m_eatTextures.size();
-                    m_sprite->setTexture(m_eatTextures[m_frameActual]);
-                }
-                break;
-            default:
-                break;
+        default:
+            break;
         }
-        
+
         // REAPLICAR ESCALA después de cambiar textura
         float flipX = m_mirandoDerecha ? 1.f : -1.f;
         m_sprite->setScale(sf::Vector2f(flipX * m_escala.x, m_escala.y));
@@ -193,6 +199,13 @@ void Gallo::update(float dt)
         break;
     }
 
+    case Estado::BLOQUEADO:
+    {
+        // Simplemente no hacer nada, esperar a que el jugador se vaya
+        m_sprite->setTexture(m_idleTexture);
+        break;
+    }
+
     case Estado::IDLE:
     default:
         break;
@@ -221,4 +234,15 @@ sf::FloatRect Gallo::getBounds() const
 sf::Vector2f Gallo::getPosition() const
 {
     return m_position;
+}
+
+void Gallo::verificarColisionJugador(const sf::FloatRect& playerBounds) {
+    if (!m_sprite) return;
+    if (m_estado != Estado::CAMINANDO) return;
+    
+    sf::FloatRect galloBounds = m_sprite->getGlobalBounds();
+    
+    if (galloBounds.findIntersection(playerBounds).has_value()) {
+        cambiarEstado(Estado::BLOQUEADO);
+    }
 }

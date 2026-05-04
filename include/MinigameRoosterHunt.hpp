@@ -10,6 +10,7 @@ private:
     // Dimensiones
     sf::Vector2f m_size;
     sf::Vector2f m_position;
+    sf::FloatRect m_bgBounds;
     
     // Fondo
     sf::RectangleShape m_background;
@@ -22,6 +23,12 @@ private:
 
     // Gallo muerto
     sf::Texture m_deadTexture;
+
+    // Indicadores de gallos
+    sf::Texture m_aliveIconTexture;
+    sf::Texture m_deadIconTexture;
+
+    std::vector<std::unique_ptr<sf::Sprite>> m_scoreIcons;
     
     struct FlyingRooster {
         std::unique_ptr<sf::Sprite> sprite;
@@ -55,7 +62,6 @@ private:
     // UI
     sf::Font m_font;
     std::unique_ptr<sf::Text> m_titleText;
-    std::unique_ptr<sf::Text> m_scoreText;
     std::unique_ptr<sf::Text> m_ammoText;
     std::unique_ptr<sf::Text> m_closeText;
     std::unique_ptr<sf::Text> m_messageText;
@@ -75,6 +81,7 @@ public:
     void update(float dt);
     void draw(sf::RenderWindow& window);
     void reset();
+    void initScoreIcons();
     
 private:
     void spawnRooster();
