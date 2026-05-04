@@ -71,6 +71,9 @@ private:
     bool m_mensajeEmergenteActivo;  
     int m_bloqueActualIndex;
     void configurarBloquesInteractivos();
+    void reajustarMinijuegoCriminal();
+    std::vector<ObjetoBuscar> m_objetosCriminal;
+    std::vector<Sospechoso> m_sospechososCriminal;
 
 public:
     NivelSara2State(sf::RenderWindow* window, Game* game);

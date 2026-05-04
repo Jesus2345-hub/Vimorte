@@ -200,52 +200,54 @@ void NivelSara2State::configurarMinijuegoCriminal()
     m_cercaCriminalArea = false;
     m_criminalGameCompleted = false;
     
+    // ===== CREAR OBJETOS (con coordenadas BASE de 800x600) =====
     std::vector<ObjetoBuscar> objetos;
     
     objetos.emplace_back("Collar", 
-        sf::FloatRect(sf::Vector2f(775.f, 427.f), sf::Vector2f(36.f, 40.f)),
+        sf::FloatRect(sf::Vector2f(560.f, 426.f), sf::Vector2f(36.f, 40.f)),
         "Un collar de perlas abandonado en la arena");
     
     objetos.emplace_back("Carta Mojada", 
-        sf::FloatRect(sf::Vector2f(255.f, 462.f), sf::Vector2f(95.f, 38.f)),
+        sf::FloatRect(sf::Vector2f(191.f, 438.f), sf::Vector2f(75.f, 38.f)),
         "Una carta informacion crucial de Andrea");
     
     objetos.emplace_back("Reloj Arena", 
-        sf::FloatRect(sf::Vector2f(915.f, 359.f), sf::Vector2f(19.f, 70.f)),
+        sf::FloatRect(sf::Vector2f(665.f, 357.f), sf::Vector2f(25.f, 70.f)),
         "Un reloj de regalo");
     
     objetos.emplace_back("Medalla", 
-        sf::FloatRect(sf::Vector2f(160.f, 172.f), sf::Vector2f(20.f, 16.f)),
+        sf::FloatRect(sf::Vector2f(116.f, 164.f), sf::Vector2f(20.f, 23.f)),
         "Una medalla vieja");
     
     objetos.emplace_back("Botella", 
-        sf::FloatRect(sf::Vector2f(138.f, 371.f), sf::Vector2f(30.f, 24.f)),
+        sf::FloatRect(sf::Vector2f(104.f, 359.f), sf::Vector2f(25.f, 24.f)),
         "Una botella con las penas de Andrea");
     
     objetos.emplace_back("Diario", 
-        sf::FloatRect(sf::Vector2f(715.f, 506.f), sf::Vector2f(35.f, 30.f)),
+        sf::FloatRect(sf::Vector2f(524.f, 496.f), sf::Vector2f(35.f, 30.f)),
         "El diario personal");
     
     objetos.emplace_back("Anillo", 
-        sf::FloatRect(sf::Vector2f(688.f, 422.f), sf::Vector2f(21.f, 15.f)),
+        sf::FloatRect(sf::Vector2f(504.f, 414.f), sf::Vector2f(21.f, 25.f)),
         "Un anillo de compromiso");
     
     objetos.emplace_back("Foto", 
-        sf::FloatRect(sf::Vector2f(1013.f, 247.f), sf::Vector2f(34.f, 54.f)),
+        sf::FloatRect(sf::Vector2f(744.f, 240.f), sf::Vector2f(34.f, 54.f)),
         "Una foto, no sabemos por que");
     
     objetos.emplace_back("Cuchillo", 
-        sf::FloatRect(sf::Vector2f(487.f, 389.f), sf::Vector2f(36.f, 5.f)),
+        sf::FloatRect(sf::Vector2f(348.f, 370.f), sf::Vector2f(36.f, 25.f)),
         "Quiere defenderse");
     
     objetos.emplace_back("Bolso", 
-        sf::FloatRect(sf::Vector2f(562.f, 472.f), sf::Vector2f(124.f, 80.f)),
+        sf::FloatRect(sf::Vector2f(408.f, 473.f), sf::Vector2f(109.f, 80.f)),
         "Un bolso que ya le toca cambio");
     
     objetos.emplace_back("Trapo Viejo", 
-    sf::FloatRect(sf::Vector2f(1046.f, 467.f), sf::Vector2f(26.f, 10.f)),
-    "Un Trapo sucio... no limpia su bolso");
+        sf::FloatRect(sf::Vector2f(766.f, 455.f), sf::Vector2f(26.f, 15.f)),
+        "Un Trapo sucio... no limpia su bolso");
 
+    // ===== CREAR SOSPECHOSOS =====
     std::vector<Sospechoso> sospechosos;
     
     sospechosos.emplace_back("Capitan Rodrigo", 
@@ -263,6 +265,43 @@ void NivelSara2State::configurarMinijuegoCriminal()
         "Vio todo desde su bote, pero jura que no fue el.", 
         false);
     
+    // GUARDAR COPIAS para reinicializar
+    m_objetosCriminal = objetos;
+    m_sospechososCriminal = sospechosos;
+    
+     // Configurar el minijuego
+    m_criminalMinigame.setInventory(m_player.getInventory());
+    m_criminalMinigame.setBaseSize(sf::Vector2f(800.f, 600.f));  // <--- ESTO PRIMERO
+    
+    // Calcular tamaño basado en la ventana
+    sf::Vector2u windowSize = window->getSize();
+    float minijuegoW = windowSize.x * 0.85f;
+    float minijuegoH = windowSize.y * 0.85f;
+    
+    float minijuegoX = (static_cast<float>(windowSize.x) - minijuegoW) / 2.f;
+    float minijuegoY = (static_cast<float>(windowSize.y) - minijuegoH) / 2.f;
+    
+    m_criminalMinigame.setPosition(sf::Vector2f(minijuegoX, minijuegoY));
+    m_criminalMinigame.setSize(sf::Vector2f(minijuegoW, minijuegoH));
+
+    // Ahora sí, init con los objetos
+    m_criminalMinigame.init("assets/images/niveles/nivel_sara2/criminalCase.png", 
+                            m_objetosCriminal, m_sospechososCriminal);
+
+
+    m_criminalMinigame.setDebugMode(true);  // Para ver las áreas escaladas
+    
+    m_criminalMinigame.setOnCompleteCallback([this](bool exito) {
+        if (exito && !m_criminalGameCompleted) {
+            m_criminalGameCompleted = true;
+            mostrarMensaje("CASO RESUELTO. Has encontrado las 10 pistas y al culpable.", 5.0f);
+        }
+    });
+}
+void NivelSara2State::reajustarMinijuegoCriminal()
+{
+    if (!m_criminalMinigame.isActive()) return;
+    
     sf::Vector2u windowSize = window->getSize();
     float minijuegoW = windowSize.x * 0.85f;
     float minijuegoH = windowSize.y * 0.85f;
@@ -272,20 +311,10 @@ void NivelSara2State::configurarMinijuegoCriminal()
     m_criminalMinigame.setSize(sf::Vector2f(minijuegoW, minijuegoH));
     m_criminalMinigame.setPosition(sf::Vector2f(minijuegoX, minijuegoY));
     
+    // Reinicializar con los objetos guardados
     m_criminalMinigame.init("assets/images/niveles/nivel_sara2/criminalCase.png", 
-                            std::move(objetos), std::move(sospechosos));
-    
-    // DEBUG ACTIVADO para ver los cuadros y ajustar coordenadas
-    m_criminalMinigame.setDebugMode(true);  // Cambia a false cuando ya tengas las coordenadas
-    
-    m_criminalMinigame.setInventory(m_player.getInventory());
-    
-    m_criminalMinigame.setOnCompleteCallback([this](bool exito) {
-        if (exito && !m_criminalGameCompleted) {
-            m_criminalGameCompleted = true;
-            mostrarMensaje("CASO RESUELTO. Has encontrado las 10 pistas y al culpable.", 5.0f);
-        }
-    });
+                            m_objetosCriminal, m_sospechososCriminal);
+    m_criminalMinigame.setDebugMode(true);
 }
 void NivelSara2State::verificarEntradaCentinela()
 {
@@ -321,13 +350,32 @@ void NivelSara2State::verificarSalidaNivel()
 
 void NivelSara2State::update(float dt)
 {
+     // Verificar si la ventana cambió de tamaño
+    static sf::Vector2u lastWindowSize = window->getSize();
+    sf::Vector2u currentWindowSize = window->getSize();
+    
+    if (currentWindowSize != lastWindowSize) {
+        lastWindowSize = currentWindowSize;
+        
+        // Calcular posición en PÍXELES de la ventana
+        float minijuegoW = currentWindowSize.x * 0.85f;
+        float minijuegoH = currentWindowSize.y * 0.85f;
+        float minijuegoX = (currentWindowSize.x - minijuegoW) / 2.f;
+        float minijuegoY = (currentWindowSize.y - minijuegoH) / 2.f;
+        
+        m_criminalMinigame.setPosition(sf::Vector2f(minijuegoX, minijuegoY));
+        m_criminalMinigame.setSize(sf::Vector2f(minijuegoW, minijuegoH));
+        
+        m_criminalMinigame.reinit("assets/images/niveles/nivel_sara2/criminalCase.png",
+                                   m_objetosCriminal, 
+                                   m_sospechososCriminal);
+    }
+
     // ===== SI HAY MENSAJE EMERGENTE, NO ACTUALIZAR MOVIMIENTO =====
     if (m_mensajeEmergenteActivo)
     {
         return;
     }
-    
-    // Resto del update normal...
     if (m_textoMensaje && m_msjActual.tiempoRestante > 0.0f)
     {
         m_msjActual.tiempoRestante -= dt;
@@ -354,18 +402,29 @@ void NivelSara2State::update(float dt)
     m_cercaCriminalArea = m_player.getHurtbox().findIntersection(m_criminalArea).has_value();
 
     static bool cCriminalPresionado = false;
-    if (m_cercaCriminalArea && !m_criminalGameCompleted && !m_criminalMinigame.isActive() 
-        && !m_mensajeEmergenteActivo) {
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R)) {
-            if (!cCriminalPresionado) {
-                cCriminalPresionado = true;
-                m_criminalMinigame.activate();
-                std::cout << "Activando minijuego Criminal Case" << std::endl;
-            }
-        } else {
-            cCriminalPresionado = false;
+if (m_cercaCriminalArea && !m_criminalGameCompleted && !m_criminalMinigame.isActive() 
+    && !m_mensajeEmergenteActivo) {
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R)) {
+        if (!cCriminalPresionado) {
+            cCriminalPresionado = true;
+            
+            // FORZAR ACTUALIZACIÓN DE POSICIÓN ANTES DE ACTIVAR
+            sf::Vector2u winSize = window->getSize();
+            float minijuegoW = winSize.x * 0.85f;
+            float minijuegoH = winSize.y * 0.85f;
+            float minijuegoX = (winSize.x - minijuegoW) / 2.f;
+            float minijuegoY = (winSize.y - minijuegoH) / 2.f;
+            
+            m_criminalMinigame.setPosition(sf::Vector2f(minijuegoX, minijuegoY));
+            m_criminalMinigame.setSize(sf::Vector2f(minijuegoW, minijuegoH));
+            
+            m_criminalMinigame.activate();
+            std::cout << "Activando minijuego Criminal Case - Posición forzada: (" << minijuegoX << ", " << minijuegoY << ")" << std::endl;
         }
+    } else {
+        cCriminalPresionado = false;
     }
+}
 
     // Manejar minijuego criminal activo
     if (m_criminalMinigame.isActive()) {

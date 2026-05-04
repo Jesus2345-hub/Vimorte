@@ -56,8 +56,16 @@ public:
     }
     
     void setDebugMode(bool debug) { m_debugMode = debug; }
+    void reinit(const std::string& fondoPath,
+                                   const std::vector<ObjetoBuscar>& objetos,
+                                   const std::vector<Sospechoso>& sospechosos);
+    void setBaseSize(const sf::Vector2f& baseSize);  
+    void escalarAreas();
     
 private:
+
+    void actualizarFondo();  
+    std::string m_fondoPath;  
     void mostrarMensaje(const std::string& msg, float duracion);
     void verificarCompletado();
     int contarObjetosEncontrados() const;
@@ -73,8 +81,7 @@ private:
     bool m_fontLoaded;
     
     Inventory* m_inventory;
-    sf::Clock m_verdeClock;
-    int m_ultimoObjetoEncontrado;
+   
     
     sf::Vector2f m_position;
     sf::Vector2f m_size;
@@ -100,6 +107,12 @@ private:
     };
     MensajeTemp m_mensajeTemp;
     sf::Clock m_mensajeClock;
-    
+
+
+    // Guardar coordenadas ORIGINALES (base) para poder escalarlas
+    std::vector<ObjetoBuscar> m_objetosOriginales;
+    std::vector<Sospechoso> m_sospechososOriginales;
+    sf::Vector2f m_tamanioBase;
+
     std::function<void(bool)> m_onCompleteCallback;
 };
