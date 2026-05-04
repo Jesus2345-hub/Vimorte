@@ -126,6 +126,7 @@ void NivelSara2State::configurarBloquesInteractivos()
 }
 void NivelSara2State::handleEvent(const sf::Event &event)
 {
+    
     // ===== PRIORIDAD: SI HAY MENSAJE EMERGENTE, ESCAPE LO CIERRA =====
     if (m_mensajeEmergenteActivo) {
         if (const auto *keyPressed = event.getIf<sf::Event::KeyPressed>()) {
@@ -199,78 +200,69 @@ void NivelSara2State::configurarMinijuegoCriminal()
     m_cercaCriminalArea = false;
     m_criminalGameCompleted = false;
     
-    // ========== CONFIGURAR 10 OBJETOS PARA LA PLAYA ==========
     std::vector<ObjetoBuscar> objetos;
     
-    objetos.emplace_back("Collar Perdido", 
-        sf::FloatRect(sf::Vector2f(200.f, 300.f), sf::Vector2f(60.f, 60.f)),
-        "assets/images/niveles/nivel_sara2/objetos/collar.png",
+    objetos.emplace_back("Collar", 
+        sf::FloatRect(sf::Vector2f(775.f, 427.f), sf::Vector2f(36.f, 40.f)),
         "Un collar de perlas abandonado en la arena");
     
     objetos.emplace_back("Carta Mojada", 
-        sf::FloatRect(sf::Vector2f(500.f, 450.f), sf::Vector2f(50.f, 70.f)),
-        "assets/images/niveles/nivel_sara2/objetos/carta.png",
-        "Una carta que revela información crucial");
+        sf::FloatRect(sf::Vector2f(255.f, 462.f), sf::Vector2f(95.f, 38.f)),
+        "Una carta informacion crucial de Andrea");
     
     objetos.emplace_back("Reloj Arena", 
-        sf::FloatRect(sf::Vector2f(350.f, 200.f), sf::Vector2f(45.f, 70.f)),
-        "assets/images/niveles/nivel_sara2/objetos/reloj.png",
-        "Un reloj detenido a la hora del crimen");
+        sf::FloatRect(sf::Vector2f(915.f, 359.f), sf::Vector2f(19.f, 70.f)),
+        "Un reloj de regalo");
     
     objetos.emplace_back("Medalla", 
-        sf::FloatRect(sf::Vector2f(700.f, 550.f), sf::Vector2f(40.f, 40.f)),
-        "assets/images/niveles/nivel_sara2/objetos/medalla.png",
-        "Una medalla con iniciales grabadas");
+        sf::FloatRect(sf::Vector2f(160.f, 172.f), sf::Vector2f(20.f, 16.f)),
+        "Una medalla vieja");
     
     objetos.emplace_back("Botella", 
-        sf::FloatRect(sf::Vector2f(100.f, 500.f), sf::Vector2f(35.f, 55.f)),
-        "assets/images/niveles/nivel_sara2/objetos/botella.png",
-        "Una botella con un mensaje dentro");
+        sf::FloatRect(sf::Vector2f(138.f, 371.f), sf::Vector2f(30.f, 24.f)),
+        "Una botella con las penas de Andrea");
     
     objetos.emplace_back("Diario", 
-        sf::FloatRect(sf::Vector2f(850.f, 350.f), sf::Vector2f(55.f, 70.f)),
-        "assets/images/niveles/nivel_sara2/objetos/diario.png",
-        "El diario personal de la víctima");
+        sf::FloatRect(sf::Vector2f(715.f, 506.f), sf::Vector2f(35.f, 30.f)),
+        "El diario personal");
     
     objetos.emplace_back("Anillo", 
-        sf::FloatRect(sf::Vector2f(600.f, 150.f), sf::Vector2f(30.f, 30.f)),
-        "assets/images/niveles/nivel_sara2/objetos/anillo.png",
-        "Un anillo de compromiso manchado");
+        sf::FloatRect(sf::Vector2f(688.f, 422.f), sf::Vector2f(21.f, 15.f)),
+        "Un anillo de compromiso");
     
     objetos.emplace_back("Foto", 
-        sf::FloatRect(sf::Vector2f(950.f, 500.f), sf::Vector2f(50.f, 60.f)),
-        "assets/images/niveles/nivel_sara2/objetos/foto.png",
-        "Una foto que muestra al culpable");
+        sf::FloatRect(sf::Vector2f(1013.f, 247.f), sf::Vector2f(34.f, 54.f)),
+        "Una foto, no sabemos por que");
     
     objetos.emplace_back("Cuchillo", 
-        sf::FloatRect(sf::Vector2f(400.f, 600.f), sf::Vector2f(45.f, 35.f)),
-        "assets/images/niveles/nivel_sara2/objetos/cuchillo.png",
-        "Posible arma del crimen, enterrada en la arena");
+        sf::FloatRect(sf::Vector2f(487.f, 389.f), sf::Vector2f(36.f, 5.f)),
+        "Quiere defenderse");
     
     objetos.emplace_back("Bolso", 
-        sf::FloatRect(sf::Vector2f(150.f, 150.f), sf::Vector2f(50.f, 45.f)),
-        "assets/images/niveles/nivel_sara2/objetos/bolso.png",
-        "Un bolso que pertenecía a la víctima");
+        sf::FloatRect(sf::Vector2f(562.f, 472.f), sf::Vector2f(124.f, 80.f)),
+        "Un bolso que ya le toca cambio");
     
-    // ========== CONFIGURAR SOSPECHOSOS ==========
+    objetos.emplace_back("Trapo Viejo", 
+    sf::FloatRect(sf::Vector2f(1046.f, 467.f), sf::Vector2f(26.f, 10.f)),
+    "Un Trapo sucio... no limpia su bolso");
+
     std::vector<Sospechoso> sospechosos;
     
-    sospechosos.emplace_back("Capitán Rodrigo", 
+    sospechosos.emplace_back("Capitan Rodrigo", 
         sf::FloatRect(sf::Vector2f(300.f, 650.f), sf::Vector2f(80.f, 100.f)), 
-        "El capitán del barco. Tenía acceso a todo, pero parece honesto.", 
+        "El capitan del barco. Tenia acceso a todo, pero parece honesto.", 
         false);
     
     sospechosos.emplace_back("Isabella la adivina", 
         sf::FloatRect(sf::Vector2f(750.f, 620.f), sf::Vector2f(70.f, 90.f)), 
-        "Siempre supo que algo pasaría. ¡ES LA CULPABLE!", 
+        "Siempre supo que algo pasaría. ES LA CULPABLE", 
         true);
     
     sospechosos.emplace_back("Don Julio el pescador", 
         sf::FloatRect(sf::Vector2f(550.f, 680.f), sf::Vector2f(80.f, 90.f)), 
-        "Vio todo desde su bote, pero jura que no fue él.", 
+        "Vio todo desde su bote, pero jura que no fue el.", 
         false);
     
-    // Configurar el minijuego
     sf::Vector2u windowSize = window->getSize();
     float minijuegoW = windowSize.x * 0.85f;
     float minijuegoH = windowSize.y * 0.85f;
@@ -280,9 +272,13 @@ void NivelSara2State::configurarMinijuegoCriminal()
     m_criminalMinigame.setSize(sf::Vector2f(minijuegoW, minijuegoH));
     m_criminalMinigame.setPosition(sf::Vector2f(minijuegoX, minijuegoY));
     
-    m_criminalMinigame.init("assets/images/niveles/nivel_sara2/playa_fondo.png", 
+    m_criminalMinigame.init("assets/images/niveles/nivel_sara2/criminalCase.png", 
                             std::move(objetos), std::move(sospechosos));
-    m_criminalMinigame.setDebugMode(true);
+    
+    // DEBUG ACTIVADO para ver los cuadros y ajustar coordenadas
+    m_criminalMinigame.setDebugMode(true);  // Cambia a false cuando ya tengas las coordenadas
+    
+    m_criminalMinigame.setInventory(m_player.getInventory());
     
     m_criminalMinigame.setOnCompleteCallback([this](bool exito) {
         if (exito && !m_criminalGameCompleted) {
@@ -360,7 +356,7 @@ void NivelSara2State::update(float dt)
     static bool cCriminalPresionado = false;
     if (m_cercaCriminalArea && !m_criminalGameCompleted && !m_criminalMinigame.isActive() 
         && !m_mensajeEmergenteActivo) {
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::C)) {
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R)) {
             if (!cCriminalPresionado) {
                 cCriminalPresionado = true;
                 m_criminalMinigame.activate();
@@ -622,7 +618,7 @@ void NivelSara2State::draw()
         
         // Texto para el minijuego criminal
         if (m_cercaCriminalArea && !m_criminalGameCompleted && !m_criminalMinigame.isActive()) {
-            m_textoInteraccion->setString("Presiona C para investigar el crimen en la playa");
+            m_textoInteraccion->setString("Presiona R para investigar el crimen en la playa");
             sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
             m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
             m_textoInteraccion->setPosition(sf::Vector2f(winW / 2.f, winH - 130.f));

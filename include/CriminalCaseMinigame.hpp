@@ -4,46 +4,17 @@
 #include <string>
 #include <functional>
 #include <memory>
+#include "Inventory.hpp"
 
-// Estructura para cada objeto a encontrar
+// Estructura para cada objeto a encontrar (sin textura, solo área)
 struct ObjetoBuscar {
     std::string nombre;
     sf::FloatRect area;
     bool encontrado;
     std::string descripcion;
-    std::string imagenPath;
     
-    // Textura y sprite del objeto (unique_ptr)
-    std::unique_ptr<sf::Texture> textura;
-    std::unique_ptr<sf::Sprite> sprite;
-    
-    ObjetoBuscar(const std::string& n, const sf::FloatRect& a, const std::string& img, const std::string& d)
-        : nombre(n), area(a), encontrado(false), descripcion(d), imagenPath(img)
-        , textura(nullptr), sprite(nullptr) {}
-    
-    // Constructor de movimiento
-    ObjetoBuscar(ObjetoBuscar&& other) noexcept = default;
-    ObjetoBuscar& operator=(ObjetoBuscar&& other) noexcept = default;
-    
-    // Cargar textura y sprite
-    bool cargarTextura() {
-        textura = std::make_unique<sf::Texture>();
-        if (!textura->loadFromFile(imagenPath)) {
-            return false;
-        }
-        sprite = std::make_unique<sf::Sprite>(*textura);
-        sprite->setPosition(area.position);
-        
-        // Escalar al tamaño del área
-        sf::Vector2u texSize = textura->getSize();
-        if (texSize.x > 0 && texSize.y > 0) {
-            sprite->setScale(sf::Vector2f(
-                area.size.x / texSize.x,
-                area.size.y / texSize.y
-            ));
-        }
-        return true;
-    }
+    ObjetoBuscar(const std::string& n, const sf::FloatRect& a, const std::string& d)
+        : nombre(n), area(a), encontrado(false), descripcion(d) {}
 };
 
 // Estructura para cada sospechoso
@@ -65,7 +36,7 @@ public:
     
     void setPosition(const sf::Vector2f& pos);
     void setSize(const sf::Vector2f& size);
-    void setDineroJugador(int* dinero) { m_dineroJugador = dinero; }
+    void setInventory(Inventory* inventory) { m_inventory = inventory; }
     
     void init(const std::string& fondoPath,
               std::vector<ObjetoBuscar> objetos,
@@ -101,20 +72,22 @@ private:
     bool m_debugMode;
     bool m_fontLoaded;
     
-    int* m_dineroJugador;
+    Inventory* m_inventory;
+    sf::Clock m_verdeClock;
+    int m_ultimoObjetoEncontrado;
     
     sf::Vector2f m_position;
     sf::Vector2f m_size;
     
-    // Fondo del minijuego (inicializados como nullptr)
+    // Solo fondo del minijuego
     std::unique_ptr<sf::Texture> m_backgroundTexture;
     std::unique_ptr<sf::Sprite> m_background;
     
-    // Lista de objetos a buscar
+    // Lista de objetos a buscar (sin texturas)
     std::vector<ObjetoBuscar> m_objetos;
     std::vector<Sospechoso> m_sospechosos;
     
-    // Textos UI (inicializados como nullptr)
+    // Textos UI
     std::unique_ptr<sf::Font> m_font;
     std::unique_ptr<sf::Text> m_mensajeText;
     std::unique_ptr<sf::Text> m_listaText;
