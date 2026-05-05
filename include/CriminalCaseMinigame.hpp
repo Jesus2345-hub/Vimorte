@@ -57,6 +57,7 @@ public:
     CriminalCaseMinigame();
     ~CriminalCaseMinigame() = default;
     
+    void resetCompletamente(); 
     void limpiarPools();
     void setPosition(const sf::Vector2f& pos);
     void setSize(const sf::Vector2f& size);

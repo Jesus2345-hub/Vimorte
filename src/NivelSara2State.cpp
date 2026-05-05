@@ -447,30 +447,31 @@ if (currentWindowSize != lastWindowSize) {
     m_cercaCriminalArea = m_player.getHurtbox().findIntersection(m_criminalArea).has_value();
 
     static bool cCriminalPresionado = false;
-if (m_cercaCriminalArea && !m_criminalGameCompleted && !m_criminalMinigame.isActive() 
-    && !m_mensajeEmergenteActivo) {
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R)) {
-        if (!cCriminalPresionado) {
-            cCriminalPresionado = true;
-            
-            // FORZAR ACTUALIZACIÓN DE POSICIÓN ANTES DE ACTIVAR
-            sf::Vector2u winSize = window->getSize();
-            float minijuegoW = winSize.x * 0.85f;
-            float minijuegoH = winSize.y * 0.85f;
-            float minijuegoX = (winSize.x - minijuegoW) / 2.f;
-            float minijuegoY = (winSize.y - minijuegoH) / 2.f;
-            
-            m_criminalMinigame.setPosition(sf::Vector2f(minijuegoX, minijuegoY));
-            m_criminalMinigame.setSize(sf::Vector2f(minijuegoW, minijuegoH));
-            
-            m_criminalMinigame.activate();
-            std::cout << "Activando minijuego Criminal Case - Posición forzada: (" << minijuegoX << ", " << minijuegoY << ")" << std::endl;
+    if (m_cercaCriminalArea && !m_criminalGameCompleted && !m_criminalMinigame.isActive() 
+        && !m_mensajeEmergenteActivo) {
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R)) {
+            if (!cCriminalPresionado) {
+                cCriminalPresionado = true;
+                
+                // RESET COMPLETO antes de activar
+                m_criminalMinigame.resetCompletamente();  // Usar el nuevo método
+                
+                sf::Vector2u winSize = window->getSize();
+                float minijuegoW = winSize.x * 0.85f;
+                float minijuegoH = winSize.y * 0.85f;
+                float minijuegoX = (winSize.x - minijuegoW) / 2.f;
+                float minijuegoY = (winSize.y - minijuegoH) / 2.f;
+                
+                m_criminalMinigame.setPosition(sf::Vector2f(minijuegoX, minijuegoY));
+                m_criminalMinigame.setSize(sf::Vector2f(minijuegoW, minijuegoH));
+                
+                m_criminalMinigame.activate();
+                std::cout << "Minijuego activado - Estado completamente reiniciado" << std::endl;
+            }
+        } else {
+            cCriminalPresionado = false;
         }
-    } else {
-        cCriminalPresionado = false;
     }
-}
-
     // Manejar minijuego criminal activo
     if (m_criminalMinigame.isActive()) {
         m_criminalMinigame.update(dt);

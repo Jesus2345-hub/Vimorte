@@ -3,6 +3,7 @@
 #include <memory>
 #include <sstream>
 #include <random>
+#include <fstream>
 #include <chrono>
 
 // Constructor
@@ -249,18 +250,37 @@ void CriminalCaseMinigame::generarNuevoCaso() {
     
     std::uniform_int_distribution<int> distObjetos(0, static_cast<int>(m_poolObjetos.size()) - 1);
     std::uniform_int_distribution<int> distSospechosos(0, static_cast<int>(m_poolSospechosos.size()) - 1);
+    std::uniform_int_distribution<int> distDialogos(0, static_cast<int>(m_poolDialogos.size()) - 1);
     
     m_setActualObjetos = distObjetos(m_rng);
     m_setActualSospechosos = distSospechosos(m_rng);
+    m_setActualDialogos = distDialogos(m_rng);  // IMPORTANTE: Seleccionar diálogos también
     
+    // Cargar los datos seleccionados
     m_objetosOriginales = m_poolObjetos[m_setActualObjetos];
     m_sospechososOriginales = m_poolSospechosos[m_setActualSospechosos];
     
-    // Cargar diálogos del mismo set si existen
-    if (m_setActualSospechosos < static_cast<int>(m_poolDialogos.size())) {
-        m_dialogosActuales = std::move(m_poolDialogos[m_setActualSospechosos]);    }
+    // Cargar diálogos del mismo índice o del correspondiente
+    if (m_setActualDialogos < static_cast<int>(m_poolDialogos.size()) && 
+        !m_poolDialogos[m_setActualDialogos].empty()) {
+        m_dialogosActuales = m_poolDialogos[m_setActualDialogos];
+        std::cout << "Diálogos cargados: " << m_dialogosActuales.size() << " diálogos" << std::endl;
+    } else if (m_setActualSospechosos < static_cast<int>(m_poolDialogos.size()) && 
+               !m_poolDialogos[m_setActualSospechosos].empty()) {
+        // Fallback: usar diálogos del mismo set que sospechosos
+        m_dialogosActuales = m_poolDialogos[m_setActualSospechosos];
+        std::cout << "Diálogos cargados (fallback): " << m_dialogosActuales.size() << std::endl;
+    } else {
+        // Si no hay diálogos, crear unos por defecto
+        m_dialogosActuales.clear();
+        m_dialogosActuales.emplace_back("Testigo", 
+            "He visto lo sucedido esa noche. Las pistas no mienten.");
+        m_dialogosActuales.emplace_back("Alguien más", 
+            "Todos tenemos algo que decir. Escucha con atención.");
+        std::cout << "Diálogos por defecto creados" << std::endl;
+    }
     
-    // Resetear estados
+    // Resetear estados de objetos
     for (auto& obj : m_objetosOriginales) {
         obj.encontrado = false;
     }
@@ -273,36 +293,100 @@ void CriminalCaseMinigame::generarNuevoCaso() {
     
     escalarAreas();
     
+    // RESET COMPLETO DEL ESTADO DEL JUEGO
     m_todasEvidencias = false;
     m_culpableEncontrado = false;
     m_completed = false;
     m_gameState = CriminalGameState::BUSCANDO_EVIDENCIAS;
     m_dialogoActualIndex = 0;
+    m_waitingForNarrative = false;
+    m_mensajeTemp.tiempoRestante = 0.0f;
     
-    std::cout << "Nuevo caso generado" << std::endl;
+    // Limpiar el mensaje temporal
+    m_mensajeTemp.texto = "";
+    
+    std::cout << "Nuevo caso generado - Diálogos: " << m_dialogosActuales.size() 
+              << " | Estado: BUSCANDO_EVIDENCIAS" << std::endl;
 }
-
 void CriminalCaseMinigame::activate() {
-    if (m_completed) return;
-    
-    // Asegurar que el fondo esté cargado ANTES de generar el caso
-    if (m_fondoPath.empty()) {
-        std::cerr << "ERROR: No hay fondo configurado para el minijuego" << std::endl;
-        return;
+    if (m_completed) {
+        // Si está completado, resetear antes de reactivar
+        resetCompletamente();
     }
     
-    // Forzar recarga del fondo
-    actualizarFondo();
+    // RESET COMPLETO DEL ESTADO
+    m_active = false;  // Temporalmente desactivar para reset
+    m_completed = false;
+    m_todasEvidencias = false;
+    m_culpableEncontrado = false;
+    m_gameState = CriminalGameState::BUSCANDO_EVIDENCIAS;
+    m_dialogoActualIndex = 0;
+    m_waitingForNarrative = false;
+    m_mensajeTemp.tiempoRestante = 0.0f;
+    m_mensajeTemp.texto = "";
     
+    // Regenerar el caso para asegurar diálogos frescos
+    if (!m_poolObjetos.empty()) {
+        generarNuevoCaso();
+    }
+    
+    actualizarFondo();
+    escalarAreas();
+    updateListaTexto();
+    
+    m_active = true;
+    mostrarMensaje("Encuentra todas las pistas", 2.0f);
+    
+    std::cout << "Minijuego activado - GameState: " << static_cast<int>(m_gameState) 
+              << " | Diálogos: " << m_dialogosActuales.size() << std::endl;
+}
+void CriminalCaseMinigame::resetCompletamente() {
+    // Resetear todos los estados
+    m_active = false;
+    m_completed = false;
+    m_todasEvidencias = false;
+    m_culpableEncontrado = false;
+    m_gameState = CriminalGameState::BUSCANDO_EVIDENCIAS;
+    m_dialogoActualIndex = 0;
+    m_waitingForNarrative = false;
+    m_mensajeTemp.tiempoRestante = 0.0f;
+    m_mensajeTemp.texto = "";
+    
+    // Limpiar inventario de items del minijuego
+    if (m_inventory) {
+        for (const auto& obj : m_objetos) {
+            if (obj.encontrado) {
+                for (int i = 0; i < 20; i++) {
+                    Item* item = m_inventory->getItem(i);
+                    if (item && item->name == obj.nombre) {
+                        m_inventory->removeItem(i);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    
+    // Resetear objetos y sospechosos
+    for (auto& obj : m_objetosOriginales) {
+        obj.encontrado = false;
+    }
+    for (auto& sos : m_sospechososOriginales) {
+        sos.acusado = false;
+    }
+    
+    m_objetos = m_objetosOriginales;
+    m_sospechosos = m_sospechososOriginales;
+    
+    // Regenerar caso para diálogos nuevos
     if (!m_poolObjetos.empty()) {
         generarNuevoCaso();
     }
     
     escalarAreas();
+    updateListaTexto();
     
-    m_active = true;
-    m_waitingForNarrative = false;
-    mostrarMensaje("Encuentra todas las pistas", 2.0f);
+    std::cout << "Reset completo del minijuego" << std::endl;
 }
 
 void CriminalCaseMinigame::deactivate() {
@@ -312,7 +396,9 @@ void CriminalCaseMinigame::deactivate() {
 
 void CriminalCaseMinigame::iniciarFaseNarrativa() {
     if (m_dialogosActuales.empty()) {
+        std::cout << "ADVERTENCIA: No hay diálogos cargados, pasando directamente a elección" << std::endl;
         m_gameState = CriminalGameState::ELECCION_FINAL;
+        mostrarMensaje("Sin testimonios disponibles. Decide quién es el culpable.", 2.0f);
         return;
     }
     
@@ -333,7 +419,10 @@ void CriminalCaseMinigame::iniciarFaseNarrativa() {
         m_position.x + (m_size.x - cuadroAncho) / 2,
         m_position.y + m_size.y - cuadroAlto - 30
     ));
+    
+    std::cout << "Fase narrativa iniciada - Diálogos disponibles: " << m_dialogosActuales.size() << std::endl;
 }
+
 
 void CriminalCaseMinigame::verificarCompletado() {
     bool todosEncontrados = true;
@@ -347,9 +436,10 @@ void CriminalCaseMinigame::verificarCompletado() {
     if (todosEncontrados && m_gameState == CriminalGameState::BUSCANDO_EVIDENCIAS) {
         m_todasEvidencias = true;
         iniciarFaseNarrativa();
-        mostrarMensaje("Has reunido todas las pistas. Ahora escucha los testimonios...", 2.0f);
+        mostrarMensaje("Has reunido todas las pistas. Ahora escucha los testimonios...", 5.0f);
     }
 }
+
 
 void CriminalCaseMinigame::procesarAcusacion(int sospechosoIndex) {
     if (sospechosoIndex < 0 || sospechosoIndex >= static_cast<int>(m_sospechosos.size())) return;
@@ -385,6 +475,12 @@ void CriminalCaseMinigame::procesarAcusacion(int sospechosoIndex) {
         }
         
         m_active = false;
+        
+        // IMPORTANTE: Resetear el estado para la próxima vez
+        m_gameState = CriminalGameState::BUSCANDO_EVIDENCIAS;
+        m_todasEvidencias = false;
+        m_dialogoActualIndex = 0;
+        
         if (m_onCompleteCallback) {
             m_onCompleteCallback(false);
         }
@@ -442,13 +538,16 @@ void CriminalCaseMinigame::centrarTexto(sf::Text& text, float x, float y) {
 }
 
 void CriminalCaseMinigame::cargarFondoDialogo(DialogoNarrativo& dialogo) {
+    // Solo cargar si hay una ruta de fondo y no está cargado
     if (!dialogo.fondoPath.empty() && !dialogo.fondoCargado) {
-        dialogo.fondoTexture = std::make_shared<sf::Texture>();  // make_shared
+        dialogo.fondoTexture = std::make_shared<sf::Texture>();
+        
         if (dialogo.fondoTexture->loadFromFile(dialogo.fondoPath)) {
             dialogo.fondoCargado = true;
-            std::cout << "Fondo cargado para: " << dialogo.persona << " - " << dialogo.fondoPath << std::endl;
+            std::cout << "Fondo cargado: " << dialogo.fondoPath << std::endl;
         } else {
             std::cerr << "Error cargando fondo: " << dialogo.fondoPath << std::endl;
+            dialogo.fondoCargado = false;
         }
     }
 }
@@ -539,7 +638,7 @@ void CriminalCaseMinigame::handleEvent(const sf::Event& event, sf::RenderWindow&
                     m_dialogoActualIndex++;
                 } else {
                     m_gameState = CriminalGameState::ELECCION_FINAL;
-                    mostrarMensaje("Has escuchado todos los testimonios. Quien es el culpable", 2.0f);
+                    mostrarMensaje("Has escuchado todos los testimonios. Quien es el culpable?", 9.0f);
                 }
             } else if (keyPressed->code == sf::Keyboard::Key::Backspace) {
                 if (m_dialogoActualIndex > 0) {
@@ -577,29 +676,28 @@ void CriminalCaseMinigame::dibujarPantallaNarrativa(sf::RenderWindow& window) {
         cargarFondoDialogo(dialogo);
         
         if (dialogo.fondoCargado && dialogo.fondoTexture) {
-            
             sf::Sprite fondoPersonaje(*dialogo.fondoTexture);
             
-            // Escalar manteniendo proporción para que quepa en el área disponible
+            // Calcular escala para que ocupe todo el cuadro de diálogo
             sf::Vector2f textureSize(static_cast<float>(dialogo.fondoTexture->getSize().x),
                                      static_cast<float>(dialogo.fondoTexture->getSize().y));
             
-            // Calcular escala para que quepa dentro del área de diálogo
+            // Opción 1: Escalar para que ocupe todo el cuadro (posible deformación)
             float scaleX = m_cuadroDialogo.getSize().x / textureSize.x;
             float scaleY = m_cuadroDialogo.getSize().y / textureSize.y;
-            float scale = std::min(scaleX, scaleY);
+            fondoPersonaje.setScale(sf::Vector2f(scaleX, scaleY));
             
-            fondoPersonaje.setScale(sf::Vector2f(scale, scale));
-            
-            // Centrar en el cuadro de diálogo
-            sf::Vector2f scaledSize(textureSize.x * scale, textureSize.y * scale);
-            fondoPersonaje.setPosition(sf::Vector2f(
-                m_cuadroDialogo.getPosition().x + (m_cuadroDialogo.getSize().x - scaledSize.x) / 2,
-                m_cuadroDialogo.getPosition().y + (m_cuadroDialogo.getSize().y - scaledSize.y) / 2
-            ));
+            // Posicionar exactamente en el cuadro de diálogo
+            fondoPersonaje.setPosition(m_cuadroDialogo.getPosition());
             
             window.draw(fondoPersonaje);
         }
+        
+        // Añade un fondo sólido semitransparente para legibilidad del texto
+        sf::RectangleShape textBackground(m_cuadroDialogo.getSize());
+        textBackground.setFillColor(sf::Color(0, 0, 0, 180));
+        textBackground.setPosition(m_cuadroDialogo.getPosition());
+        window.draw(textBackground);
     }
     
     window.draw(m_cuadroDialogo);
@@ -792,7 +890,21 @@ void CriminalCaseMinigame::draw(sf::RenderWindow& window) {
 }
 
 void CriminalCaseMinigame::resetGame() {
+    // Resetear todos los estados
+    m_active = false;
+    m_completed = false;
+    m_todasEvidencias = false;
+    m_culpableEncontrado = false;
+    m_gameState = CriminalGameState::BUSCANDO_EVIDENCIAS;
+    m_dialogoActualIndex = 0;
+    m_waitingForNarrative = false;
+    m_mensajeTemp.tiempoRestante = 0.0f;
+    
+    // Regenerar el caso
     generarNuevoCaso();
+    
+    // Actualizar UI
+    updateListaTexto();
 }
 
 void CriminalCaseMinigame::limpiarInventario() {
