@@ -198,6 +198,12 @@ void CriminalCaseMinigame::actualizarFondo() {
     m_background->setPosition(m_position);
 }
 
+void CriminalCaseMinigame::cargarFondoOnly(const std::string& fondoPath) {
+    m_fondoPath = fondoPath;
+    actualizarFondo();
+}
+
+
 void CriminalCaseMinigame::setPosition(const sf::Vector2f& pos) {
     m_position = pos;
     if (m_background) {
@@ -356,43 +362,31 @@ void CriminalCaseMinigame::resetCompletamente() {
     m_dialogoActualIndex = 0;
     m_waitingForNarrative = false;
     m_mensajeTemp.tiempoRestante = 0.0f;
-    m_mensajeTemp.texto = "";
     
-    // Limpiar inventario de items del minijuego
-    if (m_inventory) {
-        for (const auto& obj : m_objetos) {
-            if (obj.encontrado) {
-                for (int i = 0; i < 20; i++) {
-                    Item* item = m_inventory->getItem(i);
-                    if (item && item->name == obj.nombre) {
-                        m_inventory->removeItem(i);
-                        break;
-                    }
-                }
-            }
+    // Recargar desde los pools usando los mismos sets
+    if (m_setActualObjetos >= 0 && m_setActualObjetos < static_cast<int>(m_poolObjetos.size())) {
+        m_objetosOriginales = m_poolObjetos[m_setActualObjetos];
+        for (auto& obj : m_objetosOriginales) {
+            obj.encontrado = false;
         }
     }
     
-    // Resetear objetos y sospechosos
-    for (auto& obj : m_objetosOriginales) {
-        obj.encontrado = false;
+    if (m_setActualSospechosos >= 0 && m_setActualSospechosos < static_cast<int>(m_poolSospechosos.size())) {
+        m_sospechososOriginales = m_poolSospechosos[m_setActualSospechosos];
+        for (auto& sos : m_sospechososOriginales) {
+            sos.acusado = false;
+        }
     }
-    for (auto& sos : m_sospechososOriginales) {
-        sos.acusado = false;
+    
+    if (m_setActualDialogos >= 0 && m_setActualDialogos < static_cast<int>(m_poolDialogos.size())) {
+        m_dialogosActuales = m_poolDialogos[m_setActualDialogos];
     }
     
     m_objetos = m_objetosOriginales;
     m_sospechosos = m_sospechososOriginales;
     
-    // Regenerar caso para diálogos nuevos
-    if (!m_poolObjetos.empty()) {
-        generarNuevoCaso();
-    }
-    
     escalarAreas();
     updateListaTexto();
-    
-    std::cout << "Reset completo del minijuego" << std::endl;
 }
 
 void CriminalCaseMinigame::deactivate() {
@@ -447,7 +441,52 @@ void CriminalCaseMinigame::verificarCompletado() {
         mostrarMensaje("Has reunido todas las pistas. Ahora escucha los testimonios...", 5.0f);
     }
 }
-
+void CriminalCaseMinigame::reiniciarCasoCompleto() {
+    // Resetear objetos encontrados
+    for (auto& obj : m_objetosOriginales) {
+        obj.encontrado = false;
+    }
+    for (auto& obj : m_objetos) {
+        obj.encontrado = false;
+    }
+    
+    // Resetear acusaciones de sospechosos
+    for (auto& sos : m_sospechososOriginales) {
+        sos.acusado = false;
+    }
+    for (auto& sos : m_sospechosos) {
+        sos.acusado = false;
+    }
+    
+    // Recargar desde los pools originales
+    if (m_setActualObjetos >= 0 && m_setActualObjetos < static_cast<int>(m_poolObjetos.size())) {
+        m_objetosOriginales = m_poolObjetos[m_setActualObjetos];
+        for (auto& obj : m_objetosOriginales) {
+            obj.encontrado = false;
+        }
+    }
+    
+    if (m_setActualSospechosos >= 0 && m_setActualSospechosos < static_cast<int>(m_poolSospechosos.size())) {
+        m_sospechososOriginales = m_poolSospechosos[m_setActualSospechosos];
+        // Asegurar que el culpable está correctamente marcado
+        for (auto& sos : m_sospechososOriginales) {
+            sos.acusado = false;
+            std::cout << "Sospechoso: " << sos.nombre << " - Culpable: " << (sos.esElCulpable ? "SI" : "NO") << std::endl;
+        }
+    }
+    
+    // Recargar diálogos
+    if (m_setActualDialogos >= 0 && m_setActualDialogos < static_cast<int>(m_poolDialogos.size())) {
+        m_dialogosActuales = m_poolDialogos[m_setActualDialogos];
+    }
+    
+    // Sincronizar vectores actuales
+    m_objetos = m_objetosOriginales;
+    m_sospechosos = m_sospechososOriginales;
+    
+    // Re-escalar áreas
+    escalarAreas();
+}
 
 void CriminalCaseMinigame::procesarAcusacion(int sospechosoIndex) {
     if (sospechosoIndex < 0 || sospechosoIndex >= static_cast<int>(m_sospechosos.size())) return;
@@ -455,7 +494,8 @@ void CriminalCaseMinigame::procesarAcusacion(int sospechosoIndex) {
     Sospechoso& sospechoso = m_sospechosos[sospechosoIndex];
     
     if (sospechoso.esElCulpable) {
-        mostrarMensaje("Correcto " + sospechoso.nombre + " es el culpable. Caso cerrado", 3.0f);
+        std::cout << "¡CORRECTO! " << sospechoso.nombre << " es el culpable." << std::endl;
+        mostrarMensaje("Correcto! " + sospechoso.nombre + " es el culpable. Caso cerrado!", 3.0f);
         m_completed = true;
         m_active = false;
         
@@ -463,11 +503,15 @@ void CriminalCaseMinigame::procesarAcusacion(int sospechosoIndex) {
             m_onCompleteCallback(true);
         }
     } else {
-        std::string mensajePenalizacion = "ERROR. Has acusado a " + sospechoso.nombre + 
-                              ".\nEl verdadero culpable escapo con todas las pruebas.\n" +
-                              "Las pistas encontradas han desaparecido...";
-        mostrarMensaje(mensajePenalizacion, 4.0f);
+        // Mostrar mensaje de error específico
+        std::string mensajeError = "¡INCORRECTO! " + sospechoso.nombre + " es inocente.\n";
+        mensajeError += "El verdadero culpable aún anda suelto...\n";
+        mensajeError += "Las pruebas han sido重塑 y debes reunirlas de nuevo.";
         
+        mostrarMensaje(mensajeError, 4.0f);
+        std::cout << "Acusación incorrecta: " << sospechoso.nombre << " NO es el culpable" << std::endl;
+        
+        // Limpiar inventario (eliminar las pistas encontradas)
         if (m_inventory) {
             for (const auto& obj : m_objetos) {
                 if (obj.encontrado) {
@@ -482,18 +526,29 @@ void CriminalCaseMinigame::procesarAcusacion(int sospechosoIndex) {
             }
         }
         
-        m_active = false;
+        // REINICIAR COMPLETAMENTE EL ESTADO DEL JUEGO
+        reiniciarCasoCompleto();
         
-        // IMPORTANTE: Resetear el estado para la próxima vez
+        // Volver al estado de búsqueda de evidencias
         m_gameState = CriminalGameState::BUSCANDO_EVIDENCIAS;
         m_todasEvidencias = false;
+        m_waitingForNarrative = false;
         m_dialogoActualIndex = 0;
         
+        // Actualizar la UI
+        updateListaTexto();
+        
+        // Mantener el minijuego activo para reintentar
+        m_active = true;
+        
+        // Llamar al callback para notificar el error (pero no cerrar el minijuego)
         if (m_onCompleteCallback) {
-            m_onCompleteCallback(false);
+            m_onCompleteCallback(false);  // false indica que falló pero puede reintentar
         }
     }
 }
+
+
 
 int CriminalCaseMinigame::contarObjetosEncontrados() const {
     int count = 0;

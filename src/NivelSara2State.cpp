@@ -117,10 +117,13 @@ NivelSara2State::NivelSara2State(sf::RenderWindow *window, Game *game)
     // ===== ACTIVAR DEBUG DE COORDENADAS SIEMPRE =====
     CoordenadasDebug::getInstance().setVisible(true);
 
-    // ===== IMPORTANTE: Inicializar el minijuego con la imagen de fondo =====
-    m_criminalMinigame.init("assets/images/niveles/nivel_sara2/criminalCase.png", 
-                            m_objetosCriminal, 
-                            m_sospechososCriminal);
+    m_criminalMinigame.setOnCompleteCallback([this](bool exito) {
+    if (exito && !m_criminalGameCompleted) 
+    {
+        m_criminalGameCompleted = true;
+        mostrarMensaje("CASO RESUELTO. Has encontrado todas las pistas y al culpable.", 5.0f);
+    }
+    });
     
     m_criminalMinigame.setDebugMode(true);
     
@@ -220,6 +223,11 @@ void NivelSara2State::configurarMinijuegoCriminal()
     // ===== LIMPIAR POOLS =====
     m_criminalMinigame.limpiarPools();
     
+    // Limpiar vectores miembro
+    m_todosLosObjetos.clear();
+    m_todosLosSospechosos.clear();
+    m_todosLosDialogos.clear();
+    
     // ===== BLOQUE 1 (Caso de la playa) =====
     std::vector<ObjetoBuscar> objetosBloque1;
     objetosBloque1.emplace_back("Collar", sf::FloatRect(sf::Vector2f(560.f, 426.f), sf::Vector2f(36.f, 40.f)), "Un collar de perlas abandonado en la arena");
@@ -239,9 +247,7 @@ void NivelSara2State::configurarMinijuegoCriminal()
     sospechososBloque1.emplace_back("Isabella la Adivina", sf::FloatRect(sf::Vector2f(750.f, 620.f), sf::Vector2f(70.f, 90.f)), "Siempre supo que algo pasaria. ES LA CULPABLE", true);
     sospechososBloque1.emplace_back("Don Julio el Pescador", sf::FloatRect(sf::Vector2f(550.f, 680.f), sf::Vector2f(80.f, 90.f)), "Vio todo desde su bote, pero jura que no fue el.", false);
     
-    // Diálogos con fondos personalizados - Usar push_back con std::move
     std::vector<DialogoNarrativo> dialogosBloque1;
-    
     DialogoNarrativo dialogoDonJulio("Don Julio el Pescador", 
         "Vi todo desde mi bote esa noche.\nEl barco estaba tranquilo,\n pero vi a alguien moviendose\nsigilosamente cerca\nde las pertenencias de Andrea.",
         "assets/images/niveles/nivel_sara2/JulioPescador.png");
@@ -301,8 +307,7 @@ void NivelSara2State::configurarMinijuegoCriminal()
         "assets/images/niveles/nivel_sara2/anonimo.jpg");
     dialogosBloque2.push_back(std::move(dialogoAnonimo));
 
-
-        // ===== BLOQUE 3 (Caso del naufragio misterioso) =====
+    // ===== BLOQUE 3 (Caso del naufragio misterioso) =====
     std::vector<ObjetoBuscar> objetosBloque3;
     objetosBloque3.emplace_back("Calaveras", sf::FloatRect(sf::Vector2f(697.f, 262.f), sf::Vector2f(45.f, 48.f)), "Una calavera tallada en madera, simbolo de una antigua tripulacion");
     objetosBloque3.emplace_back("Canoa", sf::FloatRect(sf::Vector2f(508.f, 254.f), sf::Vector2f(75.f, 28.f)), "Una canoa varada en la orilla, con rasguños recientes");
@@ -321,7 +326,6 @@ void NivelSara2State::configurarMinijuegoCriminal()
     sospechososBloque3.emplace_back("Misterioso Comerciante", sf::FloatRect(sf::Vector2f(750.f, 650.f), sf::Vector2f(85.f, 85.f)), "Siempre aparece justo despues de los naufragios. Nadie sabe de donde viene.", false);
 
     std::vector<DialogoNarrativo> dialogosBloque3;
-
     DialogoNarrativo dialogoMarino("El Viejo Marino", 
         "Yo conozco cada barco que ha naufragado\n en estas costas. Este ultimo... \nfue sabotaje. Vi a alguien nadando hacia la costa\ncon un maletin la noche del accidente.",
         "assets/images/niveles/nivel_sara2/viejoMarino.png");
@@ -342,18 +346,29 @@ void NivelSara2State::configurarMinijuegoCriminal()
         "assets/images/niveles/nivel_sara2/anonimo.jpg");
     dialogosBloque3.push_back(std::move(dialogoTestigo2));
 
-    // ===== AGREGAR SETS A LOS POOLS  =====
-    m_criminalMinigame.agregarSetObjetos(std::move(objetosBloque1));
-    m_criminalMinigame.agregarSetSospechosos(std::move(sospechososBloque1));
-    m_criminalMinigame.agregarSetDialogos(dialogosBloque1);
+    // ===== GUARDAR EN VECTORES MIEMBRO PARA REUSAR =====
+    m_todosLosObjetos.push_back(objetosBloque1);
+    m_todosLosObjetos.push_back(objetosBloque2);
+    m_todosLosObjetos.push_back(objetosBloque3);
     
-    m_criminalMinigame.agregarSetObjetos(std::move(objetosBloque2));
-    m_criminalMinigame.agregarSetSospechosos(std::move(sospechososBloque2));
-    m_criminalMinigame.agregarSetDialogos(dialogosBloque2);
-
-    m_criminalMinigame.agregarSetObjetos(std::move(objetosBloque3));
-    m_criminalMinigame.agregarSetSospechosos(std::move(sospechososBloque3));
-    m_criminalMinigame.agregarSetDialogos(dialogosBloque3);
+    m_todosLosSospechosos.push_back(sospechososBloque1);
+    m_todosLosSospechosos.push_back(sospechososBloque2);
+    m_todosLosSospechosos.push_back(sospechososBloque3);
+    
+    m_todosLosDialogos.push_back(dialogosBloque1);
+    m_todosLosDialogos.push_back(dialogosBloque2);
+    m_todosLosDialogos.push_back(dialogosBloque3);
+    
+    // ===== AGREGAR SETS A LOS POOLS =====
+    for (const auto& objSet : m_todosLosObjetos) {
+        m_criminalMinigame.agregarSetObjetos(objSet);
+    }
+    for (const auto& sosSet : m_todosLosSospechosos) {
+        m_criminalMinigame.agregarSetSospechosos(sosSet);
+    }
+    for (const auto& diaSet : m_todosLosDialogos) {
+        m_criminalMinigame.agregarSetDialogos(diaSet);
+    }
     
     // Guardar copias para reinit
     m_objetosCriminal = objetosBloque1;  
@@ -386,6 +401,9 @@ void NivelSara2State::configurarMinijuegoCriminal()
             mostrarMensaje("CASO RESUELTO. Has encontrado todas las pistas y al culpable.\nEntregale las cosas a Andrea", 5.0f);
         }
     });
+    
+    m_criminalMinigame.cargarFondoOnly("assets/images/niveles/nivel_sara2/criminalCase.png");
+    m_criminalMinigame.generarNuevoCaso();  
 }
 
 void NivelSara2State::reajustarMinijuegoCriminal()
@@ -441,25 +459,21 @@ void NivelSara2State::verificarSalidaNivel()
 void NivelSara2State::update(float dt)
 {
      static sf::Vector2u lastWindowSize = window->getSize();
-sf::Vector2u currentWindowSize = window->getSize();
+    sf::Vector2u currentWindowSize = window->getSize();
 
-if (currentWindowSize != lastWindowSize) {
-    lastWindowSize = currentWindowSize;
-    
-    // Calcular posición en PÍXELES de la ventana
-    float minijuegoW = currentWindowSize.x * 0.85f;
-    float minijuegoH = currentWindowSize.y * 0.85f;
-    float minijuegoX = (currentWindowSize.x - minijuegoW) / 2.f;
-    float minijuegoY = (currentWindowSize.y - minijuegoH) / 2.f;
-    
-    m_criminalMinigame.setPosition(sf::Vector2f(minijuegoX, minijuegoY));
-    m_criminalMinigame.setSize(sf::Vector2f(minijuegoW, minijuegoH));
-    
-    // Forzar actualización del fondo
-    m_criminalMinigame.init("assets/images/niveles/nivel_sara2/criminalCase.png",
-                            m_objetosCriminal, 
-                            m_sospechososCriminal);
-}
+    if (currentWindowSize != lastWindowSize) {
+        lastWindowSize = currentWindowSize;
+        
+        float minijuegoW = currentWindowSize.x * 0.85f;
+        float minijuegoH = currentWindowSize.y * 0.85f;
+        float minijuegoX = (currentWindowSize.x - minijuegoW) / 2.f;
+        float minijuegoY = (currentWindowSize.y - minijuegoH) / 2.f;
+        
+        m_criminalMinigame.setPosition(sf::Vector2f(minijuegoX, minijuegoY));
+        m_criminalMinigame.setSize(sf::Vector2f(minijuegoW, minijuegoH));
+        
+        m_criminalMinigame.cargarFondoOnly("assets/images/niveles/nivel_sara2/criminalCase.png");
+    }
 
     // ===== SI HAY MENSAJE EMERGENTE, NO ACTUALIZAR MOVIMIENTO =====
     if (m_mensajeEmergenteActivo)
@@ -493,30 +507,43 @@ if (currentWindowSize != lastWindowSize) {
 
     static bool cCriminalPresionado = false;
     if (m_cercaCriminalArea && !m_criminalGameCompleted && !m_criminalMinigame.isActive() 
-        && !m_mensajeEmergenteActivo) {
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R)) {
-            if (!cCriminalPresionado) {
-                cCriminalPresionado = true;
-                
-                // RESET COMPLETO antes de activar
-                m_criminalMinigame.resetCompletamente();  // Usar el nuevo método
-                
-                sf::Vector2u winSize = window->getSize();
-                float minijuegoW = winSize.x * 0.85f;
-                float minijuegoH = winSize.y * 0.85f;
-                float minijuegoX = (winSize.x - minijuegoW) / 2.f;
-                float minijuegoY = (winSize.y - minijuegoH) / 2.f;
-                
-                m_criminalMinigame.setPosition(sf::Vector2f(minijuegoX, minijuegoY));
-                m_criminalMinigame.setSize(sf::Vector2f(minijuegoW, minijuegoH));
-                
-                m_criminalMinigame.activate();
-                std::cout << "Minijuego activado - Estado completamente reiniciado" << std::endl;
+    && !m_mensajeEmergenteActivo) {
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R)) {
+        if (!cCriminalPresionado) {
+            cCriminalPresionado = true;
+            
+            // Limpiar y volver a agregar los sets desde los vectores miembro
+            m_criminalMinigame.limpiarPools();
+            
+            for (const auto& objSet : m_todosLosObjetos) {
+                m_criminalMinigame.agregarSetObjetos(objSet);
             }
-        } else {
-            cCriminalPresionado = false;
+            for (const auto& sosSet : m_todosLosSospechosos) {
+                m_criminalMinigame.agregarSetSospechosos(sosSet);
+            }
+            for (const auto& diaSet : m_todosLosDialogos) {
+                m_criminalMinigame.agregarSetDialogos(diaSet);
+            }
+            
+            m_criminalMinigame.generarNuevoCaso();
+            
+            sf::Vector2u winSize = window->getSize();
+            float minijuegoW = winSize.x * 0.85f;
+            float minijuegoH = winSize.y * 0.85f;
+            float minijuegoX = (winSize.x - minijuegoW) / 2.f;
+            float minijuegoY = (winSize.y - minijuegoH) / 2.f;
+            
+            m_criminalMinigame.setPosition(sf::Vector2f(minijuegoX, minijuegoY));
+            m_criminalMinigame.setSize(sf::Vector2f(minijuegoW, minijuegoH));
+            m_criminalMinigame.cargarFondoOnly("assets/images/niveles/nivel_sara2/criminalCase.png");
+            
+            m_criminalMinigame.activate();
+            std::cout << "Minijuego activado con nuevo caso" << std::endl;
         }
+    } else {
+        cCriminalPresionado = false;
     }
+}
     // Manejar minijuego criminal activo
     if (m_criminalMinigame.isActive()) {
         m_criminalMinigame.update(dt);

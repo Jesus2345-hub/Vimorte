@@ -57,10 +57,12 @@ public:
     CriminalCaseMinigame();
     ~CriminalCaseMinigame() = default;
     
+    void cargarFondoOnly(const std::string& fondoPath);
     void limpiarPools();
     void setPosition(const sf::Vector2f& pos);
     void setSize(const sf::Vector2f& size);
     void setInventory(Inventory* inventory) { m_inventory = inventory; }
+    
     
     void agregarSetObjetos(const std::vector<ObjetoBuscar>& objetos);
     void agregarSetSospechosos(const std::vector<Sospechoso>& sospechosos);
@@ -93,6 +95,7 @@ public:
     void setPenaltyCallback(std::function<void()> callback) { m_penaltyCallback = callback; }
 private:
 
+    void reiniciarCasoCompleto();
     std::function<void()> m_penaltyCallback;
     void actualizarFondo();
     std::string m_fondoPath;

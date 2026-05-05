@@ -74,7 +74,9 @@ private:
     void reajustarMinijuegoCriminal();
     std::vector<ObjetoBuscar> m_objetosCriminal;
     std::vector<Sospechoso> m_sospechososCriminal;
-
+    std::vector<std::vector<ObjetoBuscar>> m_todosLosObjetos;
+    std::vector<std::vector<Sospechoso>> m_todosLosSospechosos;
+    std::vector<std::vector<DialogoNarrativo>> m_todosLosDialogos;
 public:
     NivelSara2State(sf::RenderWindow* window, Game* game);
     void update(float dt) override;
