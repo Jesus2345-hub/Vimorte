@@ -57,7 +57,6 @@ public:
     CriminalCaseMinigame();
     ~CriminalCaseMinigame() = default;
     
-    void resetCompletamente(); 
     void limpiarPools();
     void setPosition(const sf::Vector2f& pos);
     void setSize(const sf::Vector2f& size);
@@ -71,7 +70,7 @@ public:
     void init(const std::string& fondoPath,
               std::vector<ObjetoBuscar> objetos,
               std::vector<Sospechoso> sospechosos);
-    
+    void resetCompletamente();
     void activate();
     void deactivate();
     bool isActive() const { return m_active; }

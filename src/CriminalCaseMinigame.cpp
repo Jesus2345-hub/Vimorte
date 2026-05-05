@@ -248,26 +248,27 @@ void CriminalCaseMinigame::generarNuevoCaso() {
         return;
     }
     
-    std::uniform_int_distribution<int> distObjetos(0, static_cast<int>(m_poolObjetos.size()) - 1);
-    std::uniform_int_distribution<int> distSospechosos(0, static_cast<int>(m_poolSospechosos.size()) - 1);
-    std::uniform_int_distribution<int> distDialogos(0, static_cast<int>(m_poolDialogos.size()) - 1);
+    std::uniform_int_distribution<int> distSets(0, static_cast<int>(m_poolObjetos.size()) - 1);
     
-    m_setActualObjetos = distObjetos(m_rng);
-    m_setActualSospechosos = distSospechosos(m_rng);
-    m_setActualDialogos = distDialogos(m_rng);  // IMPORTANTE: Seleccionar diálogos también
+    // CAMBIO IMPORTANTE: Usar el MISMO índice para TODO
+    int mismoSet = distSets(m_rng);
+    m_setActualObjetos = mismoSet;
+    m_setActualSospechosos = mismoSet;
+    m_setActualDialogos = mismoSet;  // ← mismo índice para diálogos también!
     
     // Cargar los datos seleccionados
     m_objetosOriginales = m_poolObjetos[m_setActualObjetos];
     m_sospechososOriginales = m_poolSospechosos[m_setActualSospechosos];
     
-    // Cargar diálogos del mismo índice o del correspondiente
+    // Cargar diálogos del MISMO índice
     if (m_setActualDialogos < static_cast<int>(m_poolDialogos.size()) && 
         !m_poolDialogos[m_setActualDialogos].empty()) {
         m_dialogosActuales = m_poolDialogos[m_setActualDialogos];
-        std::cout << "Diálogos cargados: " << m_dialogosActuales.size() << " diálogos" << std::endl;
+        std::cout << "Diálogos cargados del set " << m_setActualDialogos 
+                  << ": " << m_dialogosActuales.size() << " diálogos" << std::endl;
     } else if (m_setActualSospechosos < static_cast<int>(m_poolDialogos.size()) && 
                !m_poolDialogos[m_setActualSospechosos].empty()) {
-        // Fallback: usar diálogos del mismo set que sospechosos
+        // Fallback: usar diálogos del set de sospechosos
         m_dialogosActuales = m_poolDialogos[m_setActualSospechosos];
         std::cout << "Diálogos cargados (fallback): " << m_dialogosActuales.size() << std::endl;
     } else {
@@ -301,12 +302,17 @@ void CriminalCaseMinigame::generarNuevoCaso() {
     m_dialogoActualIndex = 0;
     m_waitingForNarrative = false;
     m_mensajeTemp.tiempoRestante = 0.0f;
-    
-    // Limpiar el mensaje temporal
     m_mensajeTemp.texto = "";
     
-    std::cout << "Nuevo caso generado - Diálogos: " << m_dialogosActuales.size() 
-              << " | Estado: BUSCANDO_EVIDENCIAS" << std::endl;
+    std::cout << "Nuevo caso generado - Set: " << mismoSet
+              << " | Culpable: ";
+    // Debug: mostrar quién es el culpable
+    for (const auto& s : m_sospechososOriginales) {
+        if (s.esElCulpable) {
+            std::cout << s.nombre << std::endl;
+            break;
+        }
+    }
 }
 void CriminalCaseMinigame::activate() {
     if (m_completed) {

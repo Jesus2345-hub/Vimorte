@@ -323,12 +323,12 @@ void NivelSara2State::configurarMinijuegoCriminal()
     std::vector<DialogoNarrativo> dialogosBloque3;
 
     DialogoNarrativo dialogoMarino("El Viejo Marino", 
-        "Yo conozco cada barco que ha naufragado en estas costas.\nEste ultimo... fue sabotaje.\nVi a alguien nadando hacia la costa\ncon un maletin la noche del accidente.",
+        "Yo conozco cada barco que ha naufragado\n en estas costas. Este ultimo... \nfue sabotaje. Vi a alguien nadando hacia la costa\ncon un maletin la noche del accidente.",
         "assets/images/niveles/nivel_sara2/viejoMarino.png");
     dialogosBloque3.push_back(std::move(dialogoMarino));
 
     DialogoNarrativo dialogoComerciante("Misterioso Comerciante", 
-        "Yo solo compro lo que encuentro en la playa.\nPero esa noche... vi a Carmen buceando\n mucho antes de que llegaran los rescatistas.\nQueria algo especifico del barco.",
+        "Yo solo compro lo que encuentro en la playa.\nPero esa noche... vi a Carmen buceando\nmucho antes de que llegaran los rescatistas.\nQueria algo especifico del barco.",
         "assets/images/niveles/nivel_sara2/comerciante.png");
     dialogosBloque3.push_back(std::move(dialogoComerciante));
 
@@ -339,7 +339,7 @@ void NivelSara2State::configurarMinijuegoCriminal()
 
     DialogoNarrativo dialogoTestigo2("Pescador Anonimo", 
         "Recuerdo que la noche del naufragio\n vi una figura cargando algo pesado.\nTenian una MEDALLA DE BUCEO colgando.\nSolo los buzos profesionales tienen eso.",
-        "assets/images/niveles/nivel_sara2/anonimo.png");
+        "assets/images/niveles/nivel_sara2/anonimo.jpg");
     dialogosBloque3.push_back(std::move(dialogoTestigo2));
 
     // ===== AGREGAR SETS A LOS POOLS  =====
