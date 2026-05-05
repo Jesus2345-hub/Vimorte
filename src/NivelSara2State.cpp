@@ -300,8 +300,49 @@ void NivelSara2State::configurarMinijuegoCriminal()
         "Escuche una discusion acalorada cerca\n del campamento. Alguien gritaba \n'el tesoro me pertenece por derecho'.",
         "assets/images/niveles/nivel_sara2/anonimo.jpg");
     dialogosBloque2.push_back(std::move(dialogoAnonimo));
-    
-    // ===== AGREGAR SETS A LOS POOLS (usando std::move) =====
+
+
+        // ===== BLOQUE 3 (Caso del naufragio misterioso) =====
+    std::vector<ObjetoBuscar> objetosBloque3;
+    objetosBloque3.emplace_back("Calaveras", sf::FloatRect(sf::Vector2f(697.f, 262.f), sf::Vector2f(45.f, 48.f)), "Una calavera tallada en madera, simbolo de una antigua tripulacion");
+    objetosBloque3.emplace_back("Canoa", sf::FloatRect(sf::Vector2f(508.f, 254.f), sf::Vector2f(75.f, 28.f)), "Una canoa varada en la orilla, con rasguños recientes");
+    objetosBloque3.emplace_back("Rueda", sf::FloatRect(sf::Vector2f(219.f, 184.f), sf::Vector2f(67.f, 67.f)), "Una rueda de timon rota, parte del naufragio");
+    objetosBloque3.emplace_back("Botella de Vino", sf::FloatRect(sf::Vector2f(324.f, 312.f), sf::Vector2f(34.f, 51.f)), "Una botella de vino añejo, aun con liquido adentro");
+    objetosBloque3.emplace_back("Cangrejo", sf::FloatRect(sf::Vector2f(711.f, 446.f), sf::Vector2f(44.f, 24.f)), "Un cangrejo que parecia cuidar algo entre las rocas");
+    objetosBloque3.emplace_back("Muñeco", sf::FloatRect(sf::Vector2f(370.f, 421.f), sf::Vector2f(24.f, 44.f)), "Un muñeco de trapo con una nota escondida");
+    objetosBloque3.emplace_back("Maletin Oculto", sf::FloatRect(sf::Vector2f(345.f, 321.f), sf::Vector2f(55.f, 19.f)), "Un maletin enterrado en la arena, cerrado con candado");
+    objetosBloque3.emplace_back("Dado", sf::FloatRect(sf::Vector2f(658.f, 529.f), sf::Vector2f(14.f, 19.f)), "Un dado de marfil, siempre muestra el numero seis");
+    objetosBloque3.emplace_back("Comida para Gato", sf::FloatRect(sf::Vector2f(379.f, 533.f), sf::Vector2f(34.f, 29.f)), "Latas de comida para gato, muy fuera de lugar aqui");
+    objetosBloque3.emplace_back("Caja de Madera", sf::FloatRect(sf::Vector2f(380.f, 440.f), sf::Vector2f(50.f, 45.f)), "Una caja de madera flotante, contiene documentos");
+
+    std::vector<Sospechoso> sospechososBloque3;
+    sospechososBloque3.emplace_back("El Viejo Marino", sf::FloatRect(sf::Vector2f(300.f, 650.f), sf::Vector2f(80.f, 100.f)), "Vive en la costa desde hace decadas. Conoce cada naufragio.", false);
+    sospechososBloque3.emplace_back("Carmen la Buzo", sf::FloatRect(sf::Vector2f(550.f, 620.f), sf::Vector2f(75.f, 90.f)), "Bucea en busca de tesoros. ES LA CULPABLE, robo las pertenencias de los desaparecidos.", true);
+    sospechososBloque3.emplace_back("Misterioso Comerciante", sf::FloatRect(sf::Vector2f(750.f, 650.f), sf::Vector2f(85.f, 85.f)), "Siempre aparece justo despues de los naufragios. Nadie sabe de donde viene.", false);
+
+    std::vector<DialogoNarrativo> dialogosBloque3;
+
+    DialogoNarrativo dialogoMarino("El Viejo Marino", 
+        "Yo conozco cada barco que ha naufragado en estas costas.\nEste ultimo... fue sabotaje.\nVi a alguien nadando hacia la costa\ncon un maletin la noche del accidente.",
+        "assets/images/niveles/nivel_sara2/viejoMarino.png");
+    dialogosBloque3.push_back(std::move(dialogoMarino));
+
+    DialogoNarrativo dialogoComerciante("Misterioso Comerciante", 
+        "Yo solo compro lo que encuentro en la playa.\nPero esa noche... vi a Carmen buceando\n mucho antes de que llegaran los rescatistas.\nQueria algo especifico del barco.",
+        "assets/images/niveles/nivel_sara2/comerciante.png");
+    dialogosBloque3.push_back(std::move(dialogoComerciante));
+
+    DialogoNarrativo dialogoBuzo("Carmen la Buzo", 
+        "Es cierto que buceo en busca de tesoros,\npero jamas robaria nada.\nYo fui quien encontre el maletin...\npero alguien me lo robo de mi escondite.",
+        "assets/images/niveles/nivel_sara2/carmenBuzo.png");
+    dialogosBloque3.push_back(std::move(dialogoBuzo));
+
+    DialogoNarrativo dialogoTestigo2("Pescador Anonimo", 
+        "Recuerdo que la noche del naufragio\n vi una figura cargando algo pesado.\nTenian una MEDALLA DE BUCEO colgando.\nSolo los buzos profesionales tienen eso.",
+        "assets/images/niveles/nivel_sara2/anonimo.png");
+    dialogosBloque3.push_back(std::move(dialogoTestigo2));
+
+    // ===== AGREGAR SETS A LOS POOLS  =====
     m_criminalMinigame.agregarSetObjetos(std::move(objetosBloque1));
     m_criminalMinigame.agregarSetSospechosos(std::move(sospechososBloque1));
     m_criminalMinigame.agregarSetDialogos(dialogosBloque1);
@@ -309,9 +350,13 @@ void NivelSara2State::configurarMinijuegoCriminal()
     m_criminalMinigame.agregarSetObjetos(std::move(objetosBloque2));
     m_criminalMinigame.agregarSetSospechosos(std::move(sospechososBloque2));
     m_criminalMinigame.agregarSetDialogos(dialogosBloque2);
+
+    m_criminalMinigame.agregarSetObjetos(std::move(objetosBloque3));
+    m_criminalMinigame.agregarSetSospechosos(std::move(sospechososBloque3));
+    m_criminalMinigame.agregarSetDialogos(dialogosBloque3);
     
     // Guardar copias para reinit
-    m_objetosCriminal = objetosBloque1;  // Esto ahora funciona si ObjetoBuscar es copiable
+    m_objetosCriminal = objetosBloque1;  
     m_sospechososCriminal = sospechososBloque1;
     
     // Configurar el minijuego
