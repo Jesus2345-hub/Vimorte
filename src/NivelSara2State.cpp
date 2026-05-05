@@ -313,7 +313,7 @@ void NivelSara2State::configurarMinijuegoCriminal()
     objetosBloque3.emplace_back("Maletin Oculto", sf::FloatRect(sf::Vector2f(345.f, 321.f), sf::Vector2f(55.f, 19.f)), "Un maletin enterrado en la arena, cerrado con candado");
     objetosBloque3.emplace_back("Dado", sf::FloatRect(sf::Vector2f(658.f, 529.f), sf::Vector2f(14.f, 19.f)), "Un dado de marfil, siempre muestra el numero seis");
     objetosBloque3.emplace_back("Comida para Gato", sf::FloatRect(sf::Vector2f(379.f, 533.f), sf::Vector2f(34.f, 29.f)), "Latas de comida para gato, muy fuera de lugar aqui");
-    objetosBloque3.emplace_back("Caja de Madera", sf::FloatRect(sf::Vector2f(380.f, 440.f), sf::Vector2f(50.f, 45.f)), "Una caja de madera flotante, contiene documentos");
+    objetosBloque3.emplace_back("Caja de Madera", sf::FloatRect(sf::Vector2f(280.f, 345.f), sf::Vector2f(46.f, 19.f)), "Una caja de madera flotante, contiene documentos");
 
     std::vector<Sospechoso> sospechososBloque3;
     sospechososBloque3.emplace_back("El Viejo Marino", sf::FloatRect(sf::Vector2f(300.f, 650.f), sf::Vector2f(80.f, 100.f)), "Vive en la costa desde hace decadas. Conoce cada naufragio.", false);
