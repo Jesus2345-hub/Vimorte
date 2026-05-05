@@ -92,8 +92,11 @@ NivelSara2State::NivelSara2State(sf::RenderWindow *window, Game *game)
         m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
 
         m_textoMensaje = std::make_unique<sf::Text>(m_font);
-        m_textoMensaje->setCharacterSize(24);
+        m_textoMensaje->setCharacterSize(28);  
         m_textoMensaje->setFillColor(sf::Color::Yellow);
+        m_textoMensaje->setOutlineColor(sf::Color::Black); 
+        m_textoMensaje->setOutlineThickness(2.0f);
+        m_textoMensaje->setStyle(sf::Text::Bold);
     }
     else
     {
@@ -113,6 +116,20 @@ NivelSara2State::NivelSara2State(sf::RenderWindow *window, Game *game)
     game->setIsInLevel(true);
     // ===== ACTIVAR DEBUG DE COORDENADAS SIEMPRE =====
     CoordenadasDebug::getInstance().setVisible(true);
+
+    // ===== IMPORTANTE: Inicializar el minijuego con la imagen de fondo =====
+    m_criminalMinigame.init("assets/images/niveles/nivel_sara2/criminalCase.png", 
+                            m_objetosCriminal, 
+                            m_sospechososCriminal);
+    
+    m_criminalMinigame.setDebugMode(true);
+    
+    m_criminalMinigame.setOnCompleteCallback([this](bool exito) {
+        if (exito && !m_criminalGameCompleted) {
+            m_criminalGameCompleted = true;
+            mostrarMensaje("CASO RESUELTO. Has encontrado todas las pistas y al culpable.", 5.0f);
+        }
+    });
 }
 void NivelSara2State::configurarBloquesInteractivos()
 {
@@ -200,104 +217,98 @@ void NivelSara2State::configurarMinijuegoCriminal()
     m_cercaCriminalArea = false;
     m_criminalGameCompleted = false;
     
-    // ===== CREAR OBJETOS (con coordenadas BASE de 800x600) =====
-    std::vector<ObjetoBuscar> objetos;
+    // ===== LIMPIAR POOLS =====
+    m_criminalMinigame.limpiarPools();
     
-    objetos.emplace_back("Collar", 
-        sf::FloatRect(sf::Vector2f(560.f, 426.f), sf::Vector2f(36.f, 40.f)),
-        "Un collar de perlas abandonado en la arena");
+    // ===== BLOQUE 1 - PLAYA/ANDREA =====
+    std::vector<ObjetoBuscar> objetosBloque1;
+    objetosBloque1.emplace_back("Collar", sf::FloatRect(sf::Vector2f(560.f, 426.f), sf::Vector2f(36.f, 40.f)), "Un collar de perlas abandonado en la arena");
+    objetosBloque1.emplace_back("Carta Mojada", sf::FloatRect(sf::Vector2f(191.f, 438.f), sf::Vector2f(75.f, 38.f)), "Una carta informacion crucial de Andrea");
+    objetosBloque1.emplace_back("Reloj Arena", sf::FloatRect(sf::Vector2f(665.f, 357.f), sf::Vector2f(25.f, 70.f)), "Un reloj de regalo");
+    objetosBloque1.emplace_back("Medalla", sf::FloatRect(sf::Vector2f(116.f, 164.f), sf::Vector2f(20.f, 23.f)), "Una medalla vieja");
+    objetosBloque1.emplace_back("Botella", sf::FloatRect(sf::Vector2f(104.f, 359.f), sf::Vector2f(25.f, 24.f)), "Una botella con las penas de Andrea");
+    objetosBloque1.emplace_back("Diario", sf::FloatRect(sf::Vector2f(524.f, 496.f), sf::Vector2f(35.f, 30.f)), "El diario personal");
+    objetosBloque1.emplace_back("Anillo", sf::FloatRect(sf::Vector2f(504.f, 414.f), sf::Vector2f(21.f, 25.f)), "Un anillo de compromiso");
+    objetosBloque1.emplace_back("Foto", sf::FloatRect(sf::Vector2f(744.f, 240.f), sf::Vector2f(34.f, 54.f)), "Una foto, no sabemos por que");
+    objetosBloque1.emplace_back("Cuchillo", sf::FloatRect(sf::Vector2f(348.f, 370.f), sf::Vector2f(36.f, 25.f)), "Quiere defenderse");
+    objetosBloque1.emplace_back("Bolso", sf::FloatRect(sf::Vector2f(408.f, 473.f), sf::Vector2f(109.f, 80.f)), "Un bolso que ya le toca cambio");
+    objetosBloque1.emplace_back("Trapo Viejo", sf::FloatRect(sf::Vector2f(766.f, 455.f), sf::Vector2f(26.f, 15.f)), "Un Trapo sucio... no limpia su bolso");
     
-    objetos.emplace_back("Carta Mojada", 
-        sf::FloatRect(sf::Vector2f(191.f, 438.f), sf::Vector2f(75.f, 38.f)),
-        "Una carta informacion crucial de Andrea");
+    std::vector<Sospechoso> sospechososBloque1;
+    sospechososBloque1.emplace_back("Capitan Rodrigo", sf::FloatRect(sf::Vector2f(300.f, 650.f), sf::Vector2f(80.f, 100.f)), "El capitan del barco. Tenia acceso a todo, pero parece honesto.", false);
+    sospechososBloque1.emplace_back("Isabella la Adivina", sf::FloatRect(sf::Vector2f(750.f, 620.f), sf::Vector2f(70.f, 90.f)), "Siempre supo que algo pasaria. ES LA CULPABLE", true);
+    sospechososBloque1.emplace_back("Don Julio el Pescador", sf::FloatRect(sf::Vector2f(550.f, 680.f), sf::Vector2f(80.f, 90.f)), "Vio todo desde su bote, pero jura que no fue el.", false);
     
-    objetos.emplace_back("Reloj Arena", 
-        sf::FloatRect(sf::Vector2f(665.f, 357.f), sf::Vector2f(25.f, 70.f)),
-        "Un reloj de regalo");
+    std::vector<DialogoNarrativo> dialogosBloque1;
+    dialogosBloque1.emplace_back("Don Julio el Pescador", "Vi todo desde mi bote esa noche. El barco estaba tranquilo, pero vi a alguien moviendose sigilosamente cerca de las pertenencias de Andrea.");
+    dialogosBloque1.emplace_back("Capitan Rodrigo", "Como capitan, conozco a toda mi tripulacion. Todos son honorables, excepto que recuerdo que Isabella estuvo despierta toda la noche, algo inusual en ella.");
+    dialogosBloque1.emplace_back("Isabella la Adivina", "Mis visiones me advirtieron del robo, pero no pude evitarlo. Vi una figura encapuchada. No me atrevo a decir quien era por miedo a represalias.");
+    dialogosBloque1.emplace_back("Andrea Testigo", "Recuerdo que justo antes de que pasara, vi a alguien con una medalla peculiar. Era una MEDALLA ANTIGUA. Solo una persona en este pueblo tiene una igual.");
     
-    objetos.emplace_back("Medalla", 
-        sf::FloatRect(sf::Vector2f(116.f, 164.f), sf::Vector2f(20.f, 23.f)),
-        "Una medalla vieja");
+    // ===== BLOQUE 2 - BOSQUE/TESORO =====
+    std::vector<ObjetoBuscar> objetosBloque2;
+    objetosBloque2.emplace_back("Camaleon", sf::FloatRect(sf::Vector2f(320.f, 280.f), sf::Vector2f(30.f, 25.f)), "Un camaleon que cambia de color, podria ser una pista");
+    objetosBloque2.emplace_back("Cofre", sf::FloatRect(sf::Vector2f(450.f, 350.f), sf::Vector2f(80.f, 60.f)), "Un cofre antiguo cerrado con candado");
+    objetosBloque2.emplace_back("Mapa", sf::FloatRect(sf::Vector2f(200.f, 420.f), sf::Vector2f(55.f, 45.f)), "Un mapa del tesoro con marcas sospechosas");
+    objetosBloque2.emplace_back("Reloj Antiguo", sf::FloatRect(sf::Vector2f(600.f, 300.f), sf::Vector2f(30.f, 55.f)), "Un reloj de bolsillo que marca una hora especifica");
+    objetosBloque2.emplace_back("Microscopio", sf::FloatRect(sf::Vector2f(700.f, 450.f), sf::Vector2f(45.f, 50.f)), "Un microscopio para examinar evidencias");
+    objetosBloque2.emplace_back("Catalejo", sf::FloatRect(sf::Vector2f(150.f, 350.f), sf::Vector2f(35.f, 35.f)), "Un catalejo usado para vigilar desde lejos");
+    objetosBloque2.emplace_back("Cortina", sf::FloatRect(sf::Vector2f(500.f, 500.f), sf::Vector2f(70.f, 50.f)), "Una cortina rasgada, alguien la uso para esconderse");
+    objetosBloque2.emplace_back("Juego de Llaves", sf::FloatRect(sf::Vector2f(380.f, 250.f), sf::Vector2f(50.f, 25.f)), "Un conjunto de cinco llaves, una abre el cofre");
+    objetosBloque2.emplace_back("Periodico", sf::FloatRect(sf::Vector2f(250.f, 520.f), sf::Vector2f(60.f, 40.f)), "Un periodico viejo con noticias sobre robos");
+    objetosBloque2.emplace_back("Red", sf::FloatRect(sf::Vector2f(630.f, 520.f), sf::Vector2f(55.f, 40.f)), "Una red de pescar, tal vez usada para atrapar pruebas");
     
-    objetos.emplace_back("Botella", 
-        sf::FloatRect(sf::Vector2f(104.f, 359.f), sf::Vector2f(25.f, 24.f)),
-        "Una botella con las penas de Andrea");
+    std::vector<Sospechoso> sospechososBloque2;
+    sospechososBloque2.emplace_back("Sebastian el Guardabosques", sf::FloatRect(sf::Vector2f(300.f, 600.f), sf::Vector2f(80.f, 100.f)), "Conoce cada rincon del bosque, sabe esconder cosas.", false);
+    sospechososBloque2.emplace_back("Valentina la Arqueologa", sf::FloatRect(sf::Vector2f(550.f, 620.f), sf::Vector2f(75.f, 90.f)), "Experta en tesoros antiguos. ES LA CULPABLE, queria el cofre para ella sola.", true);
+    sospechososBloque2.emplace_back("Don Mateo el Herrero", sf::FloatRect(sf::Vector2f(750.f, 650.f), sf::Vector2f(85.f, 85.f)), "Fabrica candados, sabia como abrir el cofre sin forzarlo.", false);
     
-    objetos.emplace_back("Diario", 
-        sf::FloatRect(sf::Vector2f(524.f, 496.f), sf::Vector2f(35.f, 30.f)),
-        "El diario personal");
+    std::vector<DialogoNarrativo> dialogosBloque2;
+    dialogosBloque2.emplace_back("Sebastian el Guardabosques", "He patrullado este bosque por treinta anos. Vi a alguien merodeando cerca del cofre la noche anterior al robo.");
+    dialogosBloque2.emplace_back("Don Mateo el Herrero", "Alguien me pidio hacer una copia de una llave antigua. El diseno era identico al del candado del cofre.");
+    dialogosBloque2.emplace_back("Valentina la Arqueologa", "Yo solo queria estudiar las piezas del cofre para mi investigacion. Se como abrirlo, pero jamas robaria algo tan valioso.");
+    dialogosBloque2.emplace_back("Testigo Anonimo", "Escuche una discusion acalorada cerca del campamento. Alguien gritaba 'el tesoro me pertenece por derecho'.");
     
-    objetos.emplace_back("Anillo", 
-        sf::FloatRect(sf::Vector2f(504.f, 414.f), sf::Vector2f(21.f, 25.f)),
-        "Un anillo de compromiso");
+    // ===== AGREGAR SETS A LOS POOLS =====
+    m_criminalMinigame.agregarSetObjetos(objetosBloque1);
+    m_criminalMinigame.agregarSetSospechosos(sospechososBloque1);
+    m_criminalMinigame.agregarSetDialogos(dialogosBloque1);
     
-    objetos.emplace_back("Foto", 
-        sf::FloatRect(sf::Vector2f(744.f, 240.f), sf::Vector2f(34.f, 54.f)),
-        "Una foto, no sabemos por que");
+    m_criminalMinigame.agregarSetObjetos(objetosBloque2);
+    m_criminalMinigame.agregarSetSospechosos(sospechososBloque2);
+    m_criminalMinigame.agregarSetDialogos(dialogosBloque2);
     
-    objetos.emplace_back("Cuchillo", 
-        sf::FloatRect(sf::Vector2f(348.f, 370.f), sf::Vector2f(36.f, 25.f)),
-        "Quiere defenderse");
+    // Guardar copias para reinit
+    m_objetosCriminal = objetosBloque1;
+    m_sospechososCriminal = sospechososBloque1;
     
-    objetos.emplace_back("Bolso", 
-        sf::FloatRect(sf::Vector2f(408.f, 473.f), sf::Vector2f(109.f, 80.f)),
-        "Un bolso que ya le toca cambio");
-    
-    objetos.emplace_back("Trapo Viejo", 
-        sf::FloatRect(sf::Vector2f(766.f, 455.f), sf::Vector2f(26.f, 15.f)),
-        "Un Trapo sucio... no limpia su bolso");
-
-    // ===== CREAR SOSPECHOSOS =====
-    std::vector<Sospechoso> sospechosos;
-    
-    sospechosos.emplace_back("Capitan Rodrigo", 
-        sf::FloatRect(sf::Vector2f(300.f, 650.f), sf::Vector2f(80.f, 100.f)), 
-        "El capitan del barco. Tenia acceso a todo, pero parece honesto.", 
-        false);
-    
-    sospechosos.emplace_back("Isabella la adivina", 
-        sf::FloatRect(sf::Vector2f(750.f, 620.f), sf::Vector2f(70.f, 90.f)), 
-        "Siempre supo que algo pasaría. ES LA CULPABLE", 
-        true);
-    
-    sospechosos.emplace_back("Don Julio el pescador", 
-        sf::FloatRect(sf::Vector2f(550.f, 680.f), sf::Vector2f(80.f, 90.f)), 
-        "Vio todo desde su bote, pero jura que no fue el.", 
-        false);
-    
-    // GUARDAR COPIAS para reinicializar
-    m_objetosCriminal = objetos;
-    m_sospechososCriminal = sospechosos;
-    
-     // Configurar el minijuego
+    // Configurar el minijuego
     m_criminalMinigame.setInventory(m_player.getInventory());
-    m_criminalMinigame.setBaseSize(sf::Vector2f(800.f, 600.f));  // <--- ESTO PRIMERO
+    m_criminalMinigame.setBaseSize(sf::Vector2f(800.f, 600.f));
     
     // Calcular tamaño basado en la ventana
     sf::Vector2u windowSize = window->getSize();
     float minijuegoW = windowSize.x * 0.85f;
     float minijuegoH = windowSize.y * 0.85f;
-    
     float minijuegoX = (static_cast<float>(windowSize.x) - minijuegoW) / 2.f;
     float minijuegoY = (static_cast<float>(windowSize.y) - minijuegoH) / 2.f;
     
     m_criminalMinigame.setPosition(sf::Vector2f(minijuegoX, minijuegoY));
     m_criminalMinigame.setSize(sf::Vector2f(minijuegoW, minijuegoH));
-
-    // Ahora sí, init con los objetos
-    m_criminalMinigame.init("assets/images/niveles/nivel_sara2/criminalCase.png", 
-                            m_objetosCriminal, m_sospechososCriminal);
-
-
-    m_criminalMinigame.setDebugMode(true);  // Para ver las áreas escaladas
+    
+    // Generar primer caso aleatorio
+    m_criminalMinigame.generarNuevoCaso();
+    
+    m_criminalMinigame.setDebugMode(true);
     
     m_criminalMinigame.setOnCompleteCallback([this](bool exito) {
         if (exito && !m_criminalGameCompleted) {
             m_criminalGameCompleted = true;
-            mostrarMensaje("CASO RESUELTO. Has encontrado las 10 pistas y al culpable.", 5.0f);
+            mostrarMensaje("CASO RESUELTO. Has encontrado todas las pistas y al culpable.\nEntregale las cosas a Andrea", 5.0f);
         }
     });
 }
+
 void NivelSara2State::reajustarMinijuegoCriminal()
 {
     if (!m_criminalMinigame.isActive()) return;
@@ -350,26 +361,26 @@ void NivelSara2State::verificarSalidaNivel()
 
 void NivelSara2State::update(float dt)
 {
-     // Verificar si la ventana cambió de tamaño
-    static sf::Vector2u lastWindowSize = window->getSize();
-    sf::Vector2u currentWindowSize = window->getSize();
+     static sf::Vector2u lastWindowSize = window->getSize();
+sf::Vector2u currentWindowSize = window->getSize();
+
+if (currentWindowSize != lastWindowSize) {
+    lastWindowSize = currentWindowSize;
     
-    if (currentWindowSize != lastWindowSize) {
-        lastWindowSize = currentWindowSize;
-        
-        // Calcular posición en PÍXELES de la ventana
-        float minijuegoW = currentWindowSize.x * 0.85f;
-        float minijuegoH = currentWindowSize.y * 0.85f;
-        float minijuegoX = (currentWindowSize.x - minijuegoW) / 2.f;
-        float minijuegoY = (currentWindowSize.y - minijuegoH) / 2.f;
-        
-        m_criminalMinigame.setPosition(sf::Vector2f(minijuegoX, minijuegoY));
-        m_criminalMinigame.setSize(sf::Vector2f(minijuegoW, minijuegoH));
-        
-        m_criminalMinigame.reinit("assets/images/niveles/nivel_sara2/criminalCase.png",
-                                   m_objetosCriminal, 
-                                   m_sospechososCriminal);
-    }
+    // Calcular posición en PÍXELES de la ventana
+    float minijuegoW = currentWindowSize.x * 0.85f;
+    float minijuegoH = currentWindowSize.y * 0.85f;
+    float minijuegoX = (currentWindowSize.x - minijuegoW) / 2.f;
+    float minijuegoY = (currentWindowSize.y - minijuegoH) / 2.f;
+    
+    m_criminalMinigame.setPosition(sf::Vector2f(minijuegoX, minijuegoY));
+    m_criminalMinigame.setSize(sf::Vector2f(minijuegoW, minijuegoH));
+    
+    // Forzar actualización del fondo
+    m_criminalMinigame.init("assets/images/niveles/nivel_sara2/criminalCase.png",
+                            m_objetosCriminal, 
+                            m_sospechososCriminal);
+}
 
     // ===== SI HAY MENSAJE EMERGENTE, NO ACTUALIZAR MOVIMIENTO =====
     if (m_mensajeEmergenteActivo)
