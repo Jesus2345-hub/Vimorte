@@ -5,7 +5,7 @@
 
 MinigameTicTacToe::MinigameTicTacToe()
     : m_isActive(false), m_gameWon(false), m_gameLost(false),
-      m_playerTurn(true), m_board(9, 0), m_messageTimer(0.f)
+      m_playerTurn(true), m_board(9, 0), m_messageTimer(0.f), m_gen(m_rd())
 {
     m_background.setFillColor(sf::Color(0, 0, 0, 200));
     m_background.setOutlineThickness(3.f);
@@ -51,7 +51,7 @@ void MinigameTicTacToe::setSize(const sf::Vector2f &size)
         m_bgSprite = std::make_unique<sf::Sprite>(m_bgTexture);
 
         // Escala fija (ajustable)
-        float bgScale = 1.2f; // ← CAMBIA ESTE VALOR para tamaño del bg
+        float bgScale = 1.2f;
         m_bgSprite->setScale(sf::Vector2f(bgScale, bgScale));
 
         sf::FloatRect bounds = m_bgSprite->getLocalBounds();
@@ -59,8 +59,8 @@ void MinigameTicTacToe::setSize(const sf::Vector2f &size)
 
         // POSICIÓN DEL BACKGROUND
         m_bgSprite->setPosition(sf::Vector2f(
-            m_position.x + m_size.x / 2.f + 0.f, // ← + derecha, - izquierda
-            m_position.y + m_size.y / 2.f - 20.f // ← - arriba, + abajo
+            m_position.x + m_size.x / 2.f + 200.f, // ← + derecha, - izquierda
+            m_position.y + m_size.y / 2.f + 100.f  // ← - arriba, + abajo
             ));
     }
 
@@ -69,7 +69,7 @@ void MinigameTicTacToe::setSize(const sf::Vector2f &size)
     {
         m_tableroSprite = std::make_unique<sf::Sprite>(m_tableroTexture);
 
-        float tableroScale = 1.5f; // ← CAMBIA ESTE VALOR
+        float tableroScale = 2.0f; // ← CAMBIA ESTE VALOR
         m_tableroSprite->setScale(sf::Vector2f(tableroScale, tableroScale));
 
         sf::FloatRect bounds = m_tableroSprite->getLocalBounds();
@@ -77,8 +77,8 @@ void MinigameTicTacToe::setSize(const sf::Vector2f &size)
 
         // POSICIÓN DEL TABLERO
         m_tableroSprite->setPosition(sf::Vector2f(
-            m_position.x + m_size.x / 2.f + 0.f, // ← + derecha, - izquierda
-            m_position.y + m_size.y / 2.f - 20.f // ← - arriba, + abajo
+            m_position.x + m_size.x / 2.f + 170.f, // ← + derecha, - izquierda
+            m_position.y + m_size.y / 2.f + 100.f  // ← - arriba, + abajo
             ));
     }
 
@@ -88,7 +88,7 @@ void MinigameTicTacToe::setSize(const sf::Vector2f &size)
         m_winLineSprite = std::make_unique<sf::Sprite>(m_winLineTexture);
         sf::FloatRect bounds = m_winLineSprite->getLocalBounds();
         m_winLineSprite->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
-        m_winLineSprite->setScale(sf::Vector2f(0.5f, 0.5f));
+        m_winLineSprite->setScale(sf::Vector2f(1.0f, 1.0f));
     }
 
     // Textos
@@ -100,7 +100,7 @@ void MinigameTicTacToe::setSize(const sf::Vector2f &size)
         m_titleText->setFillColor(sf::Color::Yellow);
         sf::FloatRect tb = m_titleText->getLocalBounds();
         m_titleText->setOrigin(sf::Vector2f(tb.size.x / 2.f, 0.f));
-        m_titleText->setPosition(sf::Vector2f(m_position.x + m_size.x / 2.f, m_position.y + 10.f));
+        m_titleText->setPosition(sf::Vector2f(m_position.x + m_size.x / 2.f, m_position.y + 100.f));
 
         m_turnText = std::make_unique<sf::Text>(m_font);
         m_turnText->setCharacterSize(20);
@@ -157,9 +157,9 @@ sf::Vector2f MinigameTicTacToe::getCellPosition(int cellIndex)
     int row = cellIndex / 3;
     int col = cellIndex % 3;
 
-    float cellSize = 100.f;
-    float startX = m_position.x + m_size.x / 2.f - cellSize * 1.5f;
-    float startY = m_position.y + m_size.y / 2.f - cellSize * 1.5f - 20.f;
+    float cellSize = 150.f;
+    float startX = m_position.x + m_size.x / 2.f - cellSize * 1.5f - 20.f;
+    float startY = m_position.y + m_size.y / 2.f - cellSize * 1.5f + 10.f;
 
     return sf::Vector2f(startX + col * cellSize + cellSize / 2.f,
                         startY + row * cellSize + cellSize / 2.f);
@@ -167,9 +167,9 @@ sf::Vector2f MinigameTicTacToe::getCellPosition(int cellIndex)
 
 int MinigameTicTacToe::getCellFromMouse(const sf::Vector2f &mousePos)
 {
-    float cellSize = 100.f;
-    float startX = m_position.x + m_size.x / 2.f - cellSize * 1.5f;
-    float startY = m_position.y + m_size.y / 2.f - cellSize * 1.5f - 20.f;
+    float cellSize = 150.f;
+    float startX = m_position.x + m_size.x / 2.f - cellSize * 1.5f - 20.f;
+    float startY = m_position.y + m_size.y / 2.f - cellSize * 1.5f + 10.f;
 
     for (int i = 0; i < 9; i++)
     {
@@ -194,7 +194,7 @@ void MinigameTicTacToe::placeMark(int cellX, int cellY)
 
     // Crear sprite para la ficha
     auto sprite = std::make_unique<sf::Sprite>(m_playerTurn ? m_xTexture : m_oTexture);
-    float fichaScale = 0.5f;
+    float fichaScale = 1.0f;
     sprite->setScale(sf::Vector2f(fichaScale, fichaScale));
     sf::FloatRect bounds = sprite->getLocalBounds();
     sprite->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
@@ -269,7 +269,29 @@ void MinigameTicTacToe::placeMark(int cellX, int cellY)
 
 void MinigameTicTacToe::aiMove()
 {
-    // IA simple: busca ganar o bloquear
+    // ========== DIFICULTAD: 30% de hacer movimiento aleatorio ==========
+    // Cambia el 30 por: 50 (muy fácil), 20 (medio), 0 (imposible)
+    if (m_gen() % 100 < 30)
+    {
+        std::vector<int> vacias;
+        for (int i = 0; i < 9; i++) {
+            if (m_board[i] == 0) vacias.push_back(i);
+        }
+        if (!vacias.empty()) {
+            int idx = vacias[m_gen() % vacias.size()];
+            m_board[idx] = 2;
+            auto sprite = std::make_unique<sf::Sprite>(m_oTexture);
+            sprite->setScale(sf::Vector2f(1.0f, 1.0f));
+            sf::FloatRect bounds = sprite->getLocalBounds();
+            sprite->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
+            sprite->setPosition(getCellPosition(idx));
+            m_boardSprites.push_back(std::move(sprite));
+            m_playerTurn = true;
+            if (m_turnText) m_turnText->setString("Tu turno (X)");
+            return;
+        }
+    }
+    
     // 1. Intentar ganar
     for (int i = 0; i < 9; i++)
     {
@@ -278,9 +300,8 @@ void MinigameTicTacToe::aiMove()
             m_board[i] = 2;
             if (checkWinner() == 2)
             {
-                // Colocar ficha ganadora
                 auto sprite = std::make_unique<sf::Sprite>(m_oTexture);
-                float fichaScale = 0.5f;
+                float fichaScale = 1.0f;
                 sprite->setScale(sf::Vector2f(fichaScale, fichaScale));
                 sf::FloatRect bounds = sprite->getLocalBounds();
                 sprite->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
@@ -311,7 +332,7 @@ void MinigameTicTacToe::aiMove()
             {
                 m_board[i] = 2;
                 auto sprite = std::make_unique<sf::Sprite>(m_oTexture);
-                sprite->setScale(sf::Vector2f(0.35f, 0.35f));
+                sprite->setScale(sf::Vector2f(1.0f, 1.0f));
                 sf::FloatRect bounds = sprite->getLocalBounds();
                 sprite->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
                 sf::Vector2f pos = getCellPosition(i);
@@ -335,7 +356,7 @@ void MinigameTicTacToe::aiMove()
         {
             m_board[idx] = 2;
             auto sprite = std::make_unique<sf::Sprite>(m_oTexture);
-            sprite->setScale(sf::Vector2f(0.35f, 0.35f));
+            sprite->setScale(sf::Vector2f(1.0f, 1.0f));
             sf::FloatRect bounds = sprite->getLocalBounds();
             sprite->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
             sf::Vector2f pos = getCellPosition(idx);
@@ -403,6 +424,21 @@ void MinigameTicTacToe::showWinLine(int winner)
             float angle = std::atan2(dy, dx) * 180.f / 3.14159f + 90.f;
             m_winLineSprite->setRotation(sf::degrees(angle));
 
+            // Calcular largo necesario
+            float distance = std::sqrt(dx * dx + dy * dy);
+            float baseLength = 332.f; // Largo de la imagen win_line.png
+
+            // Escala: solo ajustamos Y (el largo), X se mantiene
+            float scaleY = 1.0f; // Base para horizontal/vertical
+            float scaleX = 1.0f;
+
+            // Si es diagonal, necesitamos más largo
+            if (std::abs(dx) > 50.f && std::abs(dy) > 50.f)
+            {
+                scaleY = 1.4f; // 40% más larga para diagonales
+            }
+
+            m_winLineSprite->setScale(sf::Vector2f(scaleX, scaleY));
             break;
         }
     }

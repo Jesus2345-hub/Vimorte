@@ -1,5 +1,6 @@
 #pragma once
 #include <SFML/Graphics.hpp>
+#include <random> 
 #include <vector>
 #include <memory>
 
@@ -45,7 +46,10 @@ private:
     
     // Mensaje temporal
     float m_messageTimer;
-    
+
+    // Random para la IA
+    std::random_device m_rd;
+    std::mt19937 m_gen;
 public:
     MinigameTicTacToe();
     

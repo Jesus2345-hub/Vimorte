@@ -37,10 +37,16 @@ void Abuelita::sonreir() {
     if (m_estado == Estado::SONRIENDO) return;
     
     m_estado = Estado::SONRIENDO;
-    m_sprite->setTexture(m_sonriendoTexture);
-    m_sprite->setScale(m_escala);
     
-    std::cout << "👵 ¡La abuelita tiene sus dientes!" << std::endl;
+    // Crear un NUEVO sprite con la textura de sonriendo
+    m_sprite = std::make_unique<sf::Sprite>(m_sonriendoTexture);
+    m_sprite->setScale(m_escala);
+    m_sprite->setPosition(m_position);
+    
+    // Centrar origen de nuevo
+    sf::FloatRect bounds = m_sprite->getLocalBounds();
+    m_sprite->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
+    
 }
 
 void Abuelita::update(float dt) {
@@ -62,4 +68,16 @@ sf::FloatRect Abuelita::getBounds() const {
 
 sf::Vector2f Abuelita::getPosition() const {
     return m_position;
+}
+
+void Abuelita::ponerNormal() {
+    if (m_estado == Estado::NORMAL) return;
+    
+    m_estado = Estado::NORMAL;
+    m_sprite = std::make_unique<sf::Sprite>(m_normalTexture);
+    m_sprite->setScale(m_escala);
+    m_sprite->setPosition(m_position);
+    
+    sf::FloatRect bounds = m_sprite->getLocalBounds();
+    m_sprite->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
 }

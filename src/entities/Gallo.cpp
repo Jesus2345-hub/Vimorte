@@ -238,11 +238,16 @@ sf::Vector2f Gallo::getPosition() const
 
 void Gallo::verificarColisionJugador(const sf::FloatRect& playerBounds) {
     if (!m_sprite) return;
-    if (m_estado != Estado::CAMINANDO) return;
     
     sf::FloatRect galloBounds = m_sprite->getGlobalBounds();
     
     if (galloBounds.findIntersection(playerBounds).has_value()) {
-        cambiarEstado(Estado::BLOQUEADO);
+        if (m_estado == Estado::CAMINANDO) {
+            cambiarEstado(Estado::BLOQUEADO);
+        }
+    } else {
+        if (m_estado == Estado::BLOQUEADO) {
+            cambiarEstado(Estado::CAMINANDO);
+        }
     }
 }

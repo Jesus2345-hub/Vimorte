@@ -25,6 +25,7 @@ public:
     bool estaNormal() const { return m_estado == Estado::NORMAL; }
     void update(float dt);
     void draw(sf::RenderWindow& window);
+    void ponerNormal();
     sf::FloatRect getBounds() const;
     sf::Vector2f getPosition() const;
 };
