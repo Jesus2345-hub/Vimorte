@@ -240,23 +240,23 @@ void NivelSara2State::configurarMinijuegoCriminal()
     sospechososBloque1.emplace_back("Don Julio el Pescador", sf::FloatRect(sf::Vector2f(550.f, 680.f), sf::Vector2f(80.f, 90.f)), "Vio todo desde su bote, pero jura que no fue el.", false);
     
     std::vector<DialogoNarrativo> dialogosBloque1;
-    dialogosBloque1.emplace_back("Don Julio el Pescador", "Vi todo desde mi bote esa noche. El barco estaba tranquilo, pero vi a alguien moviendose sigilosamente cerca de las pertenencias de Andrea.");
-    dialogosBloque1.emplace_back("Capitan Rodrigo", "Como capitan, conozco a toda mi tripulacion. Todos son honorables, excepto que recuerdo que Isabella estuvo despierta toda la noche, algo inusual en ella.");
-    dialogosBloque1.emplace_back("Isabella la Adivina", "Mis visiones me advirtieron del robo, pero no pude evitarlo. Vi una figura encapuchada. No me atrevo a decir quien era por miedo a represalias.");
-    dialogosBloque1.emplace_back("Andrea Testigo", "Recuerdo que justo antes de que pasara, vi a alguien con una medalla peculiar. Era una MEDALLA ANTIGUA. Solo una persona en este pueblo tiene una igual.");
+    dialogosBloque1.emplace_back("Don Julio el Pescador", "Vi todo desde mi bote esa noche.\n El barco estaba tranquilo, pero vi a alguien moviendose sigilosamente cerca\nde las pertenencias de Andrea.");
+    dialogosBloque1.emplace_back("Capitan Rodrigo", "Como capitan, conozco a toda mi tripulacion.\n Todos son honorables,\nexcepto que recuerdo que Isabella estuvo despierta toda la noche,\nalgo inusual en ella.");
+    dialogosBloque1.emplace_back("Isabella la Adivina", "Mis visiones me advirtieron del robo, pero no pude evitarlo.\nVi una figura encapuchada.\nNo me atrevo a decir quien era por miedo a represalias.");
+    dialogosBloque1.emplace_back("Andrea Testigo", "Recuerdo que justo antes de que pasara, \nvi a alguien con una medalla peculiar.\nEra una MEDALLA ANTIGUA.\nSolo una persona en este pueblo tiene una igual.");
     
     // ===== BLOQUE 2 - BOSQUE/TESORO =====
     std::vector<ObjetoBuscar> objetosBloque2;
-    objetosBloque2.emplace_back("Camaleon", sf::FloatRect(sf::Vector2f(320.f, 280.f), sf::Vector2f(30.f, 25.f)), "Un camaleon que cambia de color, podria ser una pista");
-    objetosBloque2.emplace_back("Cofre", sf::FloatRect(sf::Vector2f(450.f, 350.f), sf::Vector2f(80.f, 60.f)), "Un cofre antiguo cerrado con candado");
-    objetosBloque2.emplace_back("Mapa", sf::FloatRect(sf::Vector2f(200.f, 420.f), sf::Vector2f(55.f, 45.f)), "Un mapa del tesoro con marcas sospechosas");
-    objetosBloque2.emplace_back("Reloj Antiguo", sf::FloatRect(sf::Vector2f(600.f, 300.f), sf::Vector2f(30.f, 55.f)), "Un reloj de bolsillo que marca una hora especifica");
-    objetosBloque2.emplace_back("Microscopio", sf::FloatRect(sf::Vector2f(700.f, 450.f), sf::Vector2f(45.f, 50.f)), "Un microscopio para examinar evidencias");
-    objetosBloque2.emplace_back("Catalejo", sf::FloatRect(sf::Vector2f(150.f, 350.f), sf::Vector2f(35.f, 35.f)), "Un catalejo usado para vigilar desde lejos");
-    objetosBloque2.emplace_back("Cortina", sf::FloatRect(sf::Vector2f(500.f, 500.f), sf::Vector2f(70.f, 50.f)), "Una cortina rasgada, alguien la uso para esconderse");
-    objetosBloque2.emplace_back("Juego de Llaves", sf::FloatRect(sf::Vector2f(380.f, 250.f), sf::Vector2f(50.f, 25.f)), "Un conjunto de cinco llaves, una abre el cofre");
-    objetosBloque2.emplace_back("Periodico", sf::FloatRect(sf::Vector2f(250.f, 520.f), sf::Vector2f(60.f, 40.f)), "Un periodico viejo con noticias sobre robos");
-    objetosBloque2.emplace_back("Red", sf::FloatRect(sf::Vector2f(630.f, 520.f), sf::Vector2f(55.f, 40.f)), "Una red de pescar, tal vez usada para atrapar pruebas");
+    objetosBloque2.emplace_back("Camaleon", sf::FloatRect(sf::Vector2f(235.f, 400.f), sf::Vector2f(50.f, 17.f)), "Un camaleon que cambia de color, podria ser una pista");
+    objetosBloque2.emplace_back("Cofre", sf::FloatRect(sf::Vector2f(753.f, 409.f), sf::Vector2f(40.f, 40.f)), "Un cofre antiguo cerrado con candado");
+    objetosBloque2.emplace_back("Mapa", sf::FloatRect(sf::Vector2f(591.f, 471.f), sf::Vector2f(131.f, 59.f)), "Un mapa del tesoro con marcas sospechosas");
+    objetosBloque2.emplace_back("Reloj Antiguo", sf::FloatRect(sf::Vector2f(604.f, 390.f), sf::Vector2f(24.f, 34.f)), "Un reloj de bolsillo que marca una hora especifica");
+    objetosBloque2.emplace_back("Microscopio", sf::FloatRect(sf::Vector2f(172.f, 197.f), sf::Vector2f(5.f, 53.f)), "Un microscopio para examinar evidencias");
+    objetosBloque2.emplace_back("Catalejo", sf::FloatRect(sf::Vector2f(362.f, 485.f), sf::Vector2f(33.f, 9.f)), "Un catalejo usado para vigilar desde lejos");
+    objetosBloque2.emplace_back("Cortina", sf::FloatRect(sf::Vector2f(380.f, 200.f), sf::Vector2f(34.f, 85.f)), "Una cortina rasgada, alguien la uso para esconderse");
+    objetosBloque2.emplace_back("Juego de Llaves", sf::FloatRect(sf::Vector2f(287.f, 507.f), sf::Vector2f(32.f, 42.f)), "Un conjunto de cinco llaves, una abre el cofre");
+    objetosBloque2.emplace_back("Periodico", sf::FloatRect(sf::Vector2f(619.f, 161.f), sf::Vector2f(43.f, 49.f)), "Un periodico viejo con noticias sobre robos");
+    objetosBloque2.emplace_back("Red", sf::FloatRect(sf::Vector2f(694.f, 95.f), sf::Vector2f(69.f, 98.f)), "Una red de pescar, tal vez usada para atrapar pruebas");
     
     std::vector<Sospechoso> sospechososBloque2;
     sospechososBloque2.emplace_back("Sebastian el Guardabosques", sf::FloatRect(sf::Vector2f(300.f, 600.f), sf::Vector2f(80.f, 100.f)), "Conoce cada rincon del bosque, sabe esconder cosas.", false);
@@ -264,10 +264,10 @@ void NivelSara2State::configurarMinijuegoCriminal()
     sospechososBloque2.emplace_back("Don Mateo el Herrero", sf::FloatRect(sf::Vector2f(750.f, 650.f), sf::Vector2f(85.f, 85.f)), "Fabrica candados, sabia como abrir el cofre sin forzarlo.", false);
     
     std::vector<DialogoNarrativo> dialogosBloque2;
-    dialogosBloque2.emplace_back("Sebastian el Guardabosques", "He patrullado este bosque por treinta anos. Vi a alguien merodeando cerca del cofre la noche anterior al robo.");
-    dialogosBloque2.emplace_back("Don Mateo el Herrero", "Alguien me pidio hacer una copia de una llave antigua. El diseno era identico al del candado del cofre.");
-    dialogosBloque2.emplace_back("Valentina la Arqueologa", "Yo solo queria estudiar las piezas del cofre para mi investigacion. Se como abrirlo, pero jamas robaria algo tan valioso.");
-    dialogosBloque2.emplace_back("Testigo Anonimo", "Escuche una discusion acalorada cerca del campamento. Alguien gritaba 'el tesoro me pertenece por derecho'.");
+    dialogosBloque2.emplace_back("Sebastian el Guardabosques", "He patrullado este bosque por treinta anos.\nVi a alguien merodeando cerca del cofre la noche anterior al robo.");
+    dialogosBloque2.emplace_back("Don Mateo el Herrero", "Alguien me pidio hacer una copia de una llave antigua.\nEl diseno era identico al del candado del cofre.");
+    dialogosBloque2.emplace_back("Valentina la Arqueologa", "Yo solo queria estudiar las piezas del cofre para mi investigacion.\nSe como abrirlo, pero jamas robaria algo tan valioso.");
+    dialogosBloque2.emplace_back("Testigo Anonimo", "Escuche una discusion acalorada cerca del campamento.\nAlguien gritaba 'el tesoro me pertenece por derecho'.");
     
     // ===== AGREGAR SETS A LOS POOLS =====
     m_criminalMinigame.agregarSetObjetos(objetosBloque1);

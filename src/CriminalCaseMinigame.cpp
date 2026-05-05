@@ -444,6 +444,38 @@ void CriminalCaseMinigame::centrarTexto(sf::Text& text, float x, float y) {
 void CriminalCaseMinigame::handleEvent(const sf::Event& event, sf::RenderWindow& window) {
     if (!m_active || m_completed) return;
     
+     if (const auto* mousePressed = event.getIf<sf::Event::MouseButtonPressed>()) {
+        if (mousePressed->button == sf::Mouse::Button::Left) {
+            
+            sf::Vector2i mousePixel(mousePressed->position.x, mousePressed->position.y);
+            
+            // Coordenadas locales (dentro del minijuego)
+            sf::Vector2f localMousePos = sf::Vector2f(
+                static_cast<float>(mousePixel.x) - m_position.x,
+                static_cast<float>(mousePixel.y) - m_position.y
+            );
+            
+            // Coordenadas en el sistema ORIGINAL (antes del escalado)
+            sf::Vector2f originalCoords;
+            if (m_tamanioBase.x > 0 && m_tamanioBase.y > 0) {
+                originalCoords.x = localMousePos.x * (m_tamanioBase.x / m_size.x);
+                originalCoords.y = localMousePos.y * (m_tamanioBase.y / m_size.y);
+            } else {
+                originalCoords = localMousePos;
+            }
+            
+            //  IMPRESIÓN DE COORDENADAS 
+            std::cout << "\n=== COORDENADAS PARA CONFIGURACIÓN ===" << std::endl;
+            std::cout << "Rectángulo: sf::FloatRect(sf::Vector2f(" 
+                      << originalCoords.x << "f, " << originalCoords.y << "f), ";
+            std::cout << "sf::Vector2f(30f, 30f))" << std::endl;
+            std::cout << "=======================================" << std::endl;
+            std::cout << "Copia esto: (" << originalCoords.x << ", " << originalCoords.y << ")" << std::endl;
+            
+        }
+    }
+
+
     if (const auto* mousePressed = event.getIf<sf::Event::MouseButtonPressed>()) {
         if (mousePressed->button == sf::Mouse::Button::Left) {
             sf::Vector2i mousePixel(mousePressed->position.x, mousePressed->position.y);
@@ -508,6 +540,7 @@ void CriminalCaseMinigame::handleEvent(const sf::Event& event, sf::RenderWindow&
             deactivate();
         }
     }
+    
 }
 
 void CriminalCaseMinigame::update(float dt) {
