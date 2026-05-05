@@ -409,15 +409,17 @@ void CriminalCaseMinigame::iniciarFaseNarrativa() {
     m_fondoNarrativo.setFillColor(sf::Color(0, 0, 0, 220));
     m_fondoNarrativo.setPosition(m_position);
     
-    float cuadroAncho = m_size.x * 0.85f;
-    float cuadroAlto = m_size.y * 0.35f;
+    // Hacer el cuadro de diálogo MÁS GRANDE
+    float cuadroAncho = m_size.x * 0.95f;   
+    float cuadroAlto = m_size.y * 0.60f;   
+    
     m_cuadroDialogo.setSize(sf::Vector2f(cuadroAncho, cuadroAlto));
     m_cuadroDialogo.setFillColor(sf::Color(30, 30, 40, 240));
     m_cuadroDialogo.setOutlineColor(sf::Color(200, 180, 100));
-    m_cuadroDialogo.setOutlineThickness(3.f);
+    m_cuadroDialogo.setOutlineThickness(4.f);
     m_cuadroDialogo.setPosition(sf::Vector2f(
         m_position.x + (m_size.x - cuadroAncho) / 2,
-        m_position.y + m_size.y - cuadroAlto - 30
+        m_position.y +(m_size.y - cuadroAlto)/2  
     ));
     
     std::cout << "Fase narrativa iniciada - Diálogos disponibles: " << m_dialogosActuales.size() << std::endl;
@@ -668,74 +670,99 @@ void CriminalCaseMinigame::update(float dt) {
 void CriminalCaseMinigame::dibujarPantallaNarrativa(sf::RenderWindow& window) {
     window.draw(m_fondoNarrativo);
     
-    // Verificar si el diálogo actual tiene un fondo personalizado
     if (m_dialogoActualIndex >= 0 && m_dialogoActualIndex < static_cast<int>(m_dialogosActuales.size())) {
         auto& dialogo = m_dialogosActuales[m_dialogoActualIndex];
         
-        // Cargar y dibujar fondo personalizado si existe
         cargarFondoDialogo(dialogo);
         
+        // 1. Dibujar el marco principal del cuadro de diálogo
+        window.draw(m_cuadroDialogo);
+        
+        // 2. Dibujar la imagen del personaje (más grande, ocupa lado izquierdo)
         if (dialogo.fondoCargado && dialogo.fondoTexture) {
             sf::Sprite fondoPersonaje(*dialogo.fondoTexture);
-            
-            // Calcular escala para que ocupe todo el cuadro de diálogo
             sf::Vector2f textureSize(static_cast<float>(dialogo.fondoTexture->getSize().x),
                                      static_cast<float>(dialogo.fondoTexture->getSize().y));
             
-            // Opción 1: Escalar para que ocupe todo el cuadro (posible deformación)
-            float scaleX = m_cuadroDialogo.getSize().x / textureSize.x;
-            float scaleY = m_cuadroDialogo.getSize().y / textureSize.y;
+            // La imagen ocupará el 45% del ancho y casi toda la altura
+            float anchoImagen = m_cuadroDialogo.getSize().x * 0.45f;
+            float altoImagen = m_cuadroDialogo.getSize().y - 20;  // Margen pequeño
+            
+            float scaleX = anchoImagen / textureSize.x;
+            float scaleY = altoImagen / textureSize.y;
+            
             fondoPersonaje.setScale(sf::Vector2f(scaleX, scaleY));
-            
-            // Posicionar exactamente en el cuadro de diálogo
-            fondoPersonaje.setPosition(m_cuadroDialogo.getPosition());
-            
+            fondoPersonaje.setPosition(sf::Vector2f(
+                m_cuadroDialogo.getPosition().x + 10,
+                m_cuadroDialogo.getPosition().y + 10
+            ));
             window.draw(fondoPersonaje);
         }
         
-        // Añade un fondo sólido semitransparente para legibilidad del texto
-        sf::RectangleShape textBackground(m_cuadroDialogo.getSize());
-        textBackground.setFillColor(sf::Color(0, 0, 0, 180));
-        textBackground.setPosition(m_cuadroDialogo.getPosition());
-        window.draw(textBackground);
-    }
-    
-    window.draw(m_cuadroDialogo);
-    
-    // Dibujar la persona y texto sobre el fondo
-    if (!m_fontLoaded || m_dialogosActuales.empty()) return;
-    
-    if (m_dialogoActualIndex >= 0 && m_dialogoActualIndex < static_cast<int>(m_dialogosActuales.size())) {
-        const auto& dialogo = m_dialogosActuales[m_dialogoActualIndex];
+        // 3. Recuadro para el texto (lado derecho, separado)
+        float anchoTexto = m_cuadroDialogo.getSize().x * 0.48f;
+        float altoTexto = m_cuadroDialogo.getSize().y - 70;
+        float inicioTextoX = m_cuadroDialogo.getPosition().x + m_cuadroDialogo.getSize().x - anchoTexto - 15;
+        float inicioTextoY = m_cuadroDialogo.getPosition().y + 15;
         
+        sf::RectangleShape recuadroTexto;
+        recuadroTexto.setSize(sf::Vector2f(anchoTexto, altoTexto));
+        recuadroTexto.setFillColor(sf::Color(0, 0, 0, 200));  // Negro semitransparente
+        recuadroTexto.setOutlineColor(sf::Color(200, 180, 100));  // Borde dorado
+        recuadroTexto.setOutlineThickness(2.f);
+        recuadroTexto.setPosition(sf::Vector2f(inicioTextoX, inicioTextoY));
+        window.draw(recuadroTexto);
+        
+        // 4. Nombre del personaje (dentro del recuadro, arriba)
         if (m_personaText) {
             m_personaText->setString(dialogo.persona);
+            m_personaText->setCharacterSize(28);  // Más grande
+            m_personaText->setFillColor(sf::Color(255, 215, 0));  // Dorado
+            m_personaText->setStyle(sf::Text::Bold);
+            
             sf::FloatRect bounds = m_personaText->getLocalBounds();
             m_personaText->setPosition(sf::Vector2f(
-                m_position.x + (m_size.x - bounds.size.x) / 2,
-                m_cuadroDialogo.getPosition().y - 40
+                inicioTextoX + (anchoTexto - bounds.size.x) / 2,  // Centrado
+                inicioTextoY + 15
             ));
             window.draw(*m_personaText);
         }
         
+        // 5. Línea separadora debajo del nombre
+        sf::RectangleShape lineaSeparadora;
+        lineaSeparadora.setSize(sf::Vector2f(anchoTexto - 40, 2.f));
+        lineaSeparadora.setFillColor(sf::Color(200, 180, 100));
+        lineaSeparadora.setPosition(sf::Vector2f(
+            inicioTextoX + 20,
+            inicioTextoY + 55
+        ));
+        window.draw(lineaSeparadora);
+        
+        // 6. Texto del diálogo
         if (m_dialogoText) {
             m_dialogoText->setString(dialogo.texto);
+            m_dialogoText->setCharacterSize(18);
+            m_dialogoText->setFillColor(sf::Color::White);
             m_dialogoText->setPosition(sf::Vector2f(
-                m_cuadroDialogo.getPosition().x + 30,
-                m_cuadroDialogo.getPosition().y + 30
+                inicioTextoX + 20,
+                inicioTextoY + 70
             ));
             window.draw(*m_dialogoText);
         }
         
+        // 7. Instrucciones (abajo a la derecha, fuera del recuadro)
         if (m_instruccionesNarrativas) {
             std::string instrucciones = (m_dialogoActualIndex == static_cast<int>(m_dialogosActuales.size()) - 1) 
-                ? "ENTER: Acusar culpable | BACKSPACE: Anterior dialogo"
-                : "ENTER: Siguiente dialogo | BACKSPACE: Anterior dialogo";
+                ? "ENTER: Acusar culpable | BACKSPACE: Anterior"
+                : "ENTER: Siguiente dialogo | BACKSPACE: Anterior";
             m_instruccionesNarrativas->setString(instrucciones);
+            m_instruccionesNarrativas->setCharacterSize(14);
+            m_instruccionesNarrativas->setFillColor(sf::Color(180, 180, 180));
+            
             sf::FloatRect bounds = m_instruccionesNarrativas->getLocalBounds();
             m_instruccionesNarrativas->setPosition(sf::Vector2f(
-                m_position.x + m_size.x - bounds.size.x - 20,
-                m_position.y + m_size.y - 25
+                m_cuadroDialogo.getPosition().x + m_cuadroDialogo.getSize().x - bounds.size.x - 20,
+                m_cuadroDialogo.getPosition().y + m_cuadroDialogo.getSize().y - 35
             ));
             window.draw(*m_instruccionesNarrativas);
         }

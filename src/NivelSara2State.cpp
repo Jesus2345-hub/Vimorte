@@ -243,22 +243,22 @@ void NivelSara2State::configurarMinijuegoCriminal()
     std::vector<DialogoNarrativo> dialogosBloque1;
     
     DialogoNarrativo dialogoDonJulio("Don Julio el Pescador", 
-        "Vi todo desde mi bote esa noche.\nEl barco estaba tranquilo, pero vi a alguien moviendose sigilosamente cerca\nde las pertenencias de Andrea.",
-        "assets/images/niveles/nivel_sara2/julioPescador.png");
+        "Vi todo desde mi bote esa noche.\nEl barco estaba tranquilo,\n pero vi a alguien moviendose\nsigilosamente cerca\nde las pertenencias de Andrea.",
+        "assets/images/niveles/nivel_sara2/JulioPescador.png");
     dialogosBloque1.push_back(std::move(dialogoDonJulio));
     
     DialogoNarrativo dialogoCapitan("Capitan Rodrigo", 
-        "Como capitan, conozco a toda mi tripulacion.\nTodos son honorables,\nexcepto que recuerdo que Isabella estuvo despierta toda la noche,\nalgo inusual en ella.",
+        "Como capitan, conozco a toda mi tripulacion.\nTodos son honorables,\nexcepto que recuerdo que Isabella\nestuvo despierta toda la noche,\nalgo inusual en ella.",
         "assets/images/niveles/nivel_sara2/capitanRodrigo.png");
     dialogosBloque1.push_back(std::move(dialogoCapitan));
     
     DialogoNarrativo dialogoIsabella("Isabella la Adivina", 
-        "Mis visiones me advirtieron del robo, pero no pude evitarlo.\nVi una figura encapuchada.\nNo me atrevo a decir quien era por miedo a represalias.",
+        "Mis visiones me advirtieron del robo,\n pero no pude evitarlo.\nVi una figura encapuchada.\nNo me atrevo a decir quien era\n por miedo a represalias.",
         "assets/images/niveles/nivel_sara2/isabellaAdivina.png");
     dialogosBloque1.push_back(std::move(dialogoIsabella));
     
     DialogoNarrativo dialogoTestigo("Testigo", 
-        "Recuerdo que justo antes de que pasara,\nvi a alguien con una medalla peculiar.\nEra una MEDALLA ANTIGUA.\nSolo una persona en este pueblo tiene una igual.",
+        "Recuerdo que justo antes de que pasara,\nvi a alguien con una medalla peculiar.\nEra una MEDALLA ANTIGUA.\nSolo una persona en este pueblo\n tiene una igual.",
         "assets/images/niveles/nivel_sara2/anonimo.jpg");
     dialogosBloque1.push_back(std::move(dialogoTestigo));
     
@@ -282,22 +282,22 @@ void NivelSara2State::configurarMinijuegoCriminal()
     
     std::vector<DialogoNarrativo> dialogosBloque2;
     DialogoNarrativo dialogoSebastian("Sebastian el Guardabosques", 
-        "He patrullado este bosque por treinta anos.\nVi a alguien merodeando cerca del cofre la noche anterior al robo.",
+        "He patrullado este bosque por treinta anios.\nVi a alguien merodeando\ncerca del cofre la noche anterior al robo.",
         "assets/images/niveles/nivel_sara2/sebastian.png");
     dialogosBloque2.push_back(std::move(dialogoSebastian));
     
     DialogoNarrativo dialogoMateo("Don Mateo el Herrero", 
-        "Alguien me pidio hacer una copia de una llave antigua.\nEl diseno era identico al del candado del cofre.",
+        "Alguien me pidio hacer una copia de\n una llave antigua. El diseno \nera identico al del \ncandado del cofre.",
         "assets/images/niveles/nivel_sara2/mateo.png");
     dialogosBloque2.push_back(std::move(dialogoMateo));
     
     DialogoNarrativo dialogoValentina("Valentina la Arqueologa", 
-        "Yo solo queria estudiar las piezas del cofre para mi investigacion.\nSe como abrirlo, pero jamas robaria algo tan valioso.",
+        "Yo solo queria estudiar\n las piezas del cofre para mi investigacion.\nSe como abrirlo, pero jamas\n robaria algo tan valioso.",
         "assets/images/niveles/nivel_sara2/valentina.png");
     dialogosBloque2.push_back(std::move(dialogoValentina));
     
     DialogoNarrativo dialogoAnonimo("Testigo Anonimo", 
-        "Escuche una discusion acalorada cerca del campamento.\nAlguien gritaba 'el tesoro me pertenece por derecho'.",
+        "Escuche una discusion acalorada cerca\n del campamento. Alguien gritaba \n'el tesoro me pertenece por derecho'.",
         "assets/images/niveles/nivel_sara2/anonimo.jpg");
     dialogosBloque2.push_back(std::move(dialogoAnonimo));
     
