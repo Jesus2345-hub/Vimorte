@@ -20,7 +20,7 @@ Nivel6State::Nivel6State(sf::RenderWindow *window, Game *game)
     m_msjActual.color = sf::Color::Yellow;
 
     m_player.loadAssets();
-    m_player.setPosition(800.f, 600.f);
+    m_player.setPosition(962.f, 136.f);
     m_player.setSpeed(300.0f);
 
     if (game->tienePartidaActiva())
@@ -54,7 +54,12 @@ Nivel6State::Nivel6State(sf::RenderWindow *window, Game *game)
                         sf::Vector2f(fixedWidth, fixedHeight));
     m_lastWindowSize = windowSize;
 
-    m_puertaSalidaArea = sf::FloatRect(sf::Vector2f(1550.f, 1350.f), sf::Vector2f(120.f, 180.f));
+    // Área de salida SOLO en la parte inferior del ascensor
+    m_puertaSalidaArea = sf::FloatRect(
+        sf::Vector2f(866.f, 61.f), // X, Y (parte baja del ascensor)
+        sf::Vector2f(192.f, 216.f)  // Ancho, Alto (solo 216px de altura)
+    );
+
     configurarColisiones();
 
     // Rifle
@@ -176,21 +181,45 @@ void Nivel6State::verificarSalidaNivel()
 {
     m_cercaPuertaSalida = m_player.getHurtbox().findIntersection(m_puertaSalidaArea).has_value();
 
-    static bool ePresionado = false;
+    static bool rPresionadoSalida = false;
     if (m_cercaPuertaSalida)
     {
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::E))
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R))
         {
-            if (!ePresionado)
+            if (!rPresionadoSalida)
             {
-                ePresionado = true;
-                std::cout << "🚪 Saliendo del Nivel 6..." << std::endl;
-                game->avanzarNivel();
+                rPresionadoSalida = true;
+
+                // Verificar si tiene la llave en el inventario
+                Inventory *inv = m_player.getInventory();
+                bool tieneLlave = false;
+                if (inv)
+                {
+                    for (int i = 0; i < 15; i++)
+                    {
+                        Item *item = inv->getItem(i);
+                        if (item && item->name == "Llave")
+                        {
+                            tieneLlave = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (tieneLlave || m_llaveObtenida)
+                {
+                    std::cout << "🚪 Saliendo del Nivel 6 con la llave..." << std::endl;
+                    game->avanzarNivel();
+                }
+                else
+                {
+                    mostrarMensaje("Necesitas la llave para salir. Busca a la abuelita.", 2.f, sf::Color::Red);
+                }
             }
         }
         else
         {
-            ePresionado = false;
+            rPresionadoSalida = false;
         }
     }
 }
@@ -650,7 +679,14 @@ void Nivel6State::draw()
     // Texto salida
     if (m_cercaPuertaSalida && m_textoInteraccion && m_fontLoaded)
     {
-        m_textoInteraccion->setString("Presiona E para avanzar al siguiente nivel");
+        if (m_llaveObtenida)
+        {
+            m_textoInteraccion->setString("Presiona R para salir del nivel");
+        }
+        else
+        {
+            m_textoInteraccion->setString("Necesitas la llave para salir");
+        }
         sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
         m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
         m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));

@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <map>
 
 struct Item {
     std::string name;
@@ -43,7 +44,9 @@ private:
     static const int HOTBAR_SIZE = 5;
     static const int INVENTORY_COLS = 5;
     static const int INVENTORY_ROWS = 3;
-    
+
+    std::map<std::string, sf::Texture> m_itemTextures;
+
 public:
     Inventory();
     
@@ -70,4 +73,7 @@ public:
     void addDefaultItems();
     
     Item* getItem(int index);
+    
+private:
+    float getItemScale(const std::string& name);
 };
