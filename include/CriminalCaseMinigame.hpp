@@ -40,14 +40,18 @@ enum class CriminalGameState {
 struct DialogoNarrativo {
     std::string persona;
     std::string texto;
-    sf::Texture fondo;
+    std::string fondoPath;  
+    std::shared_ptr<sf::Texture> fondoTexture;  
     bool fondoCargado;
     
     DialogoNarrativo() : fondoCargado(false) {}
     DialogoNarrativo(const std::string& p, const std::string& t) 
-        : persona(p), texto(t), fondoCargado(false) {}
+        : persona(p), texto(t), fondoPath(""), fondoCargado(false) {}
+    
+    DialogoNarrativo(const std::string& p, const std::string& t, const std::string& path)
+        : persona(p), texto(t), fondoPath(path), fondoCargado(false) {}
+    
 };
-
 class CriminalCaseMinigame {
 public:
     CriminalCaseMinigame();
@@ -87,8 +91,8 @@ public:
     void limpiarInventario();
     void setDialogos(const std::vector<DialogoNarrativo>& dialogos);
     void setPenaltyCallback(std::function<void()> callback) { m_penaltyCallback = callback; }
-    
 private:
+
     std::function<void()> m_penaltyCallback;
     void actualizarFondo();
     std::string m_fondoPath;
@@ -97,6 +101,8 @@ private:
     int contarObjetosEncontrados() const;
     void updateListaTexto();
     void cargarFuente();
+    void cargarFondoDialogo(DialogoNarrativo& dialogo);
+
     void centrarTexto(sf::Text& text, float x, float y);
     
     void iniciarFaseNarrativa();

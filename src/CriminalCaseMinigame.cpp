@@ -1,5 +1,6 @@
 #include "CriminalCaseMinigame.hpp"
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <random>
 #include <chrono>
@@ -49,7 +50,7 @@ void CriminalCaseMinigame::agregarSetSospechosos(const std::vector<Sospechoso>& 
 }
 
 void CriminalCaseMinigame::agregarSetDialogos(const std::vector<DialogoNarrativo>& dialogos) {
-    m_poolDialogos.push_back(dialogos);
+   m_poolDialogos.push_back(dialogos);
 }
 
 void CriminalCaseMinigame::limpiarPools() {
@@ -257,8 +258,7 @@ void CriminalCaseMinigame::generarNuevoCaso() {
     
     // Cargar diálogos del mismo set si existen
     if (m_setActualSospechosos < static_cast<int>(m_poolDialogos.size())) {
-        m_dialogosActuales = m_poolDialogos[m_setActualSospechosos];
-    }
+        m_dialogosActuales = std::move(m_poolDialogos[m_setActualSospechosos]);    }
     
     // Resetear estados
     for (auto& obj : m_objetosOriginales) {
@@ -441,6 +441,18 @@ void CriminalCaseMinigame::centrarTexto(sf::Text& text, float x, float y) {
     text.setPosition(sf::Vector2f(x, y));
 }
 
+void CriminalCaseMinigame::cargarFondoDialogo(DialogoNarrativo& dialogo) {
+    if (!dialogo.fondoPath.empty() && !dialogo.fondoCargado) {
+        dialogo.fondoTexture = std::make_shared<sf::Texture>();  // make_shared
+        if (dialogo.fondoTexture->loadFromFile(dialogo.fondoPath)) {
+            dialogo.fondoCargado = true;
+            std::cout << "Fondo cargado para: " << dialogo.persona << " - " << dialogo.fondoPath << std::endl;
+        } else {
+            std::cerr << "Error cargando fondo: " << dialogo.fondoPath << std::endl;
+        }
+    }
+}
+
 void CriminalCaseMinigame::handleEvent(const sf::Event& event, sf::RenderWindow& window) {
     if (!m_active || m_completed) return;
     
@@ -556,8 +568,43 @@ void CriminalCaseMinigame::update(float dt) {
 
 void CriminalCaseMinigame::dibujarPantallaNarrativa(sf::RenderWindow& window) {
     window.draw(m_fondoNarrativo);
+    
+    // Verificar si el diálogo actual tiene un fondo personalizado
+    if (m_dialogoActualIndex >= 0 && m_dialogoActualIndex < static_cast<int>(m_dialogosActuales.size())) {
+        auto& dialogo = m_dialogosActuales[m_dialogoActualIndex];
+        
+        // Cargar y dibujar fondo personalizado si existe
+        cargarFondoDialogo(dialogo);
+        
+        if (dialogo.fondoCargado && dialogo.fondoTexture) {
+            
+            sf::Sprite fondoPersonaje(*dialogo.fondoTexture);
+            
+            // Escalar manteniendo proporción para que quepa en el área disponible
+            sf::Vector2f textureSize(static_cast<float>(dialogo.fondoTexture->getSize().x),
+                                     static_cast<float>(dialogo.fondoTexture->getSize().y));
+            
+            // Calcular escala para que quepa dentro del área de diálogo
+            float scaleX = m_cuadroDialogo.getSize().x / textureSize.x;
+            float scaleY = m_cuadroDialogo.getSize().y / textureSize.y;
+            float scale = std::min(scaleX, scaleY);
+            
+            fondoPersonaje.setScale(sf::Vector2f(scale, scale));
+            
+            // Centrar en el cuadro de diálogo
+            sf::Vector2f scaledSize(textureSize.x * scale, textureSize.y * scale);
+            fondoPersonaje.setPosition(sf::Vector2f(
+                m_cuadroDialogo.getPosition().x + (m_cuadroDialogo.getSize().x - scaledSize.x) / 2,
+                m_cuadroDialogo.getPosition().y + (m_cuadroDialogo.getSize().y - scaledSize.y) / 2
+            ));
+            
+            window.draw(fondoPersonaje);
+        }
+    }
+    
     window.draw(m_cuadroDialogo);
     
+    // Dibujar la persona y texto sobre el fondo
     if (!m_fontLoaded || m_dialogosActuales.empty()) return;
     
     if (m_dialogoActualIndex >= 0 && m_dialogoActualIndex < static_cast<int>(m_dialogosActuales.size())) {

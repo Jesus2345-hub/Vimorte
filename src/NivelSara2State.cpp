@@ -220,7 +220,7 @@ void NivelSara2State::configurarMinijuegoCriminal()
     // ===== LIMPIAR POOLS =====
     m_criminalMinigame.limpiarPools();
     
-    // ===== BLOQUE 1 - PLAYA/ANDREA =====
+    // ===== BLOQUE 1 (Caso de la playa) =====
     std::vector<ObjetoBuscar> objetosBloque1;
     objetosBloque1.emplace_back("Collar", sf::FloatRect(sf::Vector2f(560.f, 426.f), sf::Vector2f(36.f, 40.f)), "Un collar de perlas abandonado en la arena");
     objetosBloque1.emplace_back("Carta Mojada", sf::FloatRect(sf::Vector2f(191.f, 438.f), sf::Vector2f(75.f, 38.f)), "Una carta informacion crucial de Andrea");
@@ -239,13 +239,30 @@ void NivelSara2State::configurarMinijuegoCriminal()
     sospechososBloque1.emplace_back("Isabella la Adivina", sf::FloatRect(sf::Vector2f(750.f, 620.f), sf::Vector2f(70.f, 90.f)), "Siempre supo que algo pasaria. ES LA CULPABLE", true);
     sospechososBloque1.emplace_back("Don Julio el Pescador", sf::FloatRect(sf::Vector2f(550.f, 680.f), sf::Vector2f(80.f, 90.f)), "Vio todo desde su bote, pero jura que no fue el.", false);
     
+    // Diálogos con fondos personalizados - Usar push_back con std::move
     std::vector<DialogoNarrativo> dialogosBloque1;
-    dialogosBloque1.emplace_back("Don Julio el Pescador", "Vi todo desde mi bote esa noche.\n El barco estaba tranquilo, pero vi a alguien moviendose sigilosamente cerca\nde las pertenencias de Andrea.");
-    dialogosBloque1.emplace_back("Capitan Rodrigo", "Como capitan, conozco a toda mi tripulacion.\n Todos son honorables,\nexcepto que recuerdo que Isabella estuvo despierta toda la noche,\nalgo inusual en ella.");
-    dialogosBloque1.emplace_back("Isabella la Adivina", "Mis visiones me advirtieron del robo, pero no pude evitarlo.\nVi una figura encapuchada.\nNo me atrevo a decir quien era por miedo a represalias.");
-    dialogosBloque1.emplace_back("Andrea Testigo", "Recuerdo que justo antes de que pasara, \nvi a alguien con una medalla peculiar.\nEra una MEDALLA ANTIGUA.\nSolo una persona en este pueblo tiene una igual.");
     
-    // ===== BLOQUE 2 - BOSQUE/TESORO =====
+    DialogoNarrativo dialogoDonJulio("Don Julio el Pescador", 
+        "Vi todo desde mi bote esa noche.\nEl barco estaba tranquilo, pero vi a alguien moviendose sigilosamente cerca\nde las pertenencias de Andrea.",
+        "assets/images/niveles/nivel_sara2/julioPescador.png");
+    dialogosBloque1.push_back(std::move(dialogoDonJulio));
+    
+    DialogoNarrativo dialogoCapitan("Capitan Rodrigo", 
+        "Como capitan, conozco a toda mi tripulacion.\nTodos son honorables,\nexcepto que recuerdo que Isabella estuvo despierta toda la noche,\nalgo inusual en ella.",
+        "assets/images/niveles/nivel_sara2/capitanRodrigo.png");
+    dialogosBloque1.push_back(std::move(dialogoCapitan));
+    
+    DialogoNarrativo dialogoIsabella("Isabella la Adivina", 
+        "Mis visiones me advirtieron del robo, pero no pude evitarlo.\nVi una figura encapuchada.\nNo me atrevo a decir quien era por miedo a represalias.",
+        "assets/images/niveles/nivel_sara2/isabellaAdivina.png");
+    dialogosBloque1.push_back(std::move(dialogoIsabella));
+    
+    DialogoNarrativo dialogoTestigo("Testigo", 
+        "Recuerdo que justo antes de que pasara,\nvi a alguien con una medalla peculiar.\nEra una MEDALLA ANTIGUA.\nSolo una persona en este pueblo tiene una igual.",
+        "assets/images/niveles/nivel_sara2/anonimo.jpg");
+    dialogosBloque1.push_back(std::move(dialogoTestigo));
+    
+    // ===== BLOQUE 2 (Caso del cofre) =====
     std::vector<ObjetoBuscar> objetosBloque2;
     objetosBloque2.emplace_back("Camaleon", sf::FloatRect(sf::Vector2f(235.f, 400.f), sf::Vector2f(50.f, 17.f)), "Un camaleon que cambia de color, podria ser una pista");
     objetosBloque2.emplace_back("Cofre", sf::FloatRect(sf::Vector2f(753.f, 409.f), sf::Vector2f(40.f, 40.f)), "Un cofre antiguo cerrado con candado");
@@ -264,22 +281,37 @@ void NivelSara2State::configurarMinijuegoCriminal()
     sospechososBloque2.emplace_back("Don Mateo el Herrero", sf::FloatRect(sf::Vector2f(750.f, 650.f), sf::Vector2f(85.f, 85.f)), "Fabrica candados, sabia como abrir el cofre sin forzarlo.", false);
     
     std::vector<DialogoNarrativo> dialogosBloque2;
-    dialogosBloque2.emplace_back("Sebastian el Guardabosques", "He patrullado este bosque por treinta anos.\nVi a alguien merodeando cerca del cofre la noche anterior al robo.");
-    dialogosBloque2.emplace_back("Don Mateo el Herrero", "Alguien me pidio hacer una copia de una llave antigua.\nEl diseno era identico al del candado del cofre.");
-    dialogosBloque2.emplace_back("Valentina la Arqueologa", "Yo solo queria estudiar las piezas del cofre para mi investigacion.\nSe como abrirlo, pero jamas robaria algo tan valioso.");
-    dialogosBloque2.emplace_back("Testigo Anonimo", "Escuche una discusion acalorada cerca del campamento.\nAlguien gritaba 'el tesoro me pertenece por derecho'.");
+    DialogoNarrativo dialogoSebastian("Sebastian el Guardabosques", 
+        "He patrullado este bosque por treinta anos.\nVi a alguien merodeando cerca del cofre la noche anterior al robo.",
+        "assets/images/niveles/nivel_sara2/sebastian.png");
+    dialogosBloque2.push_back(std::move(dialogoSebastian));
     
-    // ===== AGREGAR SETS A LOS POOLS =====
-    m_criminalMinigame.agregarSetObjetos(objetosBloque1);
-    m_criminalMinigame.agregarSetSospechosos(sospechososBloque1);
+    DialogoNarrativo dialogoMateo("Don Mateo el Herrero", 
+        "Alguien me pidio hacer una copia de una llave antigua.\nEl diseno era identico al del candado del cofre.",
+        "assets/images/niveles/nivel_sara2/mateo.png");
+    dialogosBloque2.push_back(std::move(dialogoMateo));
+    
+    DialogoNarrativo dialogoValentina("Valentina la Arqueologa", 
+        "Yo solo queria estudiar las piezas del cofre para mi investigacion.\nSe como abrirlo, pero jamas robaria algo tan valioso.",
+        "assets/images/niveles/nivel_sara2/valentina.png");
+    dialogosBloque2.push_back(std::move(dialogoValentina));
+    
+    DialogoNarrativo dialogoAnonimo("Testigo Anonimo", 
+        "Escuche una discusion acalorada cerca del campamento.\nAlguien gritaba 'el tesoro me pertenece por derecho'.",
+        "assets/images/niveles/nivel_sara2/anonimo.jpg");
+    dialogosBloque2.push_back(std::move(dialogoAnonimo));
+    
+    // ===== AGREGAR SETS A LOS POOLS (usando std::move) =====
+    m_criminalMinigame.agregarSetObjetos(std::move(objetosBloque1));
+    m_criminalMinigame.agregarSetSospechosos(std::move(sospechososBloque1));
     m_criminalMinigame.agregarSetDialogos(dialogosBloque1);
     
-    m_criminalMinigame.agregarSetObjetos(objetosBloque2);
-    m_criminalMinigame.agregarSetSospechosos(sospechososBloque2);
+    m_criminalMinigame.agregarSetObjetos(std::move(objetosBloque2));
+    m_criminalMinigame.agregarSetSospechosos(std::move(sospechososBloque2));
     m_criminalMinigame.agregarSetDialogos(dialogosBloque2);
     
     // Guardar copias para reinit
-    m_objetosCriminal = objetosBloque1;
+    m_objetosCriminal = objetosBloque1;  // Esto ahora funciona si ObjetoBuscar es copiable
     m_sospechososCriminal = sospechososBloque1;
     
     // Configurar el minijuego
@@ -296,8 +328,10 @@ void NivelSara2State::configurarMinijuegoCriminal()
     m_criminalMinigame.setPosition(sf::Vector2f(minijuegoX, minijuegoY));
     m_criminalMinigame.setSize(sf::Vector2f(minijuegoW, minijuegoH));
     
-    // Generar primer caso aleatorio
-    m_criminalMinigame.generarNuevoCaso();
+    // Inicializar con el fondo y datos
+    m_criminalMinigame.init("assets/images/niveles/nivel_sara2/criminalCase.png", 
+                            m_objetosCriminal, 
+                            m_sospechososCriminal);
     
     m_criminalMinigame.setDebugMode(true);
     
