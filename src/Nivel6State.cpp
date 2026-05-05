@@ -31,7 +31,6 @@ Nivel6State::Nivel6State(sf::RenderWindow *window, Game *game)
         {
             m_mostrarTutorial = true;
             game->getSaveManager().addItemRecolectado("TutorialNivel6Visto");
-            std::cout << "Primer ingreso al Nivel 6: Mostrando tutorial" << std::endl;
         }
     }
 
@@ -130,15 +129,9 @@ void Nivel6State::handleEvent(const sf::Event &event)
         }
         if (keyPressed->code == sf::Keyboard::Key::M)
         {
-            if (game->tienePartidaActiva())
-            {
-                const auto &items = game->getSaveManager().getCurrentProgress().itemsRecolectados;
-                auto it = std::find(items.begin(), items.end(), "TutorialNivel6Visto");
-                if (it != items.end())
-                    m_mostrarTutorialPorTecla = true;
-                else
-                    m_mostrarTutorial = true;
-            }
+            // Forzar mostrar el tutorial SIEMPRE al presionar M
+            m_mostrarTutorialPorTecla = true;
+            std::cout << "M presionada - Mostrando tutorial del Nivel 6" << std::endl;
         }
     }
 
@@ -248,6 +241,15 @@ void Nivel6State::update(float dt)
             {
                 rRiflePresionado = true;
                 m_rifleRecogido = true;
+
+                // AGREGAR AL INVENTARIO
+                Inventory *inv = m_player.getInventory();
+                if (inv)
+                {
+                    Item rifle("Rifle", sf::Color(139, 90, 43)); // Color marrón
+                    inv->addItem(rifle);
+                }
+
                 mostrarMensaje("Rifle recogido!", 2.f, sf::Color::Green);
             }
         }
@@ -276,9 +278,19 @@ void Nivel6State::update(float dt)
         m_roosterHuntMinigame.update(dt);
         m_player.update(dt);
         window->setMouseCursorVisible(false);
+
         if (m_roosterHuntMinigame.isGameWon() && !m_gallinaObtenida)
         {
             m_gallinaObtenida = true;
+
+            // AGREGAR AL INVENTARIO
+            Inventory *inv = m_player.getInventory();
+            if (inv)
+            {
+                Item gallina("Gallina", sf::Color(255, 220, 180)); // Color crema
+                inv->addItem(gallina);
+            }
+
             m_bloquearR = true;
             m_tiempoUltimaR.restart();
             mostrarMensaje("Gallina obtenida!", 2.f, sf::Color::Green);
@@ -347,9 +359,19 @@ void Nivel6State::update(float dt)
     {
         m_tictactoeMinigame.update(dt);
         m_player.update(dt);
+
         if (m_tictactoeMinigame.isGameWon() && !m_dientesObtenidos)
         {
             m_dientesObtenidos = true;
+
+            // AGREGAR AL INVENTARIO
+            Inventory *inv = m_player.getInventory();
+            if (inv)
+            {
+                Item dientes("Dientes", sf::Color::White); // Color blanco
+                inv->addItem(dientes);
+            }
+
             mostrarMensaje("Dientes conseguidos!", 2.f, sf::Color::Green);
         }
         sf::Vector2f pp = m_player.getPosition();
@@ -388,6 +410,15 @@ void Nivel6State::update(float dt)
                 rAbuelitaPresionado = true;
                 m_abuelita.sonreir();
                 m_llaveObtenida = true;
+
+                // AGREGAR AL INVENTARIO
+                Inventory *inv = m_player.getInventory();
+                if (inv)
+                {
+                    Item llave("Llave", sf::Color(255, 215, 0)); // Color dorado
+                    inv->addItem(llave);
+                }
+
                 mostrarMensaje("Llave obtenida!", 3.f, sf::Color::Green);
             }
         }
