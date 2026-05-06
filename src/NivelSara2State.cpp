@@ -121,7 +121,7 @@ NivelSara2State::NivelSara2State(sf::RenderWindow *window, Game *game)
     if (exito && !m_criminalGameCompleted) 
     {
         m_criminalGameCompleted = true;
-        mostrarMensaje("CASO RESUELTO. Has encontrado todas las pistas y al culpable.", 5.0f);
+        mostrarMensaje("CASO RESUELTO. Has encontrado todas las pistas y al culpable.\nEntregale las cosas a Andrea", 5.0f);
     }
     });
     
@@ -130,7 +130,7 @@ NivelSara2State::NivelSara2State(sf::RenderWindow *window, Game *game)
     m_criminalMinigame.setOnCompleteCallback([this](bool exito) {
         if (exito && !m_criminalGameCompleted) {
             m_criminalGameCompleted = true;
-            mostrarMensaje("CASO RESUELTO. Has encontrado todas las pistas y al culpable.", 5.0f);
+            mostrarMensaje("CASO RESUELTO. Has encontrado todas las pistas y al culpable.\nEntregale las cosas a Andrea", 5.0f);
         }
     });
 }
@@ -274,8 +274,8 @@ void NivelSara2State::configurarMinijuegoCriminal()
     objetosBloque2.emplace_back("Cofre", sf::FloatRect(sf::Vector2f(753.f, 409.f), sf::Vector2f(40.f, 40.f)), "Un cofre antiguo cerrado con candado");
     objetosBloque2.emplace_back("Mapa", sf::FloatRect(sf::Vector2f(591.f, 471.f), sf::Vector2f(131.f, 59.f)), "Un mapa del tesoro con marcas sospechosas");
     objetosBloque2.emplace_back("Reloj Antiguo", sf::FloatRect(sf::Vector2f(604.f, 390.f), sf::Vector2f(24.f, 34.f)), "Un reloj de bolsillo que marca una hora especifica");
-    objetosBloque2.emplace_back("Microscopio", sf::FloatRect(sf::Vector2f(172.f, 197.f), sf::Vector2f(5.f, 53.f)), "Un microscopio para examinar evidencias");
-    objetosBloque2.emplace_back("Catalejo", sf::FloatRect(sf::Vector2f(362.f, 485.f), sf::Vector2f(33.f, 9.f)), "Un catalejo usado para vigilar desde lejos");
+    objetosBloque2.emplace_back("Microscopio", sf::FloatRect(sf::Vector2f(161.f, 197.f), sf::Vector2f(15.f, 53.f)), "Un microscopio para examinar evidencias");
+    objetosBloque2.emplace_back("Catalejo", sf::FloatRect(sf::Vector2f(362.f, 485.f), sf::Vector2f(33.f, 15.f)), "Un catalejo usado para vigilar desde lejos");
     objetosBloque2.emplace_back("Cortina", sf::FloatRect(sf::Vector2f(380.f, 200.f), sf::Vector2f(34.f, 85.f)), "Una cortina rasgada, alguien la uso para esconderse");
     objetosBloque2.emplace_back("Juego de Llaves", sf::FloatRect(sf::Vector2f(287.f, 507.f), sf::Vector2f(32.f, 42.f)), "Un conjunto de cinco llaves, una abre el cofre");
     objetosBloque2.emplace_back("Periodico", sf::FloatRect(sf::Vector2f(619.f, 161.f), sf::Vector2f(43.f, 49.f)), "Un periodico viejo con noticias sobre robos");
@@ -310,7 +310,7 @@ void NivelSara2State::configurarMinijuegoCriminal()
     // ===== BLOQUE 3 (Caso del naufragio misterioso) =====
     std::vector<ObjetoBuscar> objetosBloque3;
     objetosBloque3.emplace_back("Calaveras", sf::FloatRect(sf::Vector2f(697.f, 262.f), sf::Vector2f(45.f, 48.f)), "Una calavera tallada en madera, simbolo de una antigua tripulacion");
-    objetosBloque3.emplace_back("Canoa", sf::FloatRect(sf::Vector2f(508.f, 254.f), sf::Vector2f(75.f, 28.f)), "Una canoa varada en la orilla, con rasguños recientes");
+    objetosBloque3.emplace_back("Canoa", sf::FloatRect(sf::Vector2f(508.f, 254.f), sf::Vector2f(75.f, 35.f)), "Una canoa varada en la orilla, con rasguños recientes");
     objetosBloque3.emplace_back("Rueda", sf::FloatRect(sf::Vector2f(219.f, 184.f), sf::Vector2f(67.f, 67.f)), "Una rueda de timon rota, parte del naufragio");
     objetosBloque3.emplace_back("Botella de Vino", sf::FloatRect(sf::Vector2f(324.f, 312.f), sf::Vector2f(34.f, 51.f)), "Una botella de vino añejo, aun con liquido adentro");
     objetosBloque3.emplace_back("Cangrejo", sf::FloatRect(sf::Vector2f(711.f, 446.f), sf::Vector2f(44.f, 24.f)), "Un cangrejo que parecia cuidar algo entre las rocas");

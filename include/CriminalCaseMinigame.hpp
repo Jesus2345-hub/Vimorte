@@ -108,6 +108,8 @@ private:
 
     void centrarTexto(sf::Text& text, float x, float y);
     
+    void reiniciarCasoActual();  
+    void generarNuevoCasoCompleto();
     void iniciarFaseNarrativa();
     void avanzarDialogo();
     void retrocederDialogo();
