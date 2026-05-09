@@ -18,6 +18,8 @@ struct BloqueInteractivo {
 class NivelSara2State : public State 
 {
 private:
+
+    void reajustarMinijuegoCriminalManteniendoEstado();
     //Juego de Crimen
     CriminalCaseMinigame m_criminalMinigame;
     sf::FloatRect m_criminalArea;

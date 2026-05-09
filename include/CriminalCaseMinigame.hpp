@@ -107,7 +107,7 @@ private:
     void cargarFondoDialogo(DialogoNarrativo& dialogo);
 
     void centrarTexto(sf::Text& text, float x, float y);
-    
+    void recalcularAreasBotones();
     void reiniciarCasoActual();  
     void generarNuevoCasoCompleto();
     void iniciarFaseNarrativa();

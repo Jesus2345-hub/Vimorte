@@ -134,16 +134,39 @@ NivelSara2State::NivelSara2State(sf::RenderWindow *window, Game *game)
         }
     });
 }
+
+void NivelSara2State::reajustarMinijuegoCriminalManteniendoEstado()
+{
+    if (!m_criminalMinigame.isActive()) return;
+    
+    // Guardar estado actual
+    bool wasActive = m_criminalMinigame.isActive();
+    bool wasCompleted = m_criminalGameCompleted;
+    
+    sf::Vector2u windowSize = window->getSize();
+    float minijuegoW = windowSize.x * 0.85f;
+    float minijuegoH = windowSize.y * 0.85f;
+    float minijuegoX = (windowSize.x - minijuegoW) / 2.f;
+    float minijuegoY = (windowSize.y - minijuegoH) / 2.f;
+    
+    m_criminalMinigame.setSize(sf::Vector2f(minijuegoW, minijuegoH));
+    m_criminalMinigame.setPosition(sf::Vector2f(minijuegoX, minijuegoY));
+    
+    // Recargar fondo
+    m_criminalMinigame.cargarFondoOnly("assets/images/niveles/nivel_sara2/criminalCase.png");
+}
+
 void NivelSara2State::configurarBloquesInteractivos()
 {
     m_bloquesInteractivos.clear();
     
     m_bloquesInteractivos.push_back({
-        sf::FloatRect(sf::Vector2f(280.f, 944.f), sf::Vector2f(100.f, 100.f)),
+        sf::FloatRect(sf::Vector2f(280.f, 904.f), sf::Vector2f(100.f, 100.f)),
         "Andrea Tiene horas buscando sus joyas\n mas preciosas.\nHa perdido toda esperanza....\n encuentralos y debajo de los asiento"
     });
     // Agrega mas si es necesario
 }
+
 void NivelSara2State::handleEvent(const sf::Event &event)
 {
     
@@ -230,7 +253,7 @@ void NivelSara2State::configurarMinijuegoCriminal()
     
     // ===== BLOQUE 1 (Caso de la playa) =====
     std::vector<ObjetoBuscar> objetosBloque1;
-    objetosBloque1.emplace_back("Collar", sf::FloatRect(sf::Vector2f(560.f, 426.f), sf::Vector2f(36.f, 40.f)), "Un collar de perlas abandonado en la arena");
+    objetosBloque1.emplace_back("Collar", sf::FloatRect(sf::Vector2f(560.f, 426.f), sf::Vector2f(36.f, 40.f)), "Un collar de perlas");
     objetosBloque1.emplace_back("Carta Mojada", sf::FloatRect(sf::Vector2f(191.f, 438.f), sf::Vector2f(75.f, 38.f)), "Una carta informacion crucial de Andrea");
     objetosBloque1.emplace_back("Reloj Arena", sf::FloatRect(sf::Vector2f(665.f, 357.f), sf::Vector2f(25.f, 70.f)), "Un reloj de regalo");
     objetosBloque1.emplace_back("Medalla", sf::FloatRect(sf::Vector2f(116.f, 164.f), sf::Vector2f(20.f, 23.f)), "Una medalla vieja");
@@ -458,7 +481,7 @@ void NivelSara2State::verificarSalidaNivel()
 
 void NivelSara2State::update(float dt)
 {
-     static sf::Vector2u lastWindowSize = window->getSize();
+    static sf::Vector2u lastWindowSize = window->getSize();
     sf::Vector2u currentWindowSize = window->getSize();
 
     if (currentWindowSize != lastWindowSize) {
@@ -469,10 +492,18 @@ void NivelSara2State::update(float dt)
         float minijuegoX = (currentWindowSize.x - minijuegoW) / 2.f;
         float minijuegoY = (currentWindowSize.y - minijuegoH) / 2.f;
         
+        // Siempre actualizar posición y tamaño para cualquier estado
         m_criminalMinigame.setPosition(sf::Vector2f(minijuegoX, minijuegoY));
         m_criminalMinigame.setSize(sf::Vector2f(minijuegoW, minijuegoH));
         
         m_criminalMinigame.cargarFondoOnly("assets/images/niveles/nivel_sara2/criminalCase.png");
+        
+        // Forzar reescalado de áreas si el minijuego está activo
+        if (m_criminalMinigame.isActive()) 
+        {
+
+            std::cout << "Minijuego activo - reescalado aplicado" << std::endl;
+        }
     }
 
     // ===== SI HAY MENSAJE EMERGENTE, NO ACTUALIZAR MOVIMIENTO =====
