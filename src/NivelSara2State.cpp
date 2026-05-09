@@ -253,22 +253,22 @@ void NivelSara2State::configurarMinijuegoCriminal()
     
     // ===== BLOQUE 1 (Caso de la playa) =====
     std::vector<ObjetoBuscar> objetosBloque1;
-    objetosBloque1.emplace_back("Collar", sf::FloatRect(sf::Vector2f(560.f, 426.f), sf::Vector2f(36.f, 40.f)), "Un collar de perlas");
-    objetosBloque1.emplace_back("Carta Mojada", sf::FloatRect(sf::Vector2f(191.f, 438.f), sf::Vector2f(75.f, 38.f)), "Una carta informacion crucial de Andrea");
-    objetosBloque1.emplace_back("Reloj Arena", sf::FloatRect(sf::Vector2f(665.f, 357.f), sf::Vector2f(25.f, 70.f)), "Un reloj de regalo");
-    objetosBloque1.emplace_back("Medalla", sf::FloatRect(sf::Vector2f(116.f, 164.f), sf::Vector2f(20.f, 23.f)), "Una medalla vieja");
-    objetosBloque1.emplace_back("Botella", sf::FloatRect(sf::Vector2f(104.f, 359.f), sf::Vector2f(25.f, 24.f)), "Una botella con las penas de Andrea");
-    objetosBloque1.emplace_back("Diario", sf::FloatRect(sf::Vector2f(524.f, 496.f), sf::Vector2f(35.f, 30.f)), "El diario personal");
-    objetosBloque1.emplace_back("Anillo", sf::FloatRect(sf::Vector2f(504.f, 414.f), sf::Vector2f(21.f, 25.f)), "Un anillo de compromiso");
-    objetosBloque1.emplace_back("Foto", sf::FloatRect(sf::Vector2f(744.f, 240.f), sf::Vector2f(34.f, 54.f)), "Una foto, no sabemos por que");
-    objetosBloque1.emplace_back("Cuchillo", sf::FloatRect(sf::Vector2f(348.f, 370.f), sf::Vector2f(36.f, 25.f)), "Quiere defenderse");
-    objetosBloque1.emplace_back("Bolso", sf::FloatRect(sf::Vector2f(408.f, 473.f), sf::Vector2f(109.f, 80.f)), "Un bolso que ya le toca cambio");
-    objetosBloque1.emplace_back("Trapo Viejo", sf::FloatRect(sf::Vector2f(766.f, 455.f), sf::Vector2f(26.f, 15.f)), "Un Trapo sucio... no limpia su bolso");
+    objetosBloque1.emplace_back("Collar", sf::FloatRect(sf::Vector2f(560.f, 426.f), sf::Vector2f(36.f, 40.f))," ");
+    objetosBloque1.emplace_back("Carta Mojada", sf::FloatRect(sf::Vector2f(191.f, 438.f), sf::Vector2f(75.f, 38.f))," ");
+    objetosBloque1.emplace_back("Reloj Arena", sf::FloatRect(sf::Vector2f(665.f, 357.f), sf::Vector2f(25.f, 70.f))," ");
+    objetosBloque1.emplace_back("Medalla", sf::FloatRect(sf::Vector2f(116.f, 164.f), sf::Vector2f(20.f, 23.f))," ");
+    objetosBloque1.emplace_back("Botella", sf::FloatRect(sf::Vector2f(104.f, 359.f), sf::Vector2f(25.f, 24.f))," ");
+    objetosBloque1.emplace_back("Diario", sf::FloatRect(sf::Vector2f(524.f, 496.f), sf::Vector2f(35.f, 30.f))," ");
+    objetosBloque1.emplace_back("Anillo", sf::FloatRect(sf::Vector2f(504.f, 414.f), sf::Vector2f(21.f, 25.f))," ");
+    objetosBloque1.emplace_back("Foto", sf::FloatRect(sf::Vector2f(744.f, 240.f), sf::Vector2f(34.f, 54.f))," ");
+    objetosBloque1.emplace_back("Cuchillo", sf::FloatRect(sf::Vector2f(348.f, 370.f), sf::Vector2f(36.f, 25.f))," ");
+    objetosBloque1.emplace_back("Bolso", sf::FloatRect(sf::Vector2f(408.f, 473.f), sf::Vector2f(109.f, 80.f))," ");
+    objetosBloque1.emplace_back("Trapo Viejo", sf::FloatRect(sf::Vector2f(766.f, 455.f), sf::Vector2f(26.f, 15.f))," ");
     
     std::vector<Sospechoso> sospechososBloque1;
-    sospechososBloque1.emplace_back("Capitan Rodrigo", sf::FloatRect(sf::Vector2f(300.f, 650.f), sf::Vector2f(80.f, 100.f)), "El capitan del barco. Tenia acceso a todo, pero parece honesto.", false);
-    sospechososBloque1.emplace_back("Isabella la Adivina", sf::FloatRect(sf::Vector2f(750.f, 620.f), sf::Vector2f(70.f, 90.f)), "Siempre supo que algo pasaria. ES LA CULPABLE", true);
-    sospechososBloque1.emplace_back("Don Julio el Pescador", sf::FloatRect(sf::Vector2f(550.f, 680.f), sf::Vector2f(80.f, 90.f)), "Vio todo desde su bote, pero jura que no fue el.", false);
+    sospechososBloque1.emplace_back("Capitan Rodrigo", sf::FloatRect(sf::Vector2f(300.f, 650.f), sf::Vector2f(80.f, 100.f)), "El capitan del barco. Tenia acceso a todo,\npero parece honesto.", false);
+    sospechososBloque1.emplace_back("Isabella la Adivina", sf::FloatRect(sf::Vector2f(750.f, 620.f), sf::Vector2f(70.f, 90.f)), "Siempre supo que algo pasaria", true);
+    sospechososBloque1.emplace_back("Don Julio el Pescador", sf::FloatRect(sf::Vector2f(550.f, 680.f), sf::Vector2f(80.f, 90.f)), "Vio todo desde su bote,\npero jura que no fue el.", false);
     
     std::vector<DialogoNarrativo> dialogosBloque1;
     DialogoNarrativo dialogoDonJulio("Don Julio el Pescador", 
@@ -293,21 +293,21 @@ void NivelSara2State::configurarMinijuegoCriminal()
     
     // ===== BLOQUE 2 (Caso del cofre) =====
     std::vector<ObjetoBuscar> objetosBloque2;
-    objetosBloque2.emplace_back("Camaleon", sf::FloatRect(sf::Vector2f(235.f, 400.f), sf::Vector2f(50.f, 17.f)), "Un camaleon que cambia de color, podria ser una pista");
-    objetosBloque2.emplace_back("Cofre", sf::FloatRect(sf::Vector2f(753.f, 409.f), sf::Vector2f(40.f, 40.f)), "Un cofre antiguo cerrado con candado");
-    objetosBloque2.emplace_back("Mapa", sf::FloatRect(sf::Vector2f(591.f, 471.f), sf::Vector2f(131.f, 59.f)), "Un mapa del tesoro con marcas sospechosas");
-    objetosBloque2.emplace_back("Reloj Antiguo", sf::FloatRect(sf::Vector2f(604.f, 390.f), sf::Vector2f(24.f, 34.f)), "Un reloj de bolsillo que marca una hora especifica");
-    objetosBloque2.emplace_back("Microscopio", sf::FloatRect(sf::Vector2f(161.f, 197.f), sf::Vector2f(15.f, 53.f)), "Un microscopio para examinar evidencias");
-    objetosBloque2.emplace_back("Catalejo", sf::FloatRect(sf::Vector2f(362.f, 485.f), sf::Vector2f(33.f, 15.f)), "Un catalejo usado para vigilar desde lejos");
-    objetosBloque2.emplace_back("Cortina", sf::FloatRect(sf::Vector2f(380.f, 200.f), sf::Vector2f(34.f, 85.f)), "Una cortina rasgada, alguien la uso para esconderse");
-    objetosBloque2.emplace_back("Juego de Llaves", sf::FloatRect(sf::Vector2f(287.f, 507.f), sf::Vector2f(32.f, 42.f)), "Un conjunto de cinco llaves, una abre el cofre");
-    objetosBloque2.emplace_back("Periodico", sf::FloatRect(sf::Vector2f(619.f, 161.f), sf::Vector2f(43.f, 49.f)), "Un periodico viejo con noticias sobre robos");
-    objetosBloque2.emplace_back("Red", sf::FloatRect(sf::Vector2f(694.f, 95.f), sf::Vector2f(69.f, 98.f)), "Una red de pescar, tal vez usada para atrapar pruebas");
+    objetosBloque2.emplace_back("Camaleon", sf::FloatRect(sf::Vector2f(235.f, 400.f), sf::Vector2f(50.f, 17.f))," ");
+    objetosBloque2.emplace_back("Cofre", sf::FloatRect(sf::Vector2f(753.f, 409.f), sf::Vector2f(40.f, 40.f))," ");
+    objetosBloque2.emplace_back("Mapa", sf::FloatRect(sf::Vector2f(591.f, 471.f), sf::Vector2f(131.f, 59.f))," ");
+    objetosBloque2.emplace_back("Reloj Antiguo", sf::FloatRect(sf::Vector2f(604.f, 390.f), sf::Vector2f(24.f, 34.f))," ");
+    objetosBloque2.emplace_back("Microscopio", sf::FloatRect(sf::Vector2f(161.f, 197.f), sf::Vector2f(15.f, 53.f))," ");
+    objetosBloque2.emplace_back("Catalejo", sf::FloatRect(sf::Vector2f(362.f, 485.f), sf::Vector2f(33.f, 15.f))," ");
+    objetosBloque2.emplace_back("Cortina", sf::FloatRect(sf::Vector2f(380.f, 200.f), sf::Vector2f(34.f, 85.f))," ");
+    objetosBloque2.emplace_back("Juego de Llaves", sf::FloatRect(sf::Vector2f(287.f, 507.f), sf::Vector2f(32.f, 42.f))," ");
+    objetosBloque2.emplace_back("Periodico", sf::FloatRect(sf::Vector2f(619.f, 161.f), sf::Vector2f(43.f, 49.f))," ");
+    objetosBloque2.emplace_back("Red", sf::FloatRect(sf::Vector2f(694.f, 95.f), sf::Vector2f(69.f, 98.f))," ");
     
     std::vector<Sospechoso> sospechososBloque2;
-    sospechososBloque2.emplace_back("Sebastian el Guardabosques", sf::FloatRect(sf::Vector2f(300.f, 600.f), sf::Vector2f(80.f, 100.f)), "Conoce cada rincon del bosque, sabe esconder cosas.", false);
-    sospechososBloque2.emplace_back("Valentina la Arqueologa", sf::FloatRect(sf::Vector2f(550.f, 620.f), sf::Vector2f(75.f, 90.f)), "Experta en tesoros antiguos. ES LA CULPABLE, queria el cofre para ella sola.", true);
-    sospechososBloque2.emplace_back("Don Mateo el Herrero", sf::FloatRect(sf::Vector2f(750.f, 650.f), sf::Vector2f(85.f, 85.f)), "Fabrica candados, sabia como abrir el cofre sin forzarlo.", false);
+    sospechososBloque2.emplace_back("Sebastian el Guardabosques", sf::FloatRect(sf::Vector2f(300.f, 600.f), sf::Vector2f(80.f, 100.f)), "Conoce cada rincon del bosque,\nsabe esconder cosas.", false);
+    sospechososBloque2.emplace_back("Valentina la Arqueologa", sf::FloatRect(sf::Vector2f(550.f, 620.f), sf::Vector2f(75.f, 90.f)), "Experta en tesoros antiguos,\nqueria el cofre para ella sola.", true);
+    sospechososBloque2.emplace_back("Don Mateo el Herrero", sf::FloatRect(sf::Vector2f(750.f, 650.f), sf::Vector2f(85.f, 85.f)), "Fabrica candados\nsabia como abrir el cofre sin forzarlo.", false);
     
     std::vector<DialogoNarrativo> dialogosBloque2;
     DialogoNarrativo dialogoSebastian("Sebastian el Guardabosques", 
@@ -332,21 +332,21 @@ void NivelSara2State::configurarMinijuegoCriminal()
 
     // ===== BLOQUE 3 (Caso del naufragio misterioso) =====
     std::vector<ObjetoBuscar> objetosBloque3;
-    objetosBloque3.emplace_back("Calaveras", sf::FloatRect(sf::Vector2f(697.f, 262.f), sf::Vector2f(45.f, 48.f)), "Una calavera tallada en madera, simbolo de una antigua tripulacion");
-    objetosBloque3.emplace_back("Canoa", sf::FloatRect(sf::Vector2f(508.f, 254.f), sf::Vector2f(75.f, 35.f)), "Una canoa varada en la orilla, con rasguños recientes");
-    objetosBloque3.emplace_back("Rueda", sf::FloatRect(sf::Vector2f(219.f, 184.f), sf::Vector2f(67.f, 67.f)), "Una rueda de timon rota, parte del naufragio");
-    objetosBloque3.emplace_back("Botella de Vino", sf::FloatRect(sf::Vector2f(324.f, 312.f), sf::Vector2f(34.f, 51.f)), "Una botella de vino añejo, aun con liquido adentro");
-    objetosBloque3.emplace_back("Cangrejo", sf::FloatRect(sf::Vector2f(711.f, 446.f), sf::Vector2f(44.f, 24.f)), "Un cangrejo que parecia cuidar algo entre las rocas");
-    objetosBloque3.emplace_back("Muñeco", sf::FloatRect(sf::Vector2f(370.f, 421.f), sf::Vector2f(24.f, 44.f)), "Un muñeco de trapo con una nota escondida");
-    objetosBloque3.emplace_back("Maletin Oculto", sf::FloatRect(sf::Vector2f(345.f, 321.f), sf::Vector2f(55.f, 19.f)), "Un maletin enterrado en la arena, cerrado con candado");
-    objetosBloque3.emplace_back("Dado", sf::FloatRect(sf::Vector2f(658.f, 529.f), sf::Vector2f(14.f, 19.f)), "Un dado de marfil, siempre muestra el numero seis");
-    objetosBloque3.emplace_back("Comida para Gato", sf::FloatRect(sf::Vector2f(379.f, 533.f), sf::Vector2f(34.f, 29.f)), "Latas de comida para gato, muy fuera de lugar aqui");
-    objetosBloque3.emplace_back("Caja de Madera", sf::FloatRect(sf::Vector2f(280.f, 345.f), sf::Vector2f(46.f, 19.f)), "Una caja de madera flotante, contiene documentos");
+    objetosBloque3.emplace_back("Calaveras", sf::FloatRect(sf::Vector2f(697.f, 262.f), sf::Vector2f(45.f, 48.f))," ");
+    objetosBloque3.emplace_back("Canoa", sf::FloatRect(sf::Vector2f(508.f, 254.f), sf::Vector2f(75.f, 35.f))," ");
+    objetosBloque3.emplace_back("Rueda", sf::FloatRect(sf::Vector2f(219.f, 184.f), sf::Vector2f(67.f, 67.f))," ");
+    objetosBloque3.emplace_back("Botella de Vino", sf::FloatRect(sf::Vector2f(324.f, 312.f), sf::Vector2f(34.f, 51.f))," ");
+    objetosBloque3.emplace_back("Cangrejo", sf::FloatRect(sf::Vector2f(711.f, 446.f), sf::Vector2f(44.f, 24.f))," ");
+    objetosBloque3.emplace_back("Muñeco", sf::FloatRect(sf::Vector2f(370.f, 421.f), sf::Vector2f(24.f, 44.f))," ");
+    objetosBloque3.emplace_back("Maletin Oculto", sf::FloatRect(sf::Vector2f(345.f, 321.f), sf::Vector2f(55.f, 19.f))," ");
+    objetosBloque3.emplace_back("Dado", sf::FloatRect(sf::Vector2f(658.f, 529.f), sf::Vector2f(14.f, 19.f))," ");
+    objetosBloque3.emplace_back("Comida para Gato", sf::FloatRect(sf::Vector2f(379.f, 533.f), sf::Vector2f(34.f, 29.f))," ");
+    objetosBloque3.emplace_back("Caja de Madera", sf::FloatRect(sf::Vector2f(280.f, 345.f), sf::Vector2f(46.f, 19.f))," ");
 
     std::vector<Sospechoso> sospechososBloque3;
-    sospechososBloque3.emplace_back("El Viejo Marino", sf::FloatRect(sf::Vector2f(300.f, 650.f), sf::Vector2f(80.f, 100.f)), "Vive en la costa desde hace decadas. Conoce cada naufragio.", false);
-    sospechososBloque3.emplace_back("Carmen la Buzo", sf::FloatRect(sf::Vector2f(550.f, 620.f), sf::Vector2f(75.f, 90.f)), "Bucea en busca de tesoros. ES LA CULPABLE, robo las pertenencias de los desaparecidos.", true);
-    sospechososBloque3.emplace_back("Misterioso Comerciante", sf::FloatRect(sf::Vector2f(750.f, 650.f), sf::Vector2f(85.f, 85.f)), "Siempre aparece justo despues de los naufragios. Nadie sabe de donde viene.", false);
+    sospechososBloque3.emplace_back("El Viejo Marino", sf::FloatRect(sf::Vector2f(300.f, 650.f), sf::Vector2f(80.f, 100.f)), "Vive en la costa desde hace decadas.\nConoce cada naufragio.", false);
+    sospechososBloque3.emplace_back("Carmen la Buzo", sf::FloatRect(sf::Vector2f(550.f, 620.f), sf::Vector2f(75.f, 90.f)), "Bucea en busca de tesoros", true);
+    sospechososBloque3.emplace_back("Misterioso\nComerciante", sf::FloatRect(sf::Vector2f(750.f, 650.f), sf::Vector2f(85.f, 85.f)), "Siempre aparece justo\ndespues de los naufragios.\nNadie sabe de donde viene.", false);
 
     std::vector<DialogoNarrativo> dialogosBloque3;
     DialogoNarrativo dialogoMarino("El Viejo Marino", 

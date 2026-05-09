@@ -46,21 +46,37 @@ void CriminalCaseMinigame::recalcularAreasBotones()
     
     m_areasBotones.clear();
     
-    // Usar proporciones relativas al tamaño actual de la ventana
-    float botonAncho = m_size.x * 0.18f;
-    float botonAlto = m_size.y * 0.22f;
+    float proporcionAncho = 0.55f;  
+    float proporcionAlto = 0.50f;   
     
-    if (botonAncho < 180) botonAncho = 180;
-    if (botonAncho > 280) botonAncho = 280;
-    if (botonAlto < 120) botonAlto = 120;
-    if (botonAlto > 180) botonAlto = 180;
+    float botonAncho = m_size.x * proporcionAncho;
+    float botonAlto = m_size.y * proporcionAlto;
     
+    // Límites mínimos y máximos basados en porcentaje, no en píxeles fijos
+    float minAncho = m_size.x * 0.40f;
+    float maxAncho = m_size.y * 0.70f;
+    float minAlto = m_size.y * 0.35f;
+    float maxAlto = m_size.y * 0.55f;
+    
+    if (botonAncho < minAncho) botonAncho = minAncho;
+    if (botonAncho > maxAncho) botonAncho = maxAncho;
+    if (botonAlto < minAlto) botonAlto = minAlto;
+    if (botonAlto > maxAlto) botonAlto = maxAlto;
+    
+    // Calcular distribución horizontal
     float espacioTotal = botonAncho * m_sospechosos.size();
     float espacioEntre = (m_size.x - espacioTotal) / (m_sospechosos.size() + 1);
-    if (espacioEntre < 10) espacioEntre = 10;
+    
+    // Espacio mínimo relativo
+    float minEspacio = m_size.x * 0.02f;
+    if (espacioEntre < minEspacio) {
+        espacioEntre = minEspacio;
+        // Recalcular ancho si es necesario
+        botonAncho = (m_size.x - espacioEntre * (m_sospechosos.size() + 1)) / m_sospechosos.size();
+    }
     
     float inicioX = m_position.x + espacioEntre;
-    float y = m_position.y + m_size.y - botonAlto - 50;
+    float y = m_position.y + (m_size.y * 0.35f);  // 35% desde arriba (relativo)
     
     for (size_t i = 0; i < m_sospechosos.size(); i++) {
         float x = inicioX + i * (botonAncho + espacioEntre);
@@ -339,6 +355,8 @@ void CriminalCaseMinigame::setSize(const sf::Vector2f &size)
     
     // Si estamos en modo narrativa, reescalar elementos visuales
     if (m_gameState == CriminalGameState::NARRATIVA) {
+        float escalaRef = std::min(m_size.x, m_size.y) / 800.0f;
+        
         m_fondoNarrativo.setSize(m_size);
         m_fondoNarrativo.setPosition(m_position);
         
@@ -349,9 +367,22 @@ void CriminalCaseMinigame::setSize(const sf::Vector2f &size)
         m_cuadroDialogo.setPosition(sf::Vector2f(
             m_position.x + (m_size.x - cuadroAncho) / 2,
             m_position.y + (m_size.y - cuadroAlto) / 2));
+        
+        // Actualizar tamaños de texto en narrativa
+        if (m_personaText) {
+            int tamano = static_cast<int>(28 * escalaRef);
+            if (tamano < 18) tamano = 18;
+            if (tamano > 42) tamano = 42;
+            m_personaText->setCharacterSize(tamano);
+        }
+        
+        if (m_dialogoText) {
+            int tamano = static_cast<int>(18 * escalaRef);
+            if (tamano < 14) tamano = 14;
+            if (tamano > 32) tamano = 32;
+            m_dialogoText->setCharacterSize(tamano);
+        }
     }
-    
-    std::cout << "Minijuego reescalado: " << size.x << "x" << size.y << std::endl;
 }
 
 void CriminalCaseMinigame::init(const std::string &fondoPath,
@@ -747,9 +778,9 @@ void CriminalCaseMinigame::updateListaTexto()
     float escalaTexto = std::min(m_size.x, m_size.y) / 800.0f;
     int nuevoTamano = static_cast<int>(20 * escalaTexto); // AUMENTADO de 14 a 20
     if (nuevoTamano < 16)
-        nuevoTamano = 16; // Mínimo más alto
+        nuevoTamano = 16; 
     if (nuevoTamano > 36)
-        nuevoTamano = 36; // Máximo más alto
+        nuevoTamano = 36; 
 
     m_listaText->setCharacterSize(nuevoTamano);
     m_listaText->setOutlineThickness(1.5f); // Outline más grueso para mejor legibilidad
@@ -806,7 +837,6 @@ void CriminalCaseMinigame::handleEvent(const sf::Event &event, sf::RenderWindow 
     {
         if (mousePressed->button == sf::Mouse::Button::Left)
         {
-
             sf::Vector2i mousePixel(mousePressed->position.x, mousePressed->position.y);
 
             // Coordenadas locales (dentro del minijuego)
@@ -814,7 +844,7 @@ void CriminalCaseMinigame::handleEvent(const sf::Event &event, sf::RenderWindow 
                 static_cast<float>(mousePixel.x) - m_position.x,
                 static_cast<float>(mousePixel.y) - m_position.y);
 
-            // Coordenadas en el sistema ORIGINAL (antes del escalado)
+            // Coordenadas en el sistema ORIGINAL (antes del escalado) - solo para debug
             sf::Vector2f originalCoords;
             if (m_tamanioBase.x > 0 && m_tamanioBase.y > 0)
             {
@@ -826,25 +856,18 @@ void CriminalCaseMinigame::handleEvent(const sf::Event &event, sf::RenderWindow 
                 originalCoords = localMousePos;
             }
 
-            //  IMPRESIÓN DE COORDENADAS
-            std::cout << "\n=== COORDENADAS PARA CONFIGURACIÓN ===" << std::endl;
-            std::cout << "Rectángulo: sf::FloatRect(sf::Vector2f("
-                      << originalCoords.x << "f, " << originalCoords.y << "f), ";
-            std::cout << "sf::Vector2f(30f, 30f))" << std::endl;
-            std::cout << "=======================================" << std::endl;
-            std::cout << "Copia esto: (" << originalCoords.x << ", " << originalCoords.y << ")" << std::endl;
-        }
-    }
+            // IMPRESIÓN DE COORDENADAS (solo en modo debug)
+            if (m_debugMode)
+            {
+                std::cout << "\n=== COORDENADAS PARA CONFIGURACIÓN ===" << std::endl;
+                std::cout << "Rectángulo: sf::FloatRect(sf::Vector2f("
+                          << originalCoords.x << "f, " << originalCoords.y << "f), ";
+                std::cout << "sf::Vector2f(30f, 30f))" << std::endl;
+                std::cout << "=======================================" << std::endl;
+                std::cout << "Copia esto: (" << originalCoords.x << ", " << originalCoords.y << ")" << std::endl;
+            }
 
-    if (const auto *mousePressed = event.getIf<sf::Event::MouseButtonPressed>())
-    {
-        if (mousePressed->button == sf::Mouse::Button::Left)
-        {
-            sf::Vector2i mousePixel(mousePressed->position.x, mousePressed->position.y);
-            sf::Vector2f localMousePos = sf::Vector2f(
-                static_cast<float>(mousePixel.x) - m_position.x,
-                static_cast<float>(mousePixel.y) - m_position.y);
-
+            // ===== LÓGICA PRINCIPAL SEGÚN EL ESTADO =====
             switch (m_gameState)
             {
             case CriminalGameState::BUSCANDO_EVIDENCIAS:
@@ -871,21 +894,23 @@ void CriminalCaseMinigame::handleEvent(const sf::Event &event, sf::RenderWindow 
                 break;
 
             case CriminalGameState::ELECCION_FINAL:
-            // Recalcular áreas de botones ANTES de verificar clics
-            recalcularAreasBotones();
-            
-            for (size_t i = 0; i < m_areasBotones.size(); i++) {
-                if (m_areasBotones[i].contains(localMousePos)) {
-                    procesarAcusacion(static_cast<int>(i));
-                    break;
-                }
-            }
-            break;
-                                default:
-                            break;
-                        }
+                recalcularAreasBotones();
+                
+                for (size_t i = 0; i < m_areasBotones.size() && i < m_sospechosos.size(); i++) 
+                {
+                    if (m_areasBotones[i].contains(localMousePos)) 
+                    {
+                        procesarAcusacion(static_cast<int>(i));
+                        break; 
                     }
                 }
+                break;
+            
+            default:
+                break;
+            }
+        }
+    }
 
     if (const auto *keyPressed = event.getIf<sf::Event::KeyPressed>())
     {
@@ -937,7 +962,6 @@ void CriminalCaseMinigame::update(float dt)
 
 void CriminalCaseMinigame::dibujarPantallaNarrativa(sf::RenderWindow &window)
 {
-    // ===== ACTUALIZAR TAMAÑOS RELATIVOS AL TAMAÑO ACTUAL =====
     float cuadroAncho = m_size.x * 0.95f;
     float cuadroAlto = m_size.y * 0.60f;
     
@@ -946,7 +970,6 @@ void CriminalCaseMinigame::dibujarPantallaNarrativa(sf::RenderWindow &window)
         m_position.x + (m_size.x - cuadroAncho) / 2,
         m_position.y + (m_size.y - cuadroAlto) / 2));
     
-    // Fondo oscuro semitransparente (también reescalado)
     m_fondoNarrativo.setSize(m_size);
     m_fondoNarrativo.setPosition(m_position);
     
@@ -958,10 +981,8 @@ void CriminalCaseMinigame::dibujarPantallaNarrativa(sf::RenderWindow &window)
 
         cargarFondoDialogo(dialogo);
 
-        // 1. Dibujar el marco principal del cuadro de diálogo
         window.draw(m_cuadroDialogo);
 
-        // 2. Dibujar la imagen del personaje (más grande, ocupa lado izquierdo)
         if (dialogo.fondoCargado && dialogo.fondoTexture)
         {
             sf::Sprite fondoPersonaje(*dialogo.fondoTexture);
@@ -982,7 +1003,6 @@ void CriminalCaseMinigame::dibujarPantallaNarrativa(sf::RenderWindow &window)
             window.draw(fondoPersonaje);
         }
 
-        // 3. Recuadro para el texto (lado derecho, separado)
         float anchoTexto = m_cuadroDialogo.getSize().x * 0.48f;
         float altoTexto = m_cuadroDialogo.getSize().y - 70;
         float inicioTextoX = m_cuadroDialogo.getPosition().x + m_cuadroDialogo.getSize().x - anchoTexto - 15;
@@ -990,13 +1010,12 @@ void CriminalCaseMinigame::dibujarPantallaNarrativa(sf::RenderWindow &window)
 
         sf::RectangleShape recuadroTexto;
         recuadroTexto.setSize(sf::Vector2f(anchoTexto, altoTexto));
-        recuadroTexto.setFillColor(sf::Color(0, 0, 0, 200));     // Negro semitransparente
-        recuadroTexto.setOutlineColor(sf::Color(200, 180, 100)); // Borde dorado
+        recuadroTexto.setFillColor(sf::Color(0, 0, 0, 200));     
+        recuadroTexto.setOutlineColor(sf::Color(200, 180, 100)); 
         recuadroTexto.setOutlineThickness(2.f);
         recuadroTexto.setPosition(sf::Vector2f(inicioTextoX, inicioTextoY));
         window.draw(recuadroTexto);
 
-        // 4. Nombre del personaje (dentro del recuadro, arriba)
         if (m_personaText)
         {
             m_personaText->setString(dialogo.persona);
@@ -1007,12 +1026,12 @@ void CriminalCaseMinigame::dibujarPantallaNarrativa(sf::RenderWindow &window)
             if (tamanoNombre < 18) tamanoNombre = 18;
             if (tamanoNombre > 42) tamanoNombre = 42;
             m_personaText->setCharacterSize(tamanoNombre);
-            m_personaText->setFillColor(sf::Color(255, 215, 0)); // Dorado
+            m_personaText->setFillColor(sf::Color(255, 215, 0)); 
             m_personaText->setStyle(sf::Text::Bold);
 
             sf::FloatRect bounds = m_personaText->getLocalBounds();
             m_personaText->setPosition(sf::Vector2f(
-                inicioTextoX + (anchoTexto - bounds.size.x) / 2, // Centrado
+                inicioTextoX + (anchoTexto - bounds.size.x) / 2, 
                 inicioTextoY + 15));
             window.draw(*m_personaText);
         }
@@ -1074,94 +1093,193 @@ void CriminalCaseMinigame::dibujarPantallaEleccion(sf::RenderWindow &window)
     if (!m_fontLoaded)
         return;
 
-    // Solo recalcular una vez al inicio
+    // Recalcular áreas de botones
     recalcularAreasBotones();
+    
+    // Factor de escala universal basado en el tamaño de la ventana
+    float escalaReferencia = std::min(m_size.x, m_size.y) / 800.0f;
     
     sf::RectangleShape fondo(m_size);
     fondo.setFillColor(sf::Color(0, 0, 0, 220));
     fondo.setPosition(m_position);
     window.draw(fondo);
 
+    // Título (tamaño proporcional)
     if (m_tituloEleccion)
     {
+        int tamanoTitulo = static_cast<int>(36 * escalaReferencia);
+        if (tamanoTitulo < 24) tamanoTitulo = 24;
+        if (tamanoTitulo > 48) tamanoTitulo = 48;
+        
+        m_tituloEleccion->setCharacterSize(tamanoTitulo);
         sf::FloatRect bounds = m_tituloEleccion->getLocalBounds();
         m_tituloEleccion->setPosition(sf::Vector2f(
             m_position.x + (m_size.x - bounds.size.x) / 2,
-            m_position.y + 40));
+            m_position.y + 40 * escalaReferencia));
         window.draw(*m_tituloEleccion);
     }
 
+    // Mensaje de advertencia (tamaño proporcional)
     if (m_mensajeAdvertencia)
     {
+        int tamanoAdvertencia = static_cast<int>(14 * escalaReferencia);
+        if (tamanoAdvertencia < 12) tamanoAdvertencia = 12;
+        if (tamanoAdvertencia > 24) tamanoAdvertencia = 24;
+        
+        m_mensajeAdvertencia->setCharacterSize(tamanoAdvertencia);
         sf::FloatRect bounds = m_mensajeAdvertencia->getLocalBounds();
         m_mensajeAdvertencia->setPosition(sf::Vector2f(
             m_position.x + (m_size.x - bounds.size.x) / 2,
-            m_position.y + 90));
+            m_position.y + 80 * escalaReferencia));
         window.draw(*m_mensajeAdvertencia);
     }
-
-    // Ya no limpiamos ni recalculamos m_areasBotones aquí - usar lo que ya calculó recalcularAreasBotones()
-    for (size_t i = 0; i < m_sospechosos.size(); i++)
+    
+    // Dibujar botones y textos de sospechosos
+    for (size_t i = 0; i < m_sospechosos.size() && i < m_areasBotones.size(); i++)
     {
-        if (i >= m_areasBotones.size()) break;
-        
         sf::FloatRect areaBoton = m_areasBotones[i];
         float x = areaBoton.position.x;
         float y = areaBoton.position.y;
         float botonAncho = areaBoton.size.x;
         float botonAlto = areaBoton.size.y;
 
+        // Fondo del botón
         sf::RectangleShape boton(sf::Vector2f(botonAncho, botonAlto));
         boton.setPosition(sf::Vector2f(x, y));
         boton.setFillColor(sf::Color(40, 40, 70, 230));
         boton.setOutlineColor(sf::Color::White);
-        boton.setOutlineThickness(2.f);
+        boton.setOutlineThickness(2.f * escalaReferencia);
         window.draw(boton);
 
+        // Nombre del sospechoso (tamaño proporcional)
         sf::Text nombreText(*m_font);
         nombreText.setString(m_sospechosos[i].nombre);
-        nombreText.setCharacterSize(static_cast<unsigned int>(20 * (m_size.x / 800.f)));
+        int tamanoNombre = static_cast<int>(26 * escalaReferencia);
+        if (tamanoNombre < 18) tamanoNombre = 18;
+        if (tamanoNombre > 40) tamanoNombre = 40;
+        
+        nombreText.setCharacterSize(tamanoNombre);
         nombreText.setFillColor(sf::Color::White);
         nombreText.setOutlineColor(sf::Color::Black);
-        nombreText.setOutlineThickness(1.0f);
+        nombreText.setOutlineThickness(1.0f * escalaReferencia);
         nombreText.setStyle(sf::Text::Bold);
+        
         sf::FloatRect nameBounds = nombreText.getLocalBounds();
-        nombreText.setPosition(sf::Vector2f(x + (botonAncho - nameBounds.size.x) / 2, y + 15));
+        nombreText.setPosition(sf::Vector2f(
+            x + (botonAncho - nameBounds.size.x) / 2, 
+            y + 20 * escalaReferencia));  // Aumentado de 15 a 20
         window.draw(nombreText);
 
-        sf::Text descText(*m_font);
-        std::string desc = m_sospechosos[i].descripcion;
-        if (desc.length() > 30)
-            desc = desc.substr(0, 27) + "...";
-        descText.setString(desc);
-        descText.setCharacterSize(static_cast<unsigned int>(13 * (m_size.x / 800.f)));
-        descText.setFillColor(sf::Color(200, 200, 200));
-        descText.setOutlineColor(sf::Color::Black);
-        descText.setOutlineThickness(0.5f);
-        sf::FloatRect descBounds = descText.getLocalBounds();
-        descText.setPosition(sf::Vector2f(x + (botonAncho - descBounds.size.x) / 2, y + 50));
-        window.draw(descText);
+        // ===== LÍNEA SEPARADORA DESPUÉS DEL NOMBRE =====
+        sf::RectangleShape lineaSeparadora;
+        lineaSeparadora.setSize(sf::Vector2f(botonAncho - 40 * escalaReferencia, 2.f * escalaReferencia));
+        lineaSeparadora.setFillColor(sf::Color(200, 180, 100));
+        lineaSeparadora.setPosition(sf::Vector2f(
+            x + 20 * escalaReferencia,
+            y + 55 * escalaReferencia));  // Posición fija debajo del nombre
+        window.draw(lineaSeparadora);
 
-        sf::RectangleShape botonAcusar(sf::Vector2f(botonAncho - 40, 35));
-        botonAcusar.setPosition(sf::Vector2f(x + 20, y + botonAlto - 45));
+        // ===== DESCRIPCIÓN MULTILÍNEA (más abajo) =====
+        int tamanoDesc = static_cast<int>(17 * escalaReferencia);
+        if (tamanoDesc < 14) tamanoDesc = 14;
+        if (tamanoDesc > 26) tamanoDesc = 26;
+        
+        std::string descOriginal = m_sospechosos[i].descripcion;
+        std::vector<std::string> lineas;
+        
+        // Dividir por saltos de línea manuales primero
+        std::stringstream ss(descOriginal);
+        std::string linea;
+        while (std::getline(ss, linea, '\n')) {
+            sf::Text testText(*m_font);
+            testText.setCharacterSize(tamanoDesc);
+            testText.setString(linea);
+            
+            float maxWidth = botonAncho - 40 * escalaReferencia;
+            float currentWidth = testText.getLocalBounds().size.x;
+            
+            if (currentWidth <= maxWidth) {
+                lineas.push_back(linea);
+            } else {
+                std::stringstream words(linea);
+                std::string word;
+                std::string currentLine = "";
+                
+                while (words >> word) {
+                    testText.setString(currentLine + (currentLine.empty() ? "" : " ") + word);
+                    if (testText.getLocalBounds().size.x <= maxWidth) {
+                        currentLine += (currentLine.empty() ? "" : " ") + word;
+                    } else {
+                        if (!currentLine.empty()) {
+                            lineas.push_back(currentLine);
+                        }
+                        currentLine = word;
+                    }
+                }
+                if (!currentLine.empty()) {
+                    lineas.push_back(currentLine);
+                }
+            }
+        }
+        
+        // Descripción EMPIEZA MÁS ABAJO (después de la línea separadora)
+        float descY = y + 75 * escalaReferencia;  // AUMENTADO de 55 a 75
+        float lineSpacing = (tamanoDesc + 8) * escalaReferencia;
+        
+        // Limitar a máximo 3 líneas para no ocupar demasiado espacio
+        size_t maxLines = std::min(lineas.size(), static_cast<size_t>(3));
+        
+        for (size_t j = 0; j < maxLines; j++) {
+            sf::Text descText(*m_font);
+            descText.setString(lineas[j]);
+            descText.setCharacterSize(tamanoDesc);
+            descText.setFillColor(sf::Color(220, 220, 220));
+            descText.setOutlineColor(sf::Color::Black);
+            descText.setOutlineThickness(0.8f * escalaReferencia);
+            
+            sf::FloatRect descBounds = descText.getLocalBounds();
+            descText.setPosition(sf::Vector2f(
+                x + (botonAncho - descBounds.size.x) / 2,
+                descY));
+            window.draw(descText);
+            
+            descY += lineSpacing;
+        }
+
+        // Botón "ACUSAR" - ajustado para que quepa bien
+        float botonAcusarAlto = 45 * escalaReferencia;
+        float botonAcusarAncho = (botonAncho - 50 * escalaReferencia);
+        float margenLateral = 25 * escalaReferencia;
+        
+        sf::RectangleShape botonAcusar(sf::Vector2f(botonAcusarAncho, botonAcusarAlto));
+        botonAcusar.setPosition(sf::Vector2f(
+            x + margenLateral, 
+            y + botonAlto - botonAcusarAlto - 15 * escalaReferencia));
         botonAcusar.setFillColor(sf::Color(150, 40, 40));
         botonAcusar.setOutlineColor(sf::Color::Yellow);
-        botonAcusar.setOutlineThickness(1.f);
+        botonAcusar.setOutlineThickness(1.5f * escalaReferencia);
         window.draw(botonAcusar);
 
+        // Texto "ACUSAR"
         sf::Text acusarText(*m_font);
         acusarText.setString("ACUSAR");
-        acusarText.setCharacterSize(static_cast<unsigned int>(16 * (m_size.x / 800.f)));
+        int tamanoAcusar = static_cast<int>(16 * escalaReferencia);
+        if (tamanoAcusar < 12) tamanoAcusar = 12;
+        if (tamanoAcusar > 24) tamanoAcusar = 24;
+        
+        acusarText.setCharacterSize(tamanoAcusar);
         acusarText.setFillColor(sf::Color::White);
         acusarText.setOutlineColor(sf::Color::Black);
-        acusarText.setOutlineThickness(1.0f);
+        acusarText.setOutlineThickness(1.0f * escalaReferencia);
         acusarText.setStyle(sf::Text::Bold);
+        
         sf::FloatRect acusarBounds = acusarText.getLocalBounds();
-        acusarText.setPosition(sf::Vector2f(x + botonAncho / 2 - acusarBounds.size.x / 2, y + botonAlto - 38));
+        acusarText.setPosition(sf::Vector2f(
+            x + botonAncho / 2 - acusarBounds.size.x / 2,
+            y + botonAlto - botonAcusarAlto - 15 * escalaReferencia + (botonAcusarAlto - acusarBounds.size.y) / 2));
         window.draw(acusarText);
     }
 }
-
 void CriminalCaseMinigame::draw(sf::RenderWindow &window)
 {
     if (!m_active)
