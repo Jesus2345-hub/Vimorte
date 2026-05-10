@@ -269,28 +269,25 @@ void NivelSara2State::handleEvent(const sf::Event &event)
                     }
                     
                     if (tieneTodosLosObjetos) {
-                        // Éxito
+                        // Éxito: el jugador tiene los objetos correctos
                         m_casoResuelto = true;
                         m_nivelCompletado = true;
-                       
+                    
                         m_bloquesInteractivos[m_bloqueActualIndex].mensaje = 
-                            "¡GRACIAS! Has recuperado todas mis joyas.\n"
+                            "GRACIAS! Has recuperado todas mis joyas.\n"
                             "Eres un heroe...\n\n"
-                            "Ahora dirígete al ASCENSOR (puerta verde)\n"
+                            "Ahora dirigete al ASCENSOR\n"
                             "y presiona E para avanzar al siguiente nivel.";
                         
-                        std::cout << "¡OBJETOS ENTREGADOS CORRECTAMENTE! Nivel completado." << std::endl;
+                        std::cout << "OBJETOS ENTREGADOS CORRECTAMENTE! Nivel completado." << std::endl;
                     } else {
-                        
-                        // ERROR: USAR MENSAJE FLOTANTE EN LUGAR DEL SISTEMA DE ERROR
-                        
+                        // ERROR: Usar MENSAJE FLOTANTE
                         std::string mensajeError = "¡Te faltan joyas!\n";
                         for (const auto& obj : objetosFaltantes) {
                             mensajeError += "• " + obj + "\n";
                         }
                         mensajeError += "\nSigue buscando en la escena del crimen.";
                         
-                        // Cerrar el diálogo actual y mostrar mensaje flotante
                         m_mensajeEmergenteActivo = false;
                         mostrarMensajeFlotante(mensajeError, 4.0f, sf::Color::Red);
                     }

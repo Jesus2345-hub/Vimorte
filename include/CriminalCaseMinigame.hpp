@@ -118,6 +118,7 @@ private:
     void procesarAcusacion(int sospechosoIndex);
     void penalizarJugador();
     
+    bool m_mensajeErrorActivo;
     bool m_active;
     bool m_todasEvidencias;
     bool m_culpableEncontrado;
@@ -166,14 +167,16 @@ private:
     
     std::vector<sf::FloatRect> m_areasBotones;
     
-    struct MensajeTemp {
-        std::string texto;
-        float tiempoRestante;
-        MensajeTemp() : tiempoRestante(0.0f) {}
+    struct MensajeTemp 
+    {
+    std::string texto;
+    float tiempoRestante;
+    sf::Color color;  
+    MensajeTemp() : tiempoRestante(0.0f), color(sf::Color::Yellow) {}
     };
     MensajeTemp m_mensajeTemp;
     sf::Clock m_mensajeClock;
-    
+    void mostrarMensajeConFondo(const std::string& msg, float duracion, sf::Color color);
     std::function<void(bool)> m_onCompleteCallback;
     std::mt19937 m_rng;
 };

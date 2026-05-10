@@ -8,7 +8,31 @@
 
 // Constructor
 CriminalCaseMinigame::CriminalCaseMinigame()
-    : m_active(false), m_todasEvidencias(false), m_culpableEncontrado(false), m_completed(false), m_debugMode(true), m_fontLoaded(false), m_waitingForNarrative(false), m_gameState(CriminalGameState::BUSCANDO_EVIDENCIAS), m_setActualObjetos(-1), m_setActualSospechosos(-1), m_setActualDialogos(-1), m_dialogoActualIndex(0), m_inventory(nullptr), m_rng(std::chrono::steady_clock::now().time_since_epoch().count()), m_backgroundTexture(nullptr), m_background(nullptr), m_font(nullptr), m_mensajeText(nullptr), m_listaText(nullptr), m_instruccionText(nullptr), m_dialogoText(nullptr), m_personaText(nullptr), m_instruccionesNarrativas(nullptr), m_tituloEleccion(nullptr), m_mensajeAdvertencia(nullptr)
+    : m_active(false), 
+    m_todasEvidencias(false), 
+    m_culpableEncontrado(false), 
+    m_completed(false), m_debugMode(true), 
+    m_fontLoaded(false), 
+    m_waitingForNarrative(false), 
+    m_gameState(CriminalGameState::BUSCANDO_EVIDENCIAS), 
+    m_setActualObjetos(-1), 
+    m_setActualSospechosos(-1), 
+    m_setActualDialogos(-1), 
+    m_dialogoActualIndex(0), 
+    m_inventory(nullptr), 
+    m_rng(std::chrono::steady_clock::now().time_since_epoch().count()), 
+    m_backgroundTexture(nullptr), 
+    m_background(nullptr), 
+    m_font(nullptr), 
+    m_mensajeText(nullptr), 
+    m_listaText(nullptr), 
+    m_instruccionText(nullptr), 
+    m_dialogoText(nullptr), 
+    m_personaText(nullptr), 
+    m_instruccionesNarrativas(nullptr), 
+    m_tituloEleccion(nullptr), 
+    m_mensajeAdvertencia(nullptr),
+    m_mensajeErrorActivo(false)
 {
     m_mensajeTemp.tiempoRestante = 0.0f;
     m_position = sf::Vector2f(0, 0);
@@ -38,6 +62,19 @@ void CriminalCaseMinigame::limpiarPools()
     m_poolObjetos.clear();
     m_poolSospechosos.clear();
     m_poolDialogos.clear();
+}
+
+void CriminalCaseMinigame::mostrarMensajeConFondo(const std::string& msg, float duracion, sf::Color color)
+{
+    m_mensajeTemp.texto = msg;
+    m_mensajeTemp.tiempoRestante = duracion;
+    m_mensajeTemp.color = color;  
+    m_mensajeErrorActivo = true;
+    if (m_mensajeText)
+    {
+        m_mensajeText->setString(msg);
+        m_mensajeText->setFillColor(color);
+    }
 }
 
 void CriminalCaseMinigame::recalcularAreasBotones()
@@ -208,6 +245,7 @@ void CriminalCaseMinigame::escalarAreas()
 
     updateListaTexto();
 }
+
 void CriminalCaseMinigame::generarNuevoCasoCompleto()
 {
     if (m_poolObjetos.empty() || m_poolSospechosos.empty())
@@ -219,16 +257,6 @@ void CriminalCaseMinigame::generarNuevoCasoCompleto()
     std::uniform_int_distribution<int> distSets(0, static_cast<int>(m_poolObjetos.size()) - 1);
     int nuevoSet = distSets(m_rng);
     
-    // Guardar qué índice de sospechoso era el culpable en el set original
-    // para verificar después
-    int culpableIndexOriginal = -1;
-    for (size_t i = 0; i < m_poolSospechosos[nuevoSet].size(); ++i) {
-        if (m_poolSospechosos[nuevoSet][i].esElCulpable) {
-            culpableIndexOriginal = i;
-            break;
-        }
-    }
-    
     m_setActualObjetos = nuevoSet;
     m_setActualSospechosos = nuevoSet;
     m_setActualDialogos = nuevoSet;
@@ -237,14 +265,7 @@ void CriminalCaseMinigame::generarNuevoCasoCompleto()
     m_objetosOriginales = m_poolObjetos[m_setActualObjetos];
     m_sospechososOriginales = m_poolSospechosos[m_setActualSospechosos];
     
-    // REVISIÓN CRÍTICA: Asegurar que el culpable está marcado
-    std::cout << "=== NUEVO CASO GENERADO ===" << std::endl;
-    for (size_t i = 0; i < m_sospechososOriginales.size(); ++i) {
-        std::cout << "Sospechoso " << i << ": " << m_sospechososOriginales[i].nombre 
-                  << " - Culpable: " << (m_sospechososOriginales[i].esElCulpable ? "SI" : "NO") << std::endl;
-    }
-    
-    // Resetear estados encontrados/acusados
+    // Resetear estados encontrados/acusados (PERO NO EL MENSAJE)
     for (auto &obj : m_objetosOriginales) { obj.encontrado = false; }
     for (auto &sos : m_sospechososOriginales) { sos.acusado = false; }
 
@@ -265,25 +286,18 @@ void CriminalCaseMinigame::generarNuevoCasoCompleto()
         m_dialogosActuales.emplace_back("Alguien más", "Todos tenemos algo que decir.");
     }
 
-    // Resetear estados del juego
+    // Resetear estados del juego (PERO NO EL MENSAJE)
     m_gameState = CriminalGameState::BUSCANDO_EVIDENCIAS;
     m_todasEvidencias = false;
     m_waitingForNarrative = false;
     m_dialogoActualIndex = 0;
     m_completed = false;
-    m_mensajeTemp.tiempoRestante = 0.0f;
-
+    
     // Re-escalar áreas y actualizar UI
     escalarAreas();
     updateListaTexto();
-
-    // VERIFICACIÓN FINAL después de escalar
-    std::cout << "=== VERIFICACIÓN POST-ESCALADO ===" << std::endl;
-    for (size_t i = 0; i < m_sospechosos.size(); ++i) {
-        std::cout << "Sospechoso " << i << ": " << m_sospechosos[i].nombre 
-                  << " - Culpable: " << (m_sospechosos[i].esElCulpable ? "SI" : "NO") << std::endl;
-    }
 }
+
 void CriminalCaseMinigame::actualizarFondo()
 {
     if (m_fondoPath.empty())
@@ -528,6 +542,7 @@ void CriminalCaseMinigame::resetCompletamente()
     m_dialogoActualIndex = 0;
     m_waitingForNarrative = false;
     m_mensajeTemp.tiempoRestante = 0.0f;
+    m_mensajeErrorActivo = false;
 
     // Recargar desde los pools usando los mismos sets
     if (m_setActualObjetos >= 0 && m_setActualObjetos < static_cast<int>(m_poolObjetos.size()))
@@ -669,6 +684,7 @@ void CriminalCaseMinigame::reiniciarCasoCompleto()
     // Sincronizar vectores actuales
     m_objetos = m_objetosOriginales;
     m_sospechosos = m_sospechososOriginales;
+    m_mensajeErrorActivo = false;
 
     // Re-escalar áreas
     escalarAreas();
@@ -683,7 +699,6 @@ void CriminalCaseMinigame::procesarAcusacion(int sospechosoIndex)
 
     const Sospechoso& sospechosoAcusado = m_sospechosos[sospechosoIndex];
     
-    // ===== ENCONTRAR EL CULPABLE EN LOS DATOS ORIGINALES =====
     std::string nombreCulpable = "";
     for (const auto& s : m_sospechososOriginales) {
         if (s.esElCulpable) {
@@ -691,30 +706,25 @@ void CriminalCaseMinigame::procesarAcusacion(int sospechosoIndex)
             break;
         }
     }
-    
-    // DEBUG
-    std::cout << "=== PROCESANDO ACUSACIÓN ===" << std::endl;
-    std::cout << "Acusando a: " << sospechosoAcusado.nombre << std::endl;
-    std::cout << "El CULPABLE debería ser: " << nombreCulpable << std::endl;
-    std::cout << "¿Coinciden? " << (sospechosoAcusado.nombre == nombreCulpable ? "SI" : "NO") << std::endl;
-    std::cout << "==========================" << std::endl;
 
     if (sospechosoAcusado.nombre == nombreCulpable)
     {
-        std::cout << "¡CORRECTO! " << sospechosoAcusado.nombre << " es el culpable." << std::endl;
-        mostrarMensaje("Correcto! " + sospechosoAcusado.nombre + " es el culpable. Caso cerrado!", 3.0f);
+        std::cout << "CORRECTO! " << sospechosoAcusado.nombre << " es el culpable." << std::endl;
         m_completed = true;
         m_active = false;
         if (m_onCompleteCallback) m_onCompleteCallback(true);
     }
     else
     {
-        std::cout << "¡INCORRECTO! " << sospechosoAcusado.nombre << " NO es el culpable." << std::endl;
-        std::string mensajeError = "¡INCORRECTO! " + sospechosoAcusado.nombre + " es inocente.\n";
+        std::cout << "INCORRECTO! " << sospechosoAcusado.nombre << " NO es el culpable." << std::endl;
+        
+        // Mostrar mensaje CON FONDO 
+        std::string mensajeError = "X INCORRECTO! " + sospechosoAcusado.nombre + " es inocente.\n";
         mensajeError += "El verdadero culpable ha escapado con las pruebas...\n";
         mensajeError += "Ahora debes investigar un NUEVO caso.";
-
-        mostrarMensaje(mensajeError, 4.0f);
+        
+        // MOSTRAR EL MENSAJE PRIMERO
+        mostrarMensajeConFondo(mensajeError, 5.0f, sf::Color::Red);
 
         // Limpiar inventario
         if (m_inventory)
@@ -736,9 +746,30 @@ void CriminalCaseMinigame::procesarAcusacion(int sospechosoIndex)
             }
         }
 
-        // Generar un NUEVO caso (diferente)
+        // Guardar el mensaje ANTES de regenerar el caso
+        std::string mensajeGuardado = m_mensajeTemp.texto;
+        float tiempoGuardado = m_mensajeTemp.tiempoRestante;
+        sf::Color colorGuardado = m_mensajeTemp.color;
+        bool errorActivoGuardado = m_mensajeErrorActivo;
+
+        // Generar un NUEVO caso 
         generarNuevoCasoCompleto();
+        
+        // RESTAURAR el mensaje después de regenerar el caso
+        m_mensajeTemp.texto = mensajeGuardado;
+        m_mensajeTemp.tiempoRestante = tiempoGuardado;
+        m_mensajeTemp.color = colorGuardado;
+        m_mensajeErrorActivo = errorActivoGuardado;
+        
+        // Asegurar que el texto del mensaje se actualiza
+        if (m_mensajeText)
+        {
+            m_mensajeText->setString(mensajeGuardado);
+            m_mensajeText->setFillColor(colorGuardado);
+        }
+        
         m_active = true;
+        m_gameState = CriminalGameState::BUSCANDO_EVIDENCIAS;  // Asegurar que volvemos a buscar evidencias
 
         if (m_onCompleteCallback)
         {
@@ -795,6 +826,7 @@ void CriminalCaseMinigame::mostrarMensaje(const std::string &msg, float duracion
 {
     m_mensajeTemp.texto = msg;
     m_mensajeTemp.tiempoRestante = duracion;
+    m_mensajeErrorActivo = false;
     if (m_mensajeText)
     {
         m_mensajeText->setString(msg);
@@ -1303,7 +1335,48 @@ void CriminalCaseMinigame::draw(sf::RenderWindow &window)
             }
         }
     }
-
+    
+    // DIBUJAR MENSAJE (antes del switch para que se vea siempre)
+    if (m_mensajeTemp.tiempoRestante > 0 && m_mensajeText && !m_mensajeTemp.texto.empty())
+    {
+        // Dibujar fondo semitransparente SOLO para mensajes de error
+        if (m_mensajeErrorActivo)
+        {
+            sf::RectangleShape fondoMsg;
+            sf::FloatRect textBounds = m_mensajeText->getLocalBounds();
+            fondoMsg.setSize(sf::Vector2f(textBounds.size.x + 50, textBounds.size.y + 30));
+            fondoMsg.setFillColor(sf::Color(0, 0, 0, 200));
+            fondoMsg.setOutlineColor(m_mensajeText->getFillColor());
+            fondoMsg.setOutlineThickness(2.f);
+            
+            sf::Vector2u winSize = window.getSize();
+            float centerX = winSize.x / 2.f;
+            float centerY = winSize.y / 2.f;
+            
+            fondoMsg.setOrigin(sf::Vector2f(fondoMsg.getSize().x / 2.f, fondoMsg.getSize().y / 2.f));
+            fondoMsg.setPosition(sf::Vector2f(centerX, centerY));
+            window.draw(fondoMsg);
+            
+            m_mensajeText->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
+            m_mensajeText->setPosition(sf::Vector2f(centerX, centerY));
+        }
+        else
+        {
+            // Mensaje normal sin fondo
+            sf::FloatRect textBounds = m_mensajeText->getLocalBounds();
+            m_mensajeText->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
+            
+            sf::Vector2u winSize = window.getSize();
+            float centerX = winSize.x / 2.f;
+            float centerY = winSize.y - 150.f;
+            
+            m_mensajeText->setPosition(sf::Vector2f(centerX, centerY));
+        }
+        
+        window.draw(*m_mensajeText);
+    }
+    
+    // Resto del draw...
     switch (m_gameState)
     {
     case CriminalGameState::BUSCANDO_EVIDENCIAS:
@@ -1320,7 +1393,6 @@ void CriminalCaseMinigame::draw(sf::RenderWindow &window)
             m_instruccionText->setCharacterSize(tamanoInstruccion);
             m_instruccionText->setOutlineThickness(1.5f);
 
-            // Posición en la parte inferior
             m_instruccionText->setPosition(sf::Vector2f(
                 m_position.x + 20.0f * escalaTexto,
                 m_position.y + m_size.y - 45.0f * escalaTexto));
@@ -1335,15 +1407,6 @@ void CriminalCaseMinigame::draw(sf::RenderWindow &window)
     case CriminalGameState::ELECCION_FINAL:
         dibujarPantallaEleccion(window);
         break;
-    }
-
-    if (m_mensajeTemp.tiempoRestante > 0 && m_mensajeText)
-    {
-        m_mensajeText->setString(m_mensajeTemp.texto);
-        sf::Vector2u winSize = window.getSize();
-        centrarTexto(*m_mensajeText, static_cast<float>(winSize.x) / 2.f,
-                     static_cast<float>(winSize.y) - 150.f);
-        window.draw(*m_mensajeText);
     }
 }
 
