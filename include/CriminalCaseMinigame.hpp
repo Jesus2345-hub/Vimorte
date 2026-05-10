@@ -56,7 +56,8 @@ class CriminalCaseMinigame {
 public:
     CriminalCaseMinigame();
     ~CriminalCaseMinigame() = default;
-    
+
+    int getSetActual() const { return m_setActualObjetos; }
     void cargarFondoOnly(const std::string& fondoPath);
     void limpiarPools();
     void setPosition(const sf::Vector2f& pos);

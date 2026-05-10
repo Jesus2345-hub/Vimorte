@@ -136,12 +136,18 @@ NivelSara2State::NivelSara2State(sf::RenderWindow *window, Game *game)
     CoordenadasDebug::getInstance().setVisible(true);
     
     m_criminalMinigame.setOnCompleteCallback([this](bool exito) {
-        if (exito && !m_criminalGameCompleted) 
-        {
-            m_criminalGameCompleted = true;
-            std::cout << "CASO RESUELTO! Set actual: " << m_setActualCaso << std::endl;
-            mostrarMensaje("CASO RESUELTO. Has encontrado todas las pistas y al culpable.\nEntregale las cosas a Andrea", 5.0f);
-        }
+    if (exito && !m_criminalGameCompleted) 
+    {
+        m_criminalGameCompleted = true;
+        m_setActualCaso = m_criminalMinigame.getSetActual();
+        std::cout << "CASO RESUELTO! Set actual: " << m_setActualCaso << std::endl;
+        mostrarMensaje("CASO RESUELTO. Has encontrado todas las pistas y al culpable.\nEntregale las cosas a Andrea", 5.0f);
+    }
+    else if (!exito)
+    {
+        m_setActualCaso = m_criminalMinigame.getSetActual();
+        std::cout << "CASO FALLIDO! Nuevo caso generado. Set actual: " << m_setActualCaso << std::endl;
+    }
     });
 
     m_criminalMinigame.setDebugMode(true);
@@ -218,101 +224,93 @@ void NivelSara2State::handleEvent(const sf::Event &event)
             }
             
             // Tecla R: entregar objetos
-            if (keyPressed->code == sf::Keyboard::Key::R && !m_nivelCompletado) {
-    
-    if (m_criminalGameCompleted) {
-        
-        Inventory* inv = m_player.getInventory();
-        bool tieneTodosLosObjetos = true;
-        
-        // Usamos m_setActualCaso para saber qué caso se completó
-        int casoCompletado = m_setActualCaso;
-        
-        if (casoCompletado >= 0 && casoCompletado < (int)m_todosLosObjetos.size()) {
-            // Verificar que el jugador tenga TODOS los objetos de ESE caso
-            for (const auto& objRequerido : m_todosLosObjetos[casoCompletado]) {
-                bool encontrado = false;
-                if (inv) {
-                    for (int i = 0; i < 20; i++) {
-                        Item* item = inv->getItem(i);
-                        if (item && item->name == objRequerido.nombre) {
-                            encontrado = true;
-                            break;
-                        }
-                    }
-                }
-                if (!encontrado) {
-                    tieneTodosLosObjetos = false;
-                    break;  
-                }
-            }
-        } else 
-        {
-            for (const auto& objRequerido : m_objetosCriminal) {
-                bool encontrado = false;
-                if (inv) {
-                    for (int i = 0; i < 20; i++) {
-                        Item* item = inv->getItem(i);
-                        if (item && item->name == objRequerido.nombre) {
-                            encontrado = true;
-                            break;
-                        }
-                    }
-                }
-                if (!encontrado) {
-                    tieneTodosLosObjetos = false;
-                    break;
-                }
-            }
-        }
-        
-        if (tieneTodosLosObjetos) 
-        {
-            // Éxito: el jugador tiene los objetos correctos
-            m_casoResuelto = true;
-            m_nivelCompletado = true;
-            
-            // LIMPIAR INVENTARIO - los objetos han sido entregados
-            Inventory* inv = m_player.getInventory();
-            if (inv) {
-                // Limpiar solo los objetos del caso actual
-                int casoActual = m_setActualCaso;
-                if (casoActual >= 0 && casoActual < (int)m_todosLosObjetos.size()) {
-                    for (const auto& objRequerido : m_todosLosObjetos[casoActual]) {
-                        for (int i = 0; i < 20; i++) {
-                            Item* item = inv->getItem(i);
-                            if (item && item->name == objRequerido.nombre) {
-                                inv->removeItem(i);
-                                std::cout << "Objeto entregado y eliminado: " << objRequerido.nombre << std::endl;
-                                break;
+            if (keyPressed->code == sf::Keyboard::Key::R && !m_nivelCompletado) 
+            {
+                if (m_criminalGameCompleted) 
+                {
+                    Inventory* inv = m_player.getInventory();
+                    bool tieneTodosLosObjetos = true;
+                    
+                    int casoCompletado = m_setActualCaso;
+                    
+                    if (casoCompletado >= 0 && casoCompletado < (int)m_todosLosObjetos.size()) 
+                    {
+                        std::cout << "Verificando objetos del caso " << casoCompletado << std::endl;
+                        for (const auto& objRequerido : m_todosLosObjetos[casoCompletado]) 
+                        {
+                            bool encontrado = false;
+                            if (inv) 
+                            {
+                                for (int i = 0; i < 20; i++) 
+                                {
+                                    Item* item = inv->getItem(i);
+                                    if (item && !item->name.empty() && item->name == objRequerido.nombre) 
+                                    {
+                                        encontrado = true;
+                                        std::cout << "✓ Encontrado: " << objRequerido.nombre << std::endl;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (!encontrado) 
+                            {
+                                std::cout << "✗ FALTA: " << objRequerido.nombre << std::endl;
+                                tieneTodosLosObjetos = false;
+                                break;  
                             }
                         }
+                    } 
+                    else 
+                    {
+                        std::cerr << "ERROR: casoCompletado inválido: " << casoCompletado << std::endl;
+                        tieneTodosLosObjetos = false;
                     }
+                    
+                    if (tieneTodosLosObjetos) 
+                    {
+                        // ✅ LIMPIAR INVENTARIO - eliminar SOLO los objetos del caso actual
+                        if (inv && casoCompletado >= 0 && casoCompletado < (int)m_todosLosObjetos.size()) 
+                        {
+                            for (const auto& objRequerido : m_todosLosObjetos[casoCompletado]) 
+                            {
+                                for (int i = 0; i < 20; i++) 
+                                {
+                                    Item* item = inv->getItem(i);
+                                    if (item && item->name == objRequerido.nombre) 
+                                    {
+                                        inv->removeItem(i);
+                                        std::cout << "🗑️ Objeto entregado y eliminado: " << objRequerido.nombre << std::endl;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        
+                        m_casoResuelto = true;
+                        m_nivelCompletado = true;
+                        
+                        m_bloquesInteractivos[m_bloqueActualIndex].mensaje = 
+                            "GRACIAS! Has recuperado todas mis joyas.\n"
+                            "Eres un heroe...\n\n"
+                            "Ahora dirigete al ASCENSOR\n"
+                            "y presiona E para avanzar al siguiente nivel.";
+                        
+                        std::cout << "OBJETOS ENTREGADOS CORRECTAMENTE! Nivel completado." << std::endl;
+                    } 
+                    else 
+                    {
+                        m_mensajeEmergenteActivo = false;
+                        mostrarMensajeFlotante("Aun no has encontrado todas las joyas. Sigue investigando\n en la escena del crimen.", 3.0f, sf::Color::Yellow);
+                    }
+                } 
+                else 
+                {
+                    m_mensajeEmergenteActivo = false;
+                    mostrarMensajeFlotante("Aun no has resuelto el caso.\nInvestiga la escena del crimen y encuentra\ntodas las pistas y al culpable.", 3.0f, sf::Color::Yellow);
                 }
             }
-            
-            m_bloquesInteractivos[m_bloqueActualIndex].mensaje = 
-                "GRACIAS! Has recuperado todas mis joyas.\n"
-                "Eres un heroe...\n\n"
-                "Ahora dirigete al ASCENSOR\n"
-                "y presiona E para avanzar al siguiente nivel.";
-            
-            std::cout << "OBJETOS ENTREGADOS CORRECTAMENTE! Nivel completado." << std::endl;
-        } else {
-            // El jugador NO tiene todos los objetos - solo mostrar mensaje flotante
-            m_mensajeEmergenteActivo = false;
-            mostrarMensajeFlotante("Aun no has encontrado todas las joyas. Sigue investigando\n en la escena del crimen.", 3.0f, sf::Color::Yellow);
-        }
-           
-        } else {
-            // Caso no completado
-            m_mensajeEmergenteActivo = false;
-            mostrarMensajeFlotante("Aun no has resuelto el caso.\nInvestiga la escena del crimen y encuentra\ntodas las pistas y al culpable.", 3.0f, sf::Color::Yellow);
-            return;
-        }
-    }
-        }
-        return;
+                    }
+                    return;
     }
     
     // Teclas globales (solo si NO hay mensaje activo)
@@ -1013,7 +1011,7 @@ void NivelSara2State::draw()
             }
 
             mensajeText.setString(mensajeCompleto);
-            mensajeText.setCharacterSize(12);
+            mensajeText.setCharacterSize(21);
 
             if (m_nivelCompletado)
                 mensajeText.setFillColor(sf::Color(150, 255, 150, 255));
@@ -1123,7 +1121,7 @@ void NivelSara2State::draw()
         float posX = static_cast<float>(winSize.x) * 0.5f;   
         float posY = static_cast<float>(winSize.y) * 0.85f;  
         
-        m_textoMensaje->setCharacterSize(14);  
+        m_textoMensaje->setCharacterSize(22);  
         m_textoMensaje->setOutlineThickness(1.5f);
         
         sf::FloatRect bounds = m_textoMensaje->getLocalBounds();

@@ -22,7 +22,7 @@ private:
     std::unique_ptr<sf::Text> m_mensajeFlotante;
     sf::Clock m_clockFlotante;
     float m_tiempoFlotante;
-
+    
     bool m_casoResuelto;
     bool m_nivelCompletado;
     int m_setActualCaso;

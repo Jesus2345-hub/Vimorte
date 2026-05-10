@@ -753,13 +753,10 @@ void CriminalCaseMinigame::procesarAcusacion(int sospechosoIndex)
         mensajeGuardado += "El verdadero culpable ha escapado con las pruebas...\n";
         mensajeGuardado += "Ahora debes investigar un NUEVO caso.";
         
-        // Limpiar inventario
         limpiarInventarioCaso();
 
-        // Guardar el estado actual de diálogos ANTES de regenerar? No, generarNuevoCasoCompleto los recarga
         generarNuevoCasoCompleto();
         
-        // FORZAR el mensaje directamente en la variable interna
         m_mensajeTemp.texto = mensajeGuardado;
         m_mensajeTemp.tiempoRestante = 5.0f;
         m_mensajeTemp.color = sf::Color::Red;
