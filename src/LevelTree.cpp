@@ -4,6 +4,7 @@
 #include "Nivel1State.hpp"
 #include "Nivel2State.hpp"
 #include "Nivel6State.hpp"
+#include "Nivel7State.hpp"
 #include "NivelSara1State.hpp"
 #include <iostream>
 #include <sstream>
@@ -45,16 +46,16 @@ void LevelTree::buildTree()
         return std::make_unique<Nivel1State>(w, g);
     };
 
-    auto nivel6 = std::make_unique<LevelNode>("nivel6", "Nivel 6", LevelType::NORMAL, 6);
+    auto nivel6 = std::make_unique<LevelNode>("nivel6", "La Busqueda de los Dientes", LevelType::NORMAL, 6);
     nivel6->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
     {
         return std::make_unique<Nivel6State>(w, g);
     };
 
-    auto nivel7 = std::make_unique<LevelNode>("nivel7", "Nivel 7", LevelType::NORMAL, 7);
+    auto nivel7 = std::make_unique<LevelNode>("nivel7", "Cancha de Vimorte", LevelType::NORMAL, 7);
     nivel7->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
     {
-        return std::make_unique<Nivel1State>(w, g);
+        return std::make_unique<Nivel7State>(w, g);
     };
 
     auto nivel8 = std::make_unique<LevelNode>("nivel8", "Nivel 8", LevelType::NORMAL, 8);
