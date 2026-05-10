@@ -62,12 +62,15 @@ Inventory::Inventory() : m_selectedSlot(-1), m_activeHotbarSlot(0), m_isOpen(fal
     m_hotbar.resize(HOTBAR_SIZE, nullptr);
 
     // Cargar texturas de items
-    std::vector<std::string> itemNames = {"Rifle", "Gallina", "Dientes", "Llave"};
+    std::vector<std::string> itemNames = {"Rifle", "Gallina", "Dientes", "Llave", "Balon Basket", "Destornillador"};
     std::vector<std::string> itemFiles = {
         "assets/images/items/rifle.png",
         "assets/images/items/gallo.png",
         "assets/images/items/dientes.png",
-        "assets/images/items/llave.png"};
+        "assets/images/items/llave.png",
+        "assets/images/niveles/nivel7/balon_basket.png",
+        "assets/images/items/destornillador.png"
+    };
 
     for (size_t i = 0; i < itemNames.size(); i++)
     {
@@ -622,5 +625,9 @@ float Inventory::getItemScale(const std::string &name)
         return 0.12f;
     if (name == "Llave")
         return 0.077f;
+    if (name == "Balon Basket")
+        return 0.15f;
+    if (name == "Destornillador")
+        return 0.15f;
     return 0.5f; // Escala por defecto
 }
