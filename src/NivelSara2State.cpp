@@ -134,23 +134,19 @@ NivelSara2State::NivelSara2State(sf::RenderWindow *window, Game *game)
     std::cout << "NivelSara2State inicializado correctamente" << std::endl;
     game->setIsInLevel(true);
     CoordenadasDebug::getInstance().setVisible(true);
-
-    m_criminalMinigame.setOnCompleteCallback([this](bool exito) {
-    if (exito && !m_criminalGameCompleted) 
-    {
-        m_criminalGameCompleted = true;
-        mostrarMensaje("CASO RESUELTO. Has encontrado todas las pistas y al culpable.\nEntregale las cosas a Andrea", 5.0f);
-    }
-    });
-    
-    m_criminalMinigame.setDebugMode(true);
     
     m_criminalMinigame.setOnCompleteCallback([this](bool exito) {
-        if (exito && !m_criminalGameCompleted) {
+        if (exito && !m_criminalGameCompleted) 
+        {
             m_criminalGameCompleted = true;
+            std::cout << "CASO RESUELTO! Set actual: " << m_setActualCaso << std::endl;
             mostrarMensaje("CASO RESUELTO. Has encontrado todas las pistas y al culpable.\nEntregale las cosas a Andrea", 5.0f);
         }
     });
+
+    m_criminalMinigame.setDebugMode(true);
+    
+  
 }
 
 
@@ -223,82 +219,78 @@ void NivelSara2State::handleEvent(const sf::Event &event)
             
             // Tecla R: entregar objetos
             if (keyPressed->code == sf::Keyboard::Key::R && !m_nivelCompletado) {
-                
-                if (m_criminalGameCompleted) {
-                    
-                    Inventory* inv = m_player.getInventory();
-                    bool tieneTodosLosObjetos = true;
-                    std::vector<std::string> objetosFaltantes;
-                    
-                    int casoIndex = m_bloqueActualIndex;
-                    
-                    if (casoIndex >= 0 && casoIndex < (int)m_todosLosObjetos.size()) {
-                        for (const auto& objRequerido : m_todosLosObjetos[casoIndex]) {
-                            bool encontrado = false;
-                            if (inv) {
-                                for (int i = 0; i < 20; i++) {
-                                    Item* item = inv->getItem(i);
-                                    if (item && item->name == objRequerido.nombre) {
-                                        encontrado = true;
-                                        break;
-                                    }
-                                }
-                            }
-                            if (!encontrado) {
-                                tieneTodosLosObjetos = false;
-                                objetosFaltantes.push_back(objRequerido.nombre);
-                            }
-                        }
-                    } else {
-                        for (const auto& objRequerido : m_objetosCriminal) {
-                            bool encontrado = false;
-                            if (inv) {
-                                for (int i = 0; i < 20; i++) {
-                                    Item* item = inv->getItem(i);
-                                    if (item && item->name == objRequerido.nombre) {
-                                        encontrado = true;
-                                        break;
-                                    }
-                                }
-                            }
-                            if (!encontrado) {
-                                tieneTodosLosObjetos = false;
-                                objetosFaltantes.push_back(objRequerido.nombre);
-                            }
+    
+    if (m_criminalGameCompleted) {
+        
+        Inventory* inv = m_player.getInventory();
+        bool tieneTodosLosObjetos = true;
+        
+        // Usamos m_setActualCaso para saber qué caso se completó
+        int casoCompletado = m_setActualCaso;
+        
+        if (casoCompletado >= 0 && casoCompletado < (int)m_todosLosObjetos.size()) {
+            // Verificar que el jugador tenga TODOS los objetos de ESE caso
+            for (const auto& objRequerido : m_todosLosObjetos[casoCompletado]) {
+                bool encontrado = false;
+                if (inv) {
+                    for (int i = 0; i < 20; i++) {
+                        Item* item = inv->getItem(i);
+                        if (item && item->name == objRequerido.nombre) {
+                            encontrado = true;
+                            break;
                         }
                     }
-                    
-                    if (tieneTodosLosObjetos) {
-                        // Éxito: el jugador tiene los objetos correctos
-                        m_casoResuelto = true;
-                        m_nivelCompletado = true;
-                    
-                        m_bloquesInteractivos[m_bloqueActualIndex].mensaje = 
-                            "GRACIAS! Has recuperado todas mis joyas.\n"
-                            "Eres un heroe...\n\n"
-                            "Ahora dirigete al ASCENSOR\n"
-                            "y presiona E para avanzar al siguiente nivel.";
-                        
-                        std::cout << "OBJETOS ENTREGADOS CORRECTAMENTE! Nivel completado." << std::endl;
-                    } else {
-                        // ERROR: Usar MENSAJE FLOTANTE
-                        std::string mensajeError = "¡Te faltan joyas!\n";
-                        for (const auto& obj : objetosFaltantes) {
-                            mensajeError += "• " + obj + "\n";
-                        }
-                        mensajeError += "\nSigue buscando en la escena del crimen.";
-                        
-                        m_mensajeEmergenteActivo = false;
-                        mostrarMensajeFlotante(mensajeError, 4.0f, sf::Color::Red);
-                    }
-                       
-                } else {
-                    // Caso no completado
-                    m_mensajeEmergenteActivo = false;  // ← Cierra el diálogo de Andrea
-                    mostrarMensajeFlotante("Aun no has resuelto el caso.\nInvestiga la escena del crimen y encuentra\ntodas las pistas y al culpable.", 3.0f, sf::Color::Yellow);
-                    return;
+                }
+                if (!encontrado) {
+                    tieneTodosLosObjetos = false;
+                    break;  
                 }
             }
+        } else 
+        {
+            for (const auto& objRequerido : m_objetosCriminal) {
+                bool encontrado = false;
+                if (inv) {
+                    for (int i = 0; i < 20; i++) {
+                        Item* item = inv->getItem(i);
+                        if (item && item->name == objRequerido.nombre) {
+                            encontrado = true;
+                            break;
+                        }
+                    }
+                }
+                if (!encontrado) {
+                    tieneTodosLosObjetos = false;
+                    break;
+                }
+            }
+        }
+        
+        if (tieneTodosLosObjetos) {
+            // Éxito: el jugador tiene los objetos correctos
+            m_casoResuelto = true;
+            m_nivelCompletado = true;
+        
+            m_bloquesInteractivos[m_bloqueActualIndex].mensaje = 
+                "GRACIAS! Has recuperado todas mis joyas.\n"
+                "Eres un heroe...\n\n"
+                "Ahora dirigete al ASCENSOR\n"
+                "y presiona E para avanzar al siguiente nivel.";
+            
+            std::cout << "OBJETOS ENTREGADOS CORRECTAMENTE! Nivel completado." << std::endl;
+        } else {
+            // El jugador NO tiene todos los objetos - solo mostrar mensaje flotante
+            m_mensajeEmergenteActivo = false;
+            mostrarMensajeFlotante("Aun no has encontrado todas las joyas. Sigue investigando\n en la escena del crimen.", 3.0f, sf::Color::Yellow);
+        }
+           
+        } else {
+            // Caso no completado
+            m_mensajeEmergenteActivo = false;
+            mostrarMensajeFlotante("Aun no has resuelto el caso.\nInvestiga la escena del crimen y encuentra\ntodas las pistas y al culpable.", 3.0f, sf::Color::Yellow);
+            return;
+        }
+    }
         }
         return;
     }
@@ -537,10 +529,12 @@ void NivelSara2State::configurarMinijuegoCriminal()
     m_criminalMinigame.setDebugMode(true);
     
     m_criminalMinigame.setOnCompleteCallback([this](bool exito) {
-        if (exito && !m_criminalGameCompleted) {
-            m_criminalGameCompleted = true;
-            mostrarMensaje("CASO RESUELTO. Has encontrado todas las pistas y al culpable.\nEntregale las cosas a Andrea", 5.0f);
-        }
+    if (exito && !m_criminalGameCompleted) 
+    {
+        m_criminalGameCompleted = true;
+        std::cout << "CASO RESUELTO! Set actual: " << m_setActualCaso << std::endl;
+        mostrarMensaje("CASO RESUELTO. Has encontrado todas las pistas y al culpable.\nEntregale las cosas a Andrea", 5.0f);
+    }
     });
     
     m_criminalMinigame.cargarFondoOnly("assets/images/niveles/nivel_sara2/criminalCase.png");
@@ -698,7 +692,8 @@ void NivelSara2State::update(float dt)
                 }
                 
                 m_criminalMinigame.generarNuevoCaso();
-                
+                m_setActualCaso = m_criminalMinigame.getSetActualObjetos();
+
                 sf::Vector2u winSize = window->getSize();
                 float minijuegoW = winSize.x * 0.85f;
                 float minijuegoH = winSize.y * 0.85f;

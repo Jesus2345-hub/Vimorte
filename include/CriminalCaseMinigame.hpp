@@ -63,7 +63,7 @@ public:
     void setSize(const sf::Vector2f& size);
     void setInventory(Inventory* inventory) { m_inventory = inventory; }
     
-    
+    int getSetActualObjetos() const { return m_setActualObjetos; }
     void agregarSetObjetos(const std::vector<ObjetoBuscar>& objetos);
     void agregarSetSospechosos(const std::vector<Sospechoso>& sospechosos);
     void agregarSetDialogos(const std::vector<DialogoNarrativo>& dialogos);
@@ -94,7 +94,7 @@ public:
     void setDialogos(const std::vector<DialogoNarrativo>& dialogos);
     void setPenaltyCallback(std::function<void()> callback) { m_penaltyCallback = callback; }
 private:
-
+        
     void reiniciarCasoCompleto();
     std::function<void()> m_penaltyCallback;
     void actualizarFondo();

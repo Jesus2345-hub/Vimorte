@@ -75,6 +75,7 @@ void CriminalCaseMinigame::mostrarMensajeConFondo(const std::string& msg, float 
         m_mensajeText->setString(msg);
         m_mensajeText->setFillColor(color);
     }
+    std::cout << "MENSAJE ERROR (CON FONDO): " << msg << std::endl; // Debug
 }
 
 void CriminalCaseMinigame::recalcularAreasBotones()
@@ -265,7 +266,7 @@ void CriminalCaseMinigame::generarNuevoCasoCompleto()
     m_objetosOriginales = m_poolObjetos[m_setActualObjetos];
     m_sospechososOriginales = m_poolSospechosos[m_setActualSospechosos];
     
-    // Resetear estados encontrados/acusados (PERO NO EL MENSAJE)
+    // Resetear estados encontrados/acusados
     for (auto &obj : m_objetosOriginales) { obj.encontrado = false; }
     for (auto &sos : m_sospechososOriginales) { sos.acusado = false; }
 
@@ -286,13 +287,13 @@ void CriminalCaseMinigame::generarNuevoCasoCompleto()
         m_dialogosActuales.emplace_back("Alguien más", "Todos tenemos algo que decir.");
     }
 
-    // Resetear estados del juego (PERO NO EL MENSAJE)
+    // Resetear estados del juego
     m_gameState = CriminalGameState::BUSCANDO_EVIDENCIAS;
     m_todasEvidencias = false;
     m_waitingForNarrative = false;
     m_dialogoActualIndex = 0;
     m_completed = false;
-    
+        
     // Re-escalar áreas y actualizar UI
     escalarAreas();
     updateListaTexto();
@@ -830,7 +831,9 @@ void CriminalCaseMinigame::mostrarMensaje(const std::string &msg, float duracion
     if (m_mensajeText)
     {
         m_mensajeText->setString(msg);
+        m_mensajeText->setFillColor(sf::Color::Yellow);
     }
+    std::cout << "MENSAJE NORMAL: " << msg << std::endl; // Debug
 }
 
 void CriminalCaseMinigame::centrarTexto(sf::Text &text, float x, float y)
@@ -988,6 +991,7 @@ void CriminalCaseMinigame::update(float dt)
         if (m_mensajeTemp.tiempoRestante <= 0.0f && m_mensajeText)
         {
             m_mensajeText->setString("");
+            m_mensajeErrorActivo = false;
         }
     }
 }
