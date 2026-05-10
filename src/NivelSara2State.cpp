@@ -266,11 +266,31 @@ void NivelSara2State::handleEvent(const sf::Event &event)
             }
         }
         
-        if (tieneTodosLosObjetos) {
+        if (tieneTodosLosObjetos) 
+        {
             // Éxito: el jugador tiene los objetos correctos
             m_casoResuelto = true;
             m_nivelCompletado = true;
-        
+            
+            // LIMPIAR INVENTARIO - los objetos han sido entregados
+            Inventory* inv = m_player.getInventory();
+            if (inv) {
+                // Limpiar solo los objetos del caso actual
+                int casoActual = m_setActualCaso;
+                if (casoActual >= 0 && casoActual < (int)m_todosLosObjetos.size()) {
+                    for (const auto& objRequerido : m_todosLosObjetos[casoActual]) {
+                        for (int i = 0; i < 20; i++) {
+                            Item* item = inv->getItem(i);
+                            if (item && item->name == objRequerido.nombre) {
+                                inv->removeItem(i);
+                                std::cout << "Objeto entregado y eliminado: " << objRequerido.nombre << std::endl;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            
             m_bloquesInteractivos[m_bloqueActualIndex].mensaje = 
                 "GRACIAS! Has recuperado todas mis joyas.\n"
                 "Eres un heroe...\n\n"

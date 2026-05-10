@@ -64,6 +64,27 @@ void CriminalCaseMinigame::limpiarPools()
     m_poolDialogos.clear();
 }
 
+void CriminalCaseMinigame::limpiarInventarioCaso()
+{
+    if (!m_inventory) return;
+    
+    std::cout << "=== LIMPIANDO INVENTARIO DEL CASO ACTUAL ===" << std::endl;
+    
+    for (const auto &obj : m_objetos)
+    {
+        for (int i = 0; i < 20; i++)
+        {
+            Item *item = m_inventory->getItem(i);
+            if (item && item->name == obj.nombre)
+            {
+                m_inventory->removeItem(i);
+                std::cout << "Eliminado: " << obj.nombre << std::endl;
+                break;
+            }
+        }
+    }
+}
+
 void CriminalCaseMinigame::mostrarMensajeConFondo(const std::string& msg, float duracion, sf::Color color)
 {
     m_mensajeTemp.texto = msg;
@@ -279,12 +300,14 @@ void CriminalCaseMinigame::generarNuevoCasoCompleto()
         !m_poolDialogos[m_setActualDialogos].empty())
     {
         m_dialogosActuales = m_poolDialogos[m_setActualDialogos];
+        std::cout << "Diálogos cargados: " << m_dialogosActuales.size() << std::endl; // DEBUG
     }
     else
     {
         m_dialogosActuales.clear();
         m_dialogosActuales.emplace_back("Testigo", "Las pistas no mienten. Escucha con atención.");
         m_dialogosActuales.emplace_back("Alguien más", "Todos tenemos algo que decir.");
+        std::cout << "Diálogos por defecto cargados" << std::endl; // DEBUG
     }
 
     // Resetear estados del juego
@@ -506,7 +529,7 @@ void CriminalCaseMinigame::activate()
     }
 
     // RESET COMPLETO DEL ESTADO
-    m_active = false; // Temporalmente desactivar para reset
+    m_active = false;
     m_completed = false;
     m_todasEvidencias = false;
     m_culpableEncontrado = false;
@@ -578,6 +601,11 @@ void CriminalCaseMinigame::resetCompletamente()
 
 void CriminalCaseMinigame::deactivate()
 {
+    if (!m_completed && m_active)
+    {
+        limpiarInventarioCaso();
+    }
+    
     m_active = false;
     m_mensajeTemp.tiempoRestante = 0.0f;
 }
@@ -588,12 +616,14 @@ void CriminalCaseMinigame::iniciarFaseNarrativa()
     {
         std::cout << "ADVERTENCIA: No hay dialogos cargados, pasando directamente a elección" << std::endl;
         m_gameState = CriminalGameState::ELECCION_FINAL;
-        mostrarMensaje("Sin testimonios disponibles. Decide quié+en es el culpable.", 2.0f);
+        mostrarMensaje("Sin testimonios disponibles. Decide quién es el culpable.", 2.0f);
         return;
     }
 
     m_gameState = CriminalGameState::NARRATIVA;
     m_dialogoActualIndex = 0;
+
+    mostrarMensaje("Escucha los testimonios de los Sospechosos", 3.0f);
 
     m_fondoNarrativo.setSize(m_size);
     m_fondoNarrativo.setFillColor(sf::Color(0, 0, 0, 220));
@@ -631,7 +661,6 @@ void CriminalCaseMinigame::verificarCompletado()
     {
         m_todasEvidencias = true;
         iniciarFaseNarrativa();
-        mostrarMensaje("Has reunido todas las pistas. Ahora escucha los testimonios...", 5.0f);
     }
 }
 void CriminalCaseMinigame::reiniciarCasoCompleto()
@@ -719,58 +748,31 @@ void CriminalCaseMinigame::procesarAcusacion(int sospechosoIndex)
     {
         std::cout << "INCORRECTO! " << sospechosoAcusado.nombre << " NO es el culpable." << std::endl;
         
-        // Mostrar mensaje CON FONDO 
-        std::string mensajeError = "X INCORRECTO! " + sospechosoAcusado.nombre + " es inocente.\n";
-        mensajeError += "El verdadero culpable ha escapado con las pruebas...\n";
-        mensajeError += "Ahora debes investigar un NUEVO caso.";
+        // GUARDAR el mensaje
+        std::string mensajeGuardado = "INCORRECTO! " + sospechosoAcusado.nombre + " es inocente.\n";
+        mensajeGuardado += "El verdadero culpable ha escapado con las pruebas...\n";
+        mensajeGuardado += "Ahora debes investigar un NUEVO caso.";
         
-        // MOSTRAR EL MENSAJE PRIMERO
-        mostrarMensajeConFondo(mensajeError, 5.0f, sf::Color::Red);
-
         // Limpiar inventario
-        if (m_inventory)
-        {
-            for (const auto &obj : m_objetos)
-            {
-                if (obj.encontrado)
-                {
-                    for (int i = 0; i < 20; i++)
-                    {
-                        Item *item = m_inventory->getItem(i);
-                        if (item && item->name == obj.nombre)
-                        {
-                            m_inventory->removeItem(i);
-                            break;
-                        }
-                    }
-                }
-            }
-        }
+        limpiarInventarioCaso();
 
-        // Guardar el mensaje ANTES de regenerar el caso
-        std::string mensajeGuardado = m_mensajeTemp.texto;
-        float tiempoGuardado = m_mensajeTemp.tiempoRestante;
-        sf::Color colorGuardado = m_mensajeTemp.color;
-        bool errorActivoGuardado = m_mensajeErrorActivo;
-
-        // Generar un NUEVO caso 
+        // Guardar el estado actual de diálogos ANTES de regenerar? No, generarNuevoCasoCompleto los recarga
         generarNuevoCasoCompleto();
         
-        // RESTAURAR el mensaje después de regenerar el caso
+        // FORZAR el mensaje directamente en la variable interna
         m_mensajeTemp.texto = mensajeGuardado;
-        m_mensajeTemp.tiempoRestante = tiempoGuardado;
-        m_mensajeTemp.color = colorGuardado;
-        m_mensajeErrorActivo = errorActivoGuardado;
+        m_mensajeTemp.tiempoRestante = 5.0f;
+        m_mensajeTemp.color = sf::Color::Red;
+        m_mensajeErrorActivo = true;
         
-        // Asegurar que el texto del mensaje se actualiza
         if (m_mensajeText)
         {
             m_mensajeText->setString(mensajeGuardado);
-            m_mensajeText->setFillColor(colorGuardado);
+            m_mensajeText->setFillColor(sf::Color::Red);
         }
         
         m_active = true;
-        m_gameState = CriminalGameState::BUSCANDO_EVIDENCIAS;  // Asegurar que volvemos a buscar evidencias
+        m_gameState = CriminalGameState::BUSCANDO_EVIDENCIAS;
 
         if (m_onCompleteCallback)
         {
@@ -1339,7 +1341,6 @@ void CriminalCaseMinigame::draw(sf::RenderWindow &window)
         }
     }
     
-    // Dibujar el contenido principal según el estado
     switch (m_gameState)
     {
     case CriminalGameState::BUSCANDO_EVIDENCIAS:
@@ -1372,48 +1373,48 @@ void CriminalCaseMinigame::draw(sf::RenderWindow &window)
         break;
     }
     
-    // DIBUJAR MENSAJES 
+    // ===== MENSAJES TEMPORALES - SIN CAMBIAR LA VISTA =====
     if (m_mensajeTemp.tiempoRestante > 0 && m_mensajeText && !m_mensajeTemp.texto.empty())
     {
-        // Guardar la vista actual
-        sf::View originalView = window.getView();
-        window.setView(window.getDefaultView());
-        
+        // Obtener el tamaño de la ventana en coordenadas de pantalla
         sf::Vector2u winSize = window.getSize();
+        
         float centerX = winSize.x / 2.f;
+        float centerY = static_cast<float>(winSize.y) - 150.f;
         
         sf::FloatRect textBounds = m_mensajeText->getLocalBounds();
         
         if (m_mensajeErrorActivo)
         {
-            // Mensaje de error centrado en pantalla con fondo
-            float centerY = winSize.y / 2.f;
+            centerY = winSize.y / 2.f;
             
-            sf::RectangleShape fondoMsg;
-            fondoMsg.setSize(sf::Vector2f(textBounds.size.x + 50, textBounds.size.y + 30));
+            sf::RectangleShape fondoMsg(sf::Vector2f(textBounds.size.x + 50, textBounds.size.y + 30));
             fondoMsg.setFillColor(sf::Color(0, 0, 0, 220));
             fondoMsg.setOutlineColor(m_mensajeText->getFillColor());
             fondoMsg.setOutlineThickness(2.f);
             
+            // Convertir coordenadas de pantalla a coordenadas de mundo
+            sf::Vector2f screenPos(centerX, centerY);
+            sf::Vector2f worldPos = window.mapPixelToCoords(sf::Vector2i(static_cast<int>(screenPos.x), static_cast<int>(screenPos.y)));
+            
             fondoMsg.setOrigin(sf::Vector2f(fondoMsg.getSize().x / 2.f, fondoMsg.getSize().y / 2.f));
-            fondoMsg.setPosition(sf::Vector2f(centerX, centerY));
+            fondoMsg.setPosition(worldPos);
             window.draw(fondoMsg);
             
             m_mensajeText->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
-            m_mensajeText->setPosition(sf::Vector2f(centerX, centerY));
+            m_mensajeText->setPosition(worldPos);
         }
         else
         {
-            float centerY = static_cast<float>(winSize.y) - 150.f;
+            // Convertir coordenadas de pantalla a coordenadas de mundo
+            sf::Vector2f screenPos(centerX, centerY);
+            sf::Vector2f worldPos = window.mapPixelToCoords(sf::Vector2i(static_cast<int>(screenPos.x), static_cast<int>(screenPos.y)));
             
             m_mensajeText->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
-            m_mensajeText->setPosition(sf::Vector2f(centerX, centerY));
+            m_mensajeText->setPosition(worldPos);
         }
         
         window.draw(*m_mensajeText);
-        
-        // Restaurar la vista original
-        window.setView(originalView);
     }
 }
 

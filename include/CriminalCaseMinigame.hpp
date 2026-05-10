@@ -109,6 +109,7 @@ private:
     void centrarTexto(sf::Text& text, float x, float y);
     void recalcularAreasBotones();
     void reiniciarCasoActual();  
+    void limpiarInventarioCaso();
     void generarNuevoCasoCompleto();
     void iniciarFaseNarrativa();
     void avanzarDialogo();
