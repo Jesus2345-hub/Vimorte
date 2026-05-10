@@ -19,6 +19,7 @@ class NivelSara2State : public State
 {
 private:
 
+    sf::Vector2f m_playerStartPosition = sf::Vector2f(0.f, 0.f);
     std::unique_ptr<sf::Text> m_mensajeFlotante;
     sf::Clock m_clockFlotante;
     float m_tiempoFlotante;
@@ -92,5 +93,7 @@ public:
     void update(float dt) override;
     void draw() override;
     void handleEvent(const sf::Event& event) override;
+    void setPlayerStartPosition(const sf::Vector2f& pos) { m_playerStartPosition = pos; }
+    sf::Vector2f getPlayerStartPosition() const { return m_playerStartPosition; }
     ~NivelSara2State() override = default;
 };

@@ -76,7 +76,7 @@ NivelSara2State::NivelSara2State(sf::RenderWindow *window, Game *game)
     m_lastWindowSize = windowSize;
 
     // Áreas de interacción
-    m_puertaSalidaArea = sf::FloatRect(sf::Vector2f(1550.f, 1350.f), sf::Vector2f(120.f, 180.f));
+    m_puertaSalidaArea = sf::FloatRect(sf::Vector2f(243.f, 264.f), sf::Vector2f(120.f, 180.f));
 
     configurarColisiones();
     configurarMinijuegoCriminal();
@@ -595,34 +595,23 @@ void NivelSara2State::verificarEntradaCentinela()
 
 // VERIFICAR SALIDA DEL NIVEL
 
-void NivelSara2State::verificarSalidaNivel()
-{
+void NivelSara2State::verificarSalidaNivel() {
     m_cercaPuertaSalida = m_player.getHurtbox().findIntersection(m_puertaSalidaArea).has_value();
-
+    
     static bool ePresionado = false;
-    if (m_cercaPuertaSalida)
-    {
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::E))
-        {
-            if (!ePresionado)
-            {
-                ePresionado = true;
-                
-                if (m_nivelCompletado)
-                {
-                    std::cout << "Nivel completado! Saliendo de NivelSara2..." << std::endl;
-                    game->avanzarNivel();
-                }
-                else
-                {
-                    mostrarMensajeFlotante("Debes resolver el caso criminal y\nentregar los objetos a Andrea primero.\nHabla con Andrea presionando R", 4.0f, sf::Color::Yellow);
-                }
+    if (m_cercaPuertaSalida && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::E)) {
+        if (!ePresionado) {
+            ePresionado = true;
+            
+            if (m_nivelCompletado) {
+                std::cout << "Saliendo del nivel Sara 2..." << std::endl;
+                game->avanzarNivel();
+            } else {
+                mostrarMensajeFlotante("Debes resolver el caso criminal y\nentregar los objetos a Andrea primero.\nHabla con Andrea presionando R", 4.0f, sf::Color::Yellow);
             }
         }
-        else
-        {
-            ePresionado = false;
-        }
+    } else {
+        ePresionado = false;
     }
 }
 
@@ -904,7 +893,7 @@ void NivelSara2State::draw()
         window->draw(bloqueDebug);
     }
     
-    if (m_mostrarPuertaSalida)
+    if (m_mostrarPuertaSalida && m_nivelCompletado)
     {
         sf::RectangleShape salidaDebug(sf::Vector2f(m_puertaSalidaArea.size.x, m_puertaSalidaArea.size.y));
         salidaDebug.setPosition(sf::Vector2f(m_puertaSalidaArea.position.x, m_puertaSalidaArea.position.y));
@@ -1087,7 +1076,7 @@ void NivelSara2State::draw()
     // Textos de interacción
     if (m_fontLoaded && m_textoInteraccion)
     {
-        if (m_cercaPuertaSalida)
+        if (m_cercaPuertaSalida && m_nivelCompletado)
         {
             m_textoInteraccion->setString("Presiona E para avanzar al siguiente nivel");
             sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
@@ -1233,7 +1222,7 @@ void NivelSara2State::jugadorHaMuerto()
 }
 
 
-// MOSTRAR MENSAJE (SISTEMA ORIGINAL)
+// MOSTRAR MENSAJE 
 
 void NivelSara2State::mostrarMensaje(const std::string &texto, float duracion, sf::Color color)
 {
