@@ -1212,7 +1212,7 @@ void CriminalCaseMinigame::dibujarPantallaEleccion(sf::RenderWindow &window)
         lineaSeparadora.setFillColor(sf::Color(200, 180, 100));
         lineaSeparadora.setPosition(sf::Vector2f(
             x + 20 * escalaReferencia,
-            y + 55 * escalaReferencia));  // Posición fija debajo del nombre
+            y + 55 * escalaReferencia));  
         window.draw(lineaSeparadora);
 
         // ===== DESCRIPCIÓN MULTILÍNEA (más abajo) =====
@@ -1258,8 +1258,7 @@ void CriminalCaseMinigame::dibujarPantallaEleccion(sf::RenderWindow &window)
             }
         }
         
-        // Descripción EMPIEZA MÁS ABAJO (después de la línea separadora)
-        float descY = y + 75 * escalaReferencia;  // AUMENTADO de 55 a 75
+        float descY = y + 75 * escalaReferencia;  
         float lineSpacing = (tamanoDesc + 8) * escalaReferencia;
         
         // Limitar a máximo 3 líneas para no ocupar demasiado espacio
@@ -1282,7 +1281,7 @@ void CriminalCaseMinigame::dibujarPantallaEleccion(sf::RenderWindow &window)
             descY += lineSpacing;
         }
 
-        // Botón "ACUSAR" - ajustado para que quepa bien
+        // Botón "ACUSAR" 
         float botonAcusarAlto = 45 * escalaReferencia;
         float botonAcusarAncho = (botonAncho - 50 * escalaReferencia);
         float margenLateral = 25 * escalaReferencia;
@@ -1340,47 +1339,7 @@ void CriminalCaseMinigame::draw(sf::RenderWindow &window)
         }
     }
     
-    // DIBUJAR MENSAJE (antes del switch para que se vea siempre)
-    if (m_mensajeTemp.tiempoRestante > 0 && m_mensajeText && !m_mensajeTemp.texto.empty())
-    {
-        // Dibujar fondo semitransparente SOLO para mensajes de error
-        if (m_mensajeErrorActivo)
-        {
-            sf::RectangleShape fondoMsg;
-            sf::FloatRect textBounds = m_mensajeText->getLocalBounds();
-            fondoMsg.setSize(sf::Vector2f(textBounds.size.x + 50, textBounds.size.y + 30));
-            fondoMsg.setFillColor(sf::Color(0, 0, 0, 200));
-            fondoMsg.setOutlineColor(m_mensajeText->getFillColor());
-            fondoMsg.setOutlineThickness(2.f);
-            
-            sf::Vector2u winSize = window.getSize();
-            float centerX = winSize.x / 2.f;
-            float centerY = winSize.y / 2.f;
-            
-            fondoMsg.setOrigin(sf::Vector2f(fondoMsg.getSize().x / 2.f, fondoMsg.getSize().y / 2.f));
-            fondoMsg.setPosition(sf::Vector2f(centerX, centerY));
-            window.draw(fondoMsg);
-            
-            m_mensajeText->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
-            m_mensajeText->setPosition(sf::Vector2f(centerX, centerY));
-        }
-        else
-        {
-            // Mensaje normal sin fondo
-            sf::FloatRect textBounds = m_mensajeText->getLocalBounds();
-            m_mensajeText->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
-            
-            sf::Vector2u winSize = window.getSize();
-            float centerX = winSize.x / 2.f;
-            float centerY = winSize.y - 150.f;
-            
-            m_mensajeText->setPosition(sf::Vector2f(centerX, centerY));
-        }
-        
-        window.draw(*m_mensajeText);
-    }
-    
-    // Resto del draw...
+    // Dibujar el contenido principal según el estado
     switch (m_gameState)
     {
     case CriminalGameState::BUSCANDO_EVIDENCIAS:
@@ -1411,6 +1370,50 @@ void CriminalCaseMinigame::draw(sf::RenderWindow &window)
     case CriminalGameState::ELECCION_FINAL:
         dibujarPantallaEleccion(window);
         break;
+    }
+    
+    // DIBUJAR MENSAJES 
+    if (m_mensajeTemp.tiempoRestante > 0 && m_mensajeText && !m_mensajeTemp.texto.empty())
+    {
+        // Guardar la vista actual
+        sf::View originalView = window.getView();
+        window.setView(window.getDefaultView());
+        
+        sf::Vector2u winSize = window.getSize();
+        float centerX = winSize.x / 2.f;
+        
+        sf::FloatRect textBounds = m_mensajeText->getLocalBounds();
+        
+        if (m_mensajeErrorActivo)
+        {
+            // Mensaje de error centrado en pantalla con fondo
+            float centerY = winSize.y / 2.f;
+            
+            sf::RectangleShape fondoMsg;
+            fondoMsg.setSize(sf::Vector2f(textBounds.size.x + 50, textBounds.size.y + 30));
+            fondoMsg.setFillColor(sf::Color(0, 0, 0, 220));
+            fondoMsg.setOutlineColor(m_mensajeText->getFillColor());
+            fondoMsg.setOutlineThickness(2.f);
+            
+            fondoMsg.setOrigin(sf::Vector2f(fondoMsg.getSize().x / 2.f, fondoMsg.getSize().y / 2.f));
+            fondoMsg.setPosition(sf::Vector2f(centerX, centerY));
+            window.draw(fondoMsg);
+            
+            m_mensajeText->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
+            m_mensajeText->setPosition(sf::Vector2f(centerX, centerY));
+        }
+        else
+        {
+            float centerY = static_cast<float>(winSize.y) - 150.f;
+            
+            m_mensajeText->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
+            m_mensajeText->setPosition(sf::Vector2f(centerX, centerY));
+        }
+        
+        window.draw(*m_mensajeText);
+        
+        // Restaurar la vista original
+        window.setView(originalView);
     }
 }
 
