@@ -26,7 +26,6 @@ public:
     
     int getBebidasServidas() const { return m_bebidasServidas; }
     int getErrores() const { return m_errores; }
-    bool isGameOver() const { return m_errores >= m_maxErrores; }
 
 private:
     bool m_isActive = false;
@@ -39,7 +38,6 @@ private:
     // Progreso
     int m_bebidasServidas = 0;
     int m_errores = 0;
-    int m_maxErrores = 3;
     
     // Colores
     enum class ColorBebida {
@@ -79,7 +77,7 @@ private:
     };
     std::vector<Botella> m_botellas;
     
-    // Robot (texto por ahora)
+    // Robot
     std::unique_ptr<sf::Text> m_textoRobot;
     std::unique_ptr<sf::Text> m_textoPedido;
     std::unique_ptr<sf::Text> m_textoInstrucciones;
