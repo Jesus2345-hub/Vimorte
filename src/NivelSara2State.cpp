@@ -6,9 +6,15 @@
 #include <cmath>
 #include <algorithm>
 
+
+// CONSTRUCTOR
+
 NivelSara2State::NivelSara2State(sf::RenderWindow *window, Game *game)
     : State(window, game),
       m_background(nullptr),
+      m_casoResuelto(false),
+      m_nivelCompletado(false),
+      m_setActualCaso(-1),
       m_textoInteraccion(nullptr),
       m_mostrarPuertaSalida(true),
       m_cercaPuertaSalida(false),
@@ -16,7 +22,9 @@ NivelSara2State::NivelSara2State(sf::RenderWindow *window, Game *game)
       m_mostrarTutorial(false),
       m_mostrarTutorialPorTecla(false),
       m_msjActual(),
-      m_fontLoaded(false)
+      m_fontLoaded(false),
+      m_tiempoFlotante(0.0f) ,
+      m_mensajeFlotante(nullptr)
 {
     m_cercaBloqueInteractivo = false;
     m_mensajeEmergenteActivo = false;
@@ -67,13 +75,14 @@ NivelSara2State::NivelSara2State(sf::RenderWindow *window, Game *game)
         sf::Vector2f(fixedWidth, fixedHeight));
     m_lastWindowSize = windowSize;
 
-    // ========== ÁREAS DE INTERACCIÓN ==========
+    // Áreas de interacción
     m_puertaSalidaArea = sf::FloatRect(sf::Vector2f(1550.f, 1350.f), sf::Vector2f(120.f, 180.f));
 
     configurarColisiones();
     configurarMinijuegoCriminal();
     configurarBloquesInteractivos();
-    // ========== CARGA DE FUENTE ==========
+    
+    // Carga de fuente
     m_fontLoaded = m_font.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf");
     if (!m_fontLoaded)
     {
@@ -97,6 +106,16 @@ NivelSara2State::NivelSara2State(sf::RenderWindow *window, Game *game)
         m_textoMensaje->setOutlineColor(sf::Color::Black); 
         m_textoMensaje->setOutlineThickness(2.0f);
         m_textoMensaje->setStyle(sf::Text::Bold);
+        
+        
+        // INICIALIZAR MENSAJE FLOTANTE
+        
+        m_mensajeFlotante = std::make_unique<sf::Text>(m_font);
+        m_mensajeFlotante->setCharacterSize(24);
+        m_mensajeFlotante->setFillColor(sf::Color::Red);
+        m_mensajeFlotante->setOutlineColor(sf::Color::Black);
+        m_mensajeFlotante->setOutlineThickness(2.5f);
+        m_mensajeFlotante->setStyle(sf::Text::Bold);
     }
     else
     {
@@ -104,7 +123,7 @@ NivelSara2State::NivelSara2State(sf::RenderWindow *window, Game *game)
         m_textoMensaje = nullptr;
     }
 
-    // ========== GUARDADO AUTOMÁTICO ==========
+    // Guardado automático
     if (game->tienePartidaActiva())
     {
         game->getSaveManager().setNivelActual(5, 1);
@@ -114,7 +133,6 @@ NivelSara2State::NivelSara2State(sf::RenderWindow *window, Game *game)
 
     std::cout << "NivelSara2State inicializado correctamente" << std::endl;
     game->setIsInLevel(true);
-    // ===== ACTIVAR DEBUG DE COORDENADAS SIEMPRE =====
     CoordenadasDebug::getInstance().setVisible(true);
 
     m_criminalMinigame.setOnCompleteCallback([this](bool exito) {
@@ -135,13 +153,32 @@ NivelSara2State::NivelSara2State(sf::RenderWindow *window, Game *game)
     });
 }
 
+
+// MOSTRAR MENSAJE FLOTANTE
+
+void NivelSara2State::mostrarMensajeFlotante(const std::string& texto, float duracion, sf::Color color)
+{
+    if (!m_fontLoaded) return;
+    
+    m_mensajeFlotante->setString(texto);
+    m_mensajeFlotante->setFillColor(color);
+    
+    // Centrar el texto
+    sf::FloatRect bounds = m_mensajeFlotante->getLocalBounds();
+    m_mensajeFlotante->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
+    
+    m_tiempoFlotante = duracion;
+    m_clockFlotante.restart();
+    
+    std::cout << "MENSAJE FLOTANTE: " << texto << std::endl;
+}
+
+
+// REAJUSTAR MINIJUEGO (MANTENIENDO ESTADO)
+
 void NivelSara2State::reajustarMinijuegoCriminalManteniendoEstado()
 {
     if (!m_criminalMinigame.isActive()) return;
-    
-    // Guardar estado actual
-    bool wasActive = m_criminalMinigame.isActive();
-    bool wasCompleted = m_criminalGameCompleted;
     
     sf::Vector2u windowSize = window->getSize();
     float minijuegoW = windowSize.x * 0.85f;
@@ -152,9 +189,11 @@ void NivelSara2State::reajustarMinijuegoCriminalManteniendoEstado()
     m_criminalMinigame.setSize(sf::Vector2f(minijuegoW, minijuegoH));
     m_criminalMinigame.setPosition(sf::Vector2f(minijuegoX, minijuegoY));
     
-    // Recargar fondo
     m_criminalMinigame.cargarFondoOnly("assets/images/niveles/nivel_sara2/criminalCase.png");
 }
+
+
+// CONFIGURAR BLOQUES INTERACTIVOS
 
 void NivelSara2State::configurarBloquesInteractivos()
 {
@@ -162,28 +201,112 @@ void NivelSara2State::configurarBloquesInteractivos()
     
     m_bloquesInteractivos.push_back({
         sf::FloatRect(sf::Vector2f(280.f, 904.f), sf::Vector2f(100.f, 100.f)),
-        "Andrea Tiene horas buscando sus joyas\n mas preciosas.\nHa perdido toda esperanza....\n encuentralos y debajo de los asiento"
+        "Andrea esta desesperada.\nSus joyas mas preciosas fueron robadas...\nAndrea : Ayudame a encontrar al culpable.\n\n[Presiona R para entregar los objetos si has resuelto el caso]"
     });
-    // Agrega mas si es necesario
 }
+
+
+// MANEJAR EVENTOS
 
 void NivelSara2State::handleEvent(const sf::Event &event)
 {
-    
-    // ===== PRIORIDAD: SI HAY MENSAJE EMERGENTE, ESCAPE LO CIERRA =====
+    // Prioridad: si hay mensaje emergente
     if (m_mensajeEmergenteActivo) {
         if (const auto *keyPressed = event.getIf<sf::Event::KeyPressed>()) {
+            
+            // ESC: Cerrar mensaje
             if (keyPressed->code == sf::Keyboard::Key::Escape) {
                 m_mensajeEmergenteActivo = false;
                 m_bloqueActualIndex = -1;
-                std::cout << "Mensaje emergente cerrado con Escape" << std::endl;
-                return;  // No procesar más eventos
+                return;
+            }
+            
+            // Tecla R: entregar objetos
+            if (keyPressed->code == sf::Keyboard::Key::R && !m_nivelCompletado) {
+                
+                if (m_criminalGameCompleted) {
+                    
+                    Inventory* inv = m_player.getInventory();
+                    bool tieneTodosLosObjetos = true;
+                    std::vector<std::string> objetosFaltantes;
+                    
+                    int casoIndex = m_bloqueActualIndex;
+                    
+                    if (casoIndex >= 0 && casoIndex < (int)m_todosLosObjetos.size()) {
+                        for (const auto& objRequerido : m_todosLosObjetos[casoIndex]) {
+                            bool encontrado = false;
+                            if (inv) {
+                                for (int i = 0; i < 20; i++) {
+                                    Item* item = inv->getItem(i);
+                                    if (item && item->name == objRequerido.nombre) {
+                                        encontrado = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (!encontrado) {
+                                tieneTodosLosObjetos = false;
+                                objetosFaltantes.push_back(objRequerido.nombre);
+                            }
+                        }
+                    } else {
+                        for (const auto& objRequerido : m_objetosCriminal) {
+                            bool encontrado = false;
+                            if (inv) {
+                                for (int i = 0; i < 20; i++) {
+                                    Item* item = inv->getItem(i);
+                                    if (item && item->name == objRequerido.nombre) {
+                                        encontrado = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (!encontrado) {
+                                tieneTodosLosObjetos = false;
+                                objetosFaltantes.push_back(objRequerido.nombre);
+                            }
+                        }
+                    }
+                    
+                    if (tieneTodosLosObjetos) {
+                        // Éxito
+                        m_casoResuelto = true;
+                        m_nivelCompletado = true;
+                       
+                        m_bloquesInteractivos[m_bloqueActualIndex].mensaje = 
+                            "¡GRACIAS! Has recuperado todas mis joyas.\n"
+                            "Eres un heroe...\n\n"
+                            "Ahora dirígete al ASCENSOR (puerta verde)\n"
+                            "y presiona E para avanzar al siguiente nivel.";
+                        
+                        std::cout << "¡OBJETOS ENTREGADOS CORRECTAMENTE! Nivel completado." << std::endl;
+                    } else {
+                        
+                        // ERROR: USAR MENSAJE FLOTANTE EN LUGAR DEL SISTEMA DE ERROR
+                        
+                        std::string mensajeError = "¡Te faltan joyas!\n";
+                        for (const auto& obj : objetosFaltantes) {
+                            mensajeError += "• " + obj + "\n";
+                        }
+                        mensajeError += "\nSigue buscando en la escena del crimen.";
+                        
+                        // Cerrar el diálogo actual y mostrar mensaje flotante
+                        m_mensajeEmergenteActivo = false;
+                        mostrarMensajeFlotante(mensajeError, 4.0f, sf::Color::Red);
+                    }
+                       
+                } else {
+                    // Caso no completado
+                    m_mensajeEmergenteActivo = false;  // ← Cierra el diálogo de Andrea
+                    mostrarMensajeFlotante("Aun no has resuelto el caso.\nInvestiga la escena del crimen y encuentra\ntodas las pistas y al culpable.", 3.0f, sf::Color::Yellow);
+                    return;
+                }
             }
         }
-        return;  // No procesar nada más mientras el mensaje está activo
+        return;
     }
     
-    // ===== TECLAS GLOBALES (solo si NO hay mensaje activo) =====
+    // Teclas globales (solo si NO hay mensaje activo)
     if (const auto *keyPressed = event.getIf<sf::Event::KeyPressed>())
     {
         if (keyPressed->code == sf::Keyboard::Key::Escape)
@@ -194,7 +317,6 @@ void NivelSara2State::handleEvent(const sf::Event &event)
                 m_mostrarTutorialPorTecla = false;
                 return;
             }
-            // Si no hay mensaje, aquí NO abrimos pausa - eso se maneja en update()
         }
 
         if (keyPressed->code == sf::Keyboard::Key::M)
@@ -225,6 +347,7 @@ void NivelSara2State::handleEvent(const sf::Event &event)
     {
         inv->handleEvent(event, *window);
     }
+    
     // Manejar eventos del minijuego criminal
     if (m_criminalMinigame.isActive()) {
         m_criminalMinigame.handleEvent(event, *window);
@@ -237,21 +360,23 @@ void NivelSara2State::handleEvent(const sf::Event &event)
         return;
     }
 }
+
+
+// CONFIGURAR MINIJUEGO CRIMINAL
+
 void NivelSara2State::configurarMinijuegoCriminal()
 {
     m_criminalArea = sf::FloatRect(sf::Vector2f(800.f, 600.f), sf::Vector2f(150.f, 150.f));
     m_cercaCriminalArea = false;
     m_criminalGameCompleted = false;
     
-    // ===== LIMPIAR POOLS =====
     m_criminalMinigame.limpiarPools();
     
-    // Limpiar vectores miembro
     m_todosLosObjetos.clear();
     m_todosLosSospechosos.clear();
     m_todosLosDialogos.clear();
     
-    // ===== BLOQUE 1 (Caso de la playa) =====
+    // Bloque 1
     std::vector<ObjetoBuscar> objetosBloque1;
     objetosBloque1.emplace_back("Collar", sf::FloatRect(sf::Vector2f(560.f, 426.f), sf::Vector2f(36.f, 40.f))," ");
     objetosBloque1.emplace_back("Carta Mojada", sf::FloatRect(sf::Vector2f(191.f, 438.f), sf::Vector2f(75.f, 38.f))," ");
@@ -287,11 +412,11 @@ void NivelSara2State::configurarMinijuegoCriminal()
     dialogosBloque1.push_back(std::move(dialogoIsabella));
     
     DialogoNarrativo dialogoTestigo("Testigo", 
-        "Recuerdo que justo antes de que pasara,\nvi a alguien con una medalla peculiar.\nEra una MEDALLA ANTIGUA.\nSolo una persona en este pueblo\n tiene una igual.",
+        "Recuerdo que justo antes de que pasara,\nvi a alguien con una medalla peculiar.\nEra una MEDALLA ANTIGUA.\nSolo una persona en este pueblo\ntiene una igual.",
         "assets/images/niveles/nivel_sara2/anonimo.jpg");
     dialogosBloque1.push_back(std::move(dialogoTestigo));
     
-    // ===== BLOQUE 2 (Caso del cofre) =====
+    // Bloque 2
     std::vector<ObjetoBuscar> objetosBloque2;
     objetosBloque2.emplace_back("Camaleon", sf::FloatRect(sf::Vector2f(235.f, 400.f), sf::Vector2f(50.f, 17.f))," ");
     objetosBloque2.emplace_back("Cofre", sf::FloatRect(sf::Vector2f(753.f, 409.f), sf::Vector2f(40.f, 40.f))," ");
@@ -330,7 +455,7 @@ void NivelSara2State::configurarMinijuegoCriminal()
         "assets/images/niveles/nivel_sara2/anonimo.jpg");
     dialogosBloque2.push_back(std::move(dialogoAnonimo));
 
-    // ===== BLOQUE 3 (Caso del naufragio misterioso) =====
+    // Bloque 3
     std::vector<ObjetoBuscar> objetosBloque3;
     objetosBloque3.emplace_back("Calaveras", sf::FloatRect(sf::Vector2f(697.f, 262.f), sf::Vector2f(45.f, 48.f))," ");
     objetosBloque3.emplace_back("Canoa", sf::FloatRect(sf::Vector2f(508.f, 254.f), sf::Vector2f(75.f, 35.f))," ");
@@ -369,7 +494,7 @@ void NivelSara2State::configurarMinijuegoCriminal()
         "assets/images/niveles/nivel_sara2/anonimo.jpg");
     dialogosBloque3.push_back(std::move(dialogoTestigo2));
 
-    // ===== GUARDAR EN VECTORES MIEMBRO PARA REUSAR =====
+    // Guardar en vectores miembro
     m_todosLosObjetos.push_back(objetosBloque1);
     m_todosLosObjetos.push_back(objetosBloque2);
     m_todosLosObjetos.push_back(objetosBloque3);
@@ -382,7 +507,7 @@ void NivelSara2State::configurarMinijuegoCriminal()
     m_todosLosDialogos.push_back(dialogosBloque2);
     m_todosLosDialogos.push_back(dialogosBloque3);
     
-    // ===== AGREGAR SETS A LOS POOLS =====
+    // Agregar sets a los pools
     for (const auto& objSet : m_todosLosObjetos) {
         m_criminalMinigame.agregarSetObjetos(objSet);
     }
@@ -393,15 +518,12 @@ void NivelSara2State::configurarMinijuegoCriminal()
         m_criminalMinigame.agregarSetDialogos(diaSet);
     }
     
-    // Guardar copias para reinit
     m_objetosCriminal = objetosBloque1;  
     m_sospechososCriminal = sospechososBloque1;
     
-    // Configurar el minijuego
     m_criminalMinigame.setInventory(m_player.getInventory());
     m_criminalMinigame.setBaseSize(sf::Vector2f(800.f, 600.f));
     
-    // Calcular tamaño basado en la ventana
     sf::Vector2u windowSize = window->getSize();
     float minijuegoW = windowSize.x * 0.85f;
     float minijuegoH = windowSize.y * 0.85f;
@@ -411,7 +533,6 @@ void NivelSara2State::configurarMinijuegoCriminal()
     m_criminalMinigame.setPosition(sf::Vector2f(minijuegoX, minijuegoY));
     m_criminalMinigame.setSize(sf::Vector2f(minijuegoW, minijuegoH));
     
-    // Inicializar con el fondo y datos
     m_criminalMinigame.init("assets/images/niveles/nivel_sara2/criminalCase.png", 
                             m_objetosCriminal, 
                             m_sospechososCriminal);
@@ -426,8 +547,12 @@ void NivelSara2State::configurarMinijuegoCriminal()
     });
     
     m_criminalMinigame.cargarFondoOnly("assets/images/niveles/nivel_sara2/criminalCase.png");
-    m_criminalMinigame.generarNuevoCaso();  
+    m_criminalMinigame.generarNuevoCaso(); 
+    m_setActualCaso = 0;  
 }
+
+
+// REAJUSTAR MINIJUEGO CRIMINAL
 
 void NivelSara2State::reajustarMinijuegoCriminal()
 {
@@ -442,11 +567,13 @@ void NivelSara2State::reajustarMinijuegoCriminal()
     m_criminalMinigame.setSize(sf::Vector2f(minijuegoW, minijuegoH));
     m_criminalMinigame.setPosition(sf::Vector2f(minijuegoX, minijuegoY));
     
-    // Reinicializar con los objetos guardados
     m_criminalMinigame.init("assets/images/niveles/nivel_sara2/criminalCase.png", 
                             m_objetosCriminal, m_sospechososCriminal);
     m_criminalMinigame.setDebugMode(true);
 }
+
+
+// VERIFICAR ENTRADA CENTINELA
 void NivelSara2State::verificarEntradaCentinela()
 {
     LevelNode *currentNode = game->getLevelTree().getCurrentNode();
@@ -455,6 +582,9 @@ void NivelSara2State::verificarEntradaCentinela()
         // Lógica para centinela
     }
 }
+
+
+// VERIFICAR SALIDA DEL NIVEL
 
 void NivelSara2State::verificarSalidaNivel()
 {
@@ -468,8 +598,16 @@ void NivelSara2State::verificarSalidaNivel()
             if (!ePresionado)
             {
                 ePresionado = true;
-                std::cout << "Saliendo de NivelSara2..." << std::endl;
-                game->avanzarNivel();
+                
+                if (m_nivelCompletado)
+                {
+                    std::cout << "Nivel completado! Saliendo de NivelSara2..." << std::endl;
+                    game->avanzarNivel();
+                }
+                else
+                {
+                    mostrarMensajeFlotante("Debes resolver el caso criminal y\nentregar los objetos a Andrea primero.\nHabla con Andrea presionando R", 4.0f, sf::Color::Yellow);
+                }
             }
         }
         else
@@ -479,8 +617,16 @@ void NivelSara2State::verificarSalidaNivel()
     }
 }
 
+
+// UPDATE
+
 void NivelSara2State::update(float dt)
 {
+    // Actualizar temporizador del mensaje flotante
+    if (m_tiempoFlotante > 0.0f) {
+        m_tiempoFlotante -= dt;
+    }
+    
     static sf::Vector2u lastWindowSize = window->getSize();
     sf::Vector2u currentWindowSize = window->getSize();
 
@@ -492,25 +638,23 @@ void NivelSara2State::update(float dt)
         float minijuegoX = (currentWindowSize.x - minijuegoW) / 2.f;
         float minijuegoY = (currentWindowSize.y - minijuegoH) / 2.f;
         
-        // Siempre actualizar posición y tamaño para cualquier estado
         m_criminalMinigame.setPosition(sf::Vector2f(minijuegoX, minijuegoY));
         m_criminalMinigame.setSize(sf::Vector2f(minijuegoW, minijuegoH));
         
         m_criminalMinigame.cargarFondoOnly("assets/images/niveles/nivel_sara2/criminalCase.png");
         
-        // Forzar reescalado de áreas si el minijuego está activo
         if (m_criminalMinigame.isActive()) 
         {
-
             std::cout << "Minijuego activo - reescalado aplicado" << std::endl;
         }
     }
-
-    // ===== SI HAY MENSAJE EMERGENTE, NO ACTUALIZAR MOVIMIENTO =====
+    
+    // Si hay mensaje emergente, no actualizar movimiento
     if (m_mensajeEmergenteActivo)
     {
         return;
     }
+    
     if (m_textoMensaje && m_msjActual.tiempoRestante > 0.0f)
     {
         m_msjActual.tiempoRestante -= dt;
@@ -522,7 +666,7 @@ void NivelSara2State::update(float dt)
 
     sf::Vector2f posAnterior = m_player.getPosition();
 
-    // ========== DETECCIÓN DE BLOQUES INTERACTIVOS ==========
+    // Detección de bloques interactivos
     m_cercaBloqueInteractivo = false;
     int bloqueIndex = -1;
 
@@ -533,62 +677,64 @@ void NivelSara2State::update(float dt)
             break;
         }
     }
-    // ========== DETECCIÓN DE ÁREA DEL MINIJUEGO CRIMINAL ==========
+    
+    // Detección de área del minijuego criminal
     m_cercaCriminalArea = m_player.getHurtbox().findIntersection(m_criminalArea).has_value();
 
     static bool cCriminalPresionado = false;
     if (m_cercaCriminalArea && !m_criminalGameCompleted && !m_criminalMinigame.isActive() 
     && !m_mensajeEmergenteActivo) {
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R)) {
-        if (!cCriminalPresionado) {
-            cCriminalPresionado = true;
-            
-            // Limpiar y volver a agregar los sets desde los vectores miembro
-            m_criminalMinigame.limpiarPools();
-            
-            for (const auto& objSet : m_todosLosObjetos) {
-                m_criminalMinigame.agregarSetObjetos(objSet);
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R)) {
+            if (!cCriminalPresionado) {
+                cCriminalPresionado = true;
+                
+                m_criminalMinigame.limpiarPools();
+                
+                for (const auto& objSet : m_todosLosObjetos) {
+                    m_criminalMinigame.agregarSetObjetos(objSet);
+                }
+                for (const auto& sosSet : m_todosLosSospechosos) {
+                    m_criminalMinigame.agregarSetSospechosos(sosSet);
+                }
+                for (const auto& diaSet : m_todosLosDialogos) {
+                    m_criminalMinigame.agregarSetDialogos(diaSet);
+                }
+                
+                m_criminalMinigame.generarNuevoCaso();
+                
+                sf::Vector2u winSize = window->getSize();
+                float minijuegoW = winSize.x * 0.85f;
+                float minijuegoH = winSize.y * 0.85f;
+                float minijuegoX = (winSize.x - minijuegoW) / 2.f;
+                float minijuegoY = (winSize.y - minijuegoH) / 2.f;
+                
+                m_criminalMinigame.setPosition(sf::Vector2f(minijuegoX, minijuegoY));
+                m_criminalMinigame.setSize(sf::Vector2f(minijuegoW, minijuegoH));
+                m_criminalMinigame.cargarFondoOnly("assets/images/niveles/nivel_sara2/criminalCase.png");
+                
+                m_criminalMinigame.activate();
+                std::cout << "Minijuego activado con nuevo caso" << std::endl;
             }
-            for (const auto& sosSet : m_todosLosSospechosos) {
-                m_criminalMinigame.agregarSetSospechosos(sosSet);
-            }
-            for (const auto& diaSet : m_todosLosDialogos) {
-                m_criminalMinigame.agregarSetDialogos(diaSet);
-            }
-            
-            m_criminalMinigame.generarNuevoCaso();
-            
-            sf::Vector2u winSize = window->getSize();
-            float minijuegoW = winSize.x * 0.85f;
-            float minijuegoH = winSize.y * 0.85f;
-            float minijuegoX = (winSize.x - minijuegoW) / 2.f;
-            float minijuegoY = (winSize.y - minijuegoH) / 2.f;
-            
-            m_criminalMinigame.setPosition(sf::Vector2f(minijuegoX, minijuegoY));
-            m_criminalMinigame.setSize(sf::Vector2f(minijuegoW, minijuegoH));
-            m_criminalMinigame.cargarFondoOnly("assets/images/niveles/nivel_sara2/criminalCase.png");
-            
-            m_criminalMinigame.activate();
-            std::cout << "Minijuego activado con nuevo caso" << std::endl;
+        } else {
+            cCriminalPresionado = false;
         }
-    } else {
-        cCriminalPresionado = false;
     }
-}
+    
     // Manejar minijuego criminal activo
     if (m_criminalMinigame.isActive()) {
         m_criminalMinigame.update(dt);
-        return;  // No mover al jugador mientras el minijuego está activo
+        return;
     }
-    // Detectar tecla R para mostrar mensaje (solo si NO hay mensaje activo)
+    
+    // Interacción con Andrea (abrir mensaje)
     static bool rPresionado = false;
-    if (m_cercaBloqueInteractivo && bloqueIndex != -1 && !m_mensajeEmergenteActivo) {
+    if (m_cercaBloqueInteractivo && bloqueIndex != -1 && !m_mensajeEmergenteActivo && !m_nivelCompletado) {
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R)) {
             if (!rPresionado) {
                 rPresionado = true;
                 m_mensajeEmergenteActivo = true;
                 m_bloqueActualIndex = bloqueIndex;
-                std::cout << "Mostrando mensaje del bloque " << bloqueIndex << std::endl;
+                std::cout << "Abriendo diálogo - Bloque index: " << bloqueIndex << std::endl;
             }
         } else {
             rPresionado = false;
@@ -597,7 +743,7 @@ void NivelSara2State::update(float dt)
         rPresionado = false;
     }
 
-    // ========== MOVIMIENTO (solo si no hay mensaje activo) ==========
+    // Movimiento
     Inventory *inv = m_player.getInventory();
     if (!inv || !inv->isOpen())
     {
@@ -626,7 +772,7 @@ void NivelSara2State::update(float dt)
 
     m_player.update(dt);
 
-    // ========== COLISIONES ==========
+    // Colisiones
     for (const auto &obj : m_mapaFisico)
     {
         if (m_player.getHurtbox().findIntersection(obj.getBounds()).has_value())
@@ -635,10 +781,10 @@ void NivelSara2State::update(float dt)
             break;
         }
     }
-    // ===== ACTUALIZAR COORDENADAS DEBUG =====
+    
     CoordenadasDebug::getInstance().actualizar(window, m_camera, m_player.getPosition());
     
-    // ========== CÁMARA ==========
+    // Cámara
     sf::Vector2f playerPos = m_player.getPosition();
     sf::Vector2f cameraPos = playerPos;
 
@@ -674,7 +820,7 @@ void NivelSara2State::update(float dt)
     verificarSalidaNivel();
     verificarEntradaCentinela();
 
-    // ========== PAUSA (solo si NO hay mensaje activo) ==========
+    // Pausa
     if (!m_mostrarTutorial && !m_mostrarTutorialPorTecla && !m_mensajeEmergenteActivo)
     {
         static bool escapeProcesado_ = false;
@@ -697,12 +843,15 @@ void NivelSara2State::update(float dt)
         m_escapeConsumed = false;
     }
 }
+
+
+// DRAW
+
 void NivelSara2State::draw()
 {
     if (!window)
         return;
 
-    // Declarar winW y winH al inicio (para que estén disponibles en toda la función)
     float winW = static_cast<float>(window->getSize().x);
     float winH = static_cast<float>(window->getSize().y);
 
@@ -757,54 +906,175 @@ void NivelSara2State::draw()
 
     window->setView(window->getDefaultView());
 
-    // ===== DIBUJAR COORDENADAS DEBUG =====
     CoordenadasDebug::getInstance().dibujar(*window);
 
-    // ===== MENSAJE EMERGENTE (encima de todo) =====
+    // Mensaje emergente (diálogo de Andrea)
     if (m_mensajeEmergenteActivo && m_bloqueActualIndex >= 0 && m_bloqueActualIndex < (int)m_bloquesInteractivos.size())
     {
-        // Fondo semitransparente
-        sf::RectangleShape overlay(sf::Vector2f(window->getSize().x, window->getSize().y));
+        sf::Vector2u winSize = window->getSize();
+        float winW2 = static_cast<float>(winSize.x);
+        float winH2 = static_cast<float>(winSize.y);
+        
+        sf::RectangleShape overlay(sf::Vector2f(winW2, winH2));
         overlay.setFillColor(sf::Color(0, 0, 0, 200));
         window->draw(overlay);
         
         if (m_fontLoaded)
         {
-            // Cuadro de diálogo
-            sf::RectangleShape dialogBox(sf::Vector2f(600.f, 300.f));
-            dialogBox.setFillColor(sf::Color(30, 30, 30, 240));
+            float dialogWidth = 800.f;
+            float dialogHeight = 520.f;
+            float dialogX = winW2 / 2.f - dialogWidth / 2.f;
+            float dialogY = winH2 / 2.f - dialogHeight / 2.f;
+            
+            sf::RectangleShape shadow(sf::Vector2f(dialogWidth + 8.f, dialogHeight + 8.f));
+            shadow.setFillColor(sf::Color(0, 0, 0, 150));
+            shadow.setPosition(sf::Vector2f(dialogX + 4.f, dialogY + 4.f));
+            window->draw(shadow);
+            
+            sf::RectangleShape dialogBox(sf::Vector2f(dialogWidth, dialogHeight));
+            dialogBox.setFillColor(sf::Color(25, 25, 35, 245));
             dialogBox.setOutlineThickness(3.f);
-            dialogBox.setOutlineColor(sf::Color::White);
-            dialogBox.setOrigin(sf::Vector2f(300.f, 150.f));
-            dialogBox.setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y / 2.f));
+            
+            if (m_nivelCompletado)
+                dialogBox.setOutlineColor(sf::Color(100, 255, 100, 255));
+            else if (m_criminalGameCompleted)
+                dialogBox.setOutlineColor(sf::Color(255, 215, 0, 255));
+            else
+                dialogBox.setOutlineColor(sf::Color(150, 150, 200, 255));
+                
+            dialogBox.setPosition(sf::Vector2f(dialogX, dialogY));
             window->draw(dialogBox);
             
-            // Texto del mensaje
+            sf::RectangleShape topBar(sf::Vector2f(dialogWidth, 50.f));
+            
+            if (m_nivelCompletado)
+                topBar.setFillColor(sf::Color(30, 80, 30, 220));
+            else if (m_criminalGameCompleted)
+                topBar.setFillColor(sf::Color(80, 70, 30, 220));
+            else
+                topBar.setFillColor(sf::Color(50, 40, 60, 220));
+                
+            topBar.setPosition(sf::Vector2f(dialogX, dialogY));
+            window->draw(topBar);
+            
+            sf::RectangleShape accentLine(sf::Vector2f(dialogWidth - 40.f, 2.f));
+            
+            if (m_nivelCompletado)
+                accentLine.setFillColor(sf::Color(100, 255, 100, 255));
+            else if (m_criminalGameCompleted)
+                accentLine.setFillColor(sf::Color(255, 215, 0, 255));
+            else
+                accentLine.setFillColor(sf::Color(200, 150, 100, 255));
+                
+            accentLine.setPosition(sf::Vector2f(dialogX + 20.f, dialogY + 48.f));
+            window->draw(accentLine);
+            
+            sf::Text tituloText(m_font);
+            
+            if (m_nivelCompletado)
+                tituloText.setString("0 ANDREA o");
+            else if (m_criminalGameCompleted)
+                tituloText.setString("+ ANDREA +");
+            else
+                tituloText.setString("- ANDREA -");
+                
+            tituloText.setCharacterSize(24);
+            tituloText.setStyle(sf::Text::Bold);
+            
+            if (m_nivelCompletado)
+                tituloText.setFillColor(sf::Color(100, 255, 100, 255));
+            else if (m_criminalGameCompleted)
+                tituloText.setFillColor(sf::Color(255, 215, 0, 255));
+            else
+                tituloText.setFillColor(sf::Color(255, 220, 150, 255));
+                
+            sf::FloatRect tituloBounds = tituloText.getLocalBounds();
+            tituloText.setOrigin(sf::Vector2f(tituloBounds.size.x / 2.f, tituloBounds.size.y / 2.f));
+            tituloText.setPosition(sf::Vector2f(winW2 / 2.f, dialogY + 25.f));
+            window->draw(tituloText);
+            
             sf::Text mensajeText(m_font);
-            mensajeText.setString(m_bloquesInteractivos[m_bloqueActualIndex].mensaje);
-            mensajeText.setCharacterSize(20);
-            mensajeText.setFillColor(sf::Color::White);
-            mensajeText.setOrigin(sf::Vector2f(
-                mensajeText.getLocalBounds().size.x / 2.f,
-                mensajeText.getLocalBounds().size.y / 2.f
-            ));
-            mensajeText.setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y / 2.f - 30.f));
+
+            std::string mensajeCompleto;
+            if (m_bloqueActualIndex >= 0 && m_bloqueActualIndex < (int)m_bloquesInteractivos.size()) {
+                mensajeCompleto = m_bloquesInteractivos[m_bloqueActualIndex].mensaje;
+            }
+
+            mensajeText.setString(mensajeCompleto);
+            mensajeText.setCharacterSize(12);
+
+            if (m_nivelCompletado)
+                mensajeText.setFillColor(sf::Color(150, 255, 150, 255));
+            else
+                mensajeText.setFillColor(sf::Color(240, 240, 255, 255));
+
+            mensajeText.setOutlineColor(sf::Color(0, 0, 0, 150));
+            mensajeText.setOutlineThickness(1.5f);
+
+            mensajeText.setOrigin(sf::Vector2f(0.f, 0.f));
+
+            float textStartX = dialogX + 30.f;
+            float textStartY = dialogY + 80.f;
+
+            mensajeText.setPosition(sf::Vector2f(textStartX, textStartY));
             window->draw(mensajeText);
             
-            // Texto de instrucción
+            sf::RectangleShape instruccionPanel(sf::Vector2f(dialogWidth - 40.f, 65.f));
+            instruccionPanel.setFillColor(sf::Color(15, 15, 25, 200));
+            instruccionPanel.setOutlineThickness(1.f);
+            instruccionPanel.setOutlineColor(sf::Color(100, 100, 120, 100));
+            instruccionPanel.setPosition(sf::Vector2f(dialogX + 20.f, dialogY + dialogHeight - 85.f));
+            window->draw(instruccionPanel);
+            
             sf::Text instruccionText(m_font);
-            instruccionText.setString("[ESC] Cerrar");
             instruccionText.setCharacterSize(16);
-            instruccionText.setFillColor(sf::Color(200, 200, 200));
-            instruccionText.setOrigin(sf::Vector2f(
-                instruccionText.getLocalBounds().size.x / 2.f,
-                instruccionText.getLocalBounds().size.y / 2.f
-            ));
-            instruccionText.setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y / 2.f + 80.f));
+            instruccionText.setOutlineThickness(0.5f);
+            instruccionText.setOutlineColor(sf::Color::Black);
+            
+            if (m_nivelCompletado)
+            {
+                instruccionText.setString("[ ESC ] Cerrar    →    Ve al ascensor y presiona [ E ]");
+                instruccionText.setFillColor(sf::Color(100, 255, 100, 255));
+            }
+            else if (m_criminalGameCompleted)
+            {
+                instruccionText.setString("[ R ] Entregar objetos a Andrea     |     [ ESC ] Cerrar");
+                instruccionText.setFillColor(sf::Color(255, 215, 0, 255));
+            }
+            else
+            {
+                instruccionText.setString("[ ESC ] Cerrar     |     Resuelve el caso criminal primero");
+                instruccionText.setFillColor(sf::Color(200, 150, 100, 255));
+            }
+            
+            sf::FloatRect instrBounds = instruccionText.getLocalBounds();
+            instruccionText.setOrigin(sf::Vector2f(instrBounds.size.x / 2.f, instrBounds.size.y / 2.f));
+            instruccionText.setPosition(sf::Vector2f(winW2 / 2.f, dialogY + dialogHeight - 52.f));
             window->draw(instruccionText);
+            
+            sf::CircleShape cornerTL(6.f, 4);
+            cornerTL.setFillColor(sf::Color(200, 150, 100, 180));
+            cornerTL.setPosition(sf::Vector2f(dialogX + 3.f, dialogY + 3.f));
+            window->draw(cornerTL);
+            
+            sf::CircleShape cornerTR(6.f, 4);
+            cornerTR.setFillColor(sf::Color(200, 150, 100, 180));
+            cornerTR.setPosition(sf::Vector2f(dialogX + dialogWidth - 9.f, dialogY + 3.f));
+            window->draw(cornerTR);
+            
+            sf::CircleShape cornerBL(6.f, 4);
+            cornerBL.setFillColor(sf::Color(200, 150, 100, 180));
+            cornerBL.setPosition(sf::Vector2f(dialogX + 3.f, dialogY + dialogHeight - 9.f));
+            window->draw(cornerBL);
+            
+            sf::CircleShape cornerBR(6.f, 4);
+            cornerBR.setFillColor(sf::Color(200, 150, 100, 180));
+            cornerBR.setPosition(sf::Vector2f(dialogX + dialogWidth - 9.f, dialogY + dialogHeight - 9.f));
+            window->draw(cornerBR);
         }
     }
     
+    // Textos de interacción
     if (m_fontLoaded && m_textoInteraccion)
     {
         if (m_cercaPuertaSalida)
@@ -824,7 +1094,6 @@ void NivelSara2State::draw()
             window->draw(*m_textoInteraccion);
         }
         
-        // Texto para el minijuego criminal
         if (m_cercaCriminalArea && !m_criminalGameCompleted && !m_criminalMinigame.isActive()) {
             m_textoInteraccion->setString("Presiona R para investigar el crimen en la playa");
             sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
@@ -834,13 +1103,47 @@ void NivelSara2State::draw()
         }
     }
 
-    if (m_textoMensaje && m_msjActual.tiempoRestante > 0.0f && !m_textoMensaje->getString().isEmpty())
+    // Mensaje temporal flotante (el que estaba antes)
+    if (m_textoMensaje && m_msjActual.tiempoRestante > 0.0f && !m_textoMensaje->getString().isEmpty() && !m_mensajeEmergenteActivo)
     {
         sf::Vector2u winSize = window->getSize();
-        m_textoMensaje->setPosition(sf::Vector2f(winSize.x / 2.f, winSize.y / 3.f));
+        
+        float posX = static_cast<float>(winSize.x) * 0.5f;   
+        float posY = static_cast<float>(winSize.y) * 0.85f;  
+        
+        m_textoMensaje->setCharacterSize(14);  
+        m_textoMensaje->setOutlineThickness(1.5f);
+        
+        sf::FloatRect bounds = m_textoMensaje->getLocalBounds();
+        m_textoMensaje->setOrigin(sf::Vector2f(0.f, 0.f));
+        m_textoMensaje->setPosition(sf::Vector2f(posX - bounds.size.x / 2.f, posY));
         window->draw(*m_textoMensaje);
     }
 
+    
+    // MENSAJE FLOTANTE CENTRADO (PARA ERRORES Y AVISOS)
+    
+    if (m_tiempoFlotante > 0.0f && !m_mensajeFlotante->getString().isEmpty() && !m_mensajeEmergenteActivo)
+    {
+        sf::Vector2u winSize = window->getSize();
+        float centerX = winSize.x / 2.f;
+        float centerY = winSize.y / 2.f;
+        
+        sf::FloatRect textBounds = m_mensajeFlotante->getLocalBounds();
+        
+        sf::RectangleShape fondoRect(sf::Vector2f(textBounds.size.x + 40, textBounds.size.y + 30));
+        fondoRect.setFillColor(sf::Color(0, 0, 0, 220));
+        fondoRect.setOutlineColor(m_mensajeFlotante->getFillColor());
+        fondoRect.setOutlineThickness(2.f);
+        fondoRect.setOrigin(sf::Vector2f(fondoRect.getSize().x / 2.f, fondoRect.getSize().y / 2.f));
+        fondoRect.setPosition(sf::Vector2f(centerX, centerY));
+        window->draw(fondoRect);
+        
+        m_mensajeFlotante->setPosition(sf::Vector2f(centerX, centerY));
+        window->draw(*m_mensajeFlotante);
+    }
+
+    // Tutorial
     if (m_mostrarTutorial || m_mostrarTutorialPorTecla)
     {
         sf::RectangleShape overlay(sf::Vector2f(window->getSize().x, window->getSize().y));
@@ -871,34 +1174,31 @@ void NivelSara2State::draw()
         inv->draw(*window);
     }
     
-    // Dibujar minijuego criminal si está activo
     if (m_criminalMinigame.isActive()) {
         m_criminalMinigame.draw(*window);
     }
 }
 
+
+// CONFIGURAR COLISIONES
+
 void NivelSara2State::configurarColisiones()
 {
     m_mapaFisico.clear();
 
-    // Límites del mapa basados en el tamaño del mundo (background)
     float mapWidth = m_worldSize.x;
     float mapHeight = m_worldSize.y;
 
-    // Pared superior (borde de arriba)
     m_mapaFisico.emplace_back(0.f, 0.f, mapWidth, 250.f);
-    
-    // Pared inferior (borde de abajo)
     m_mapaFisico.emplace_back(0.f, mapHeight - 30.f, mapWidth, 30.f);
-    
-    // Pared izquierda (borde izquierdo)
     m_mapaFisico.emplace_back(0.f, 0.f, 30.f, mapHeight);
-    
-    // Pared derecha (borde derecho)
     m_mapaFisico.emplace_back(mapWidth - 30.f, 0.f, 30.f, mapHeight);
 
     std::cout << "Colisiones configuradas" << std::endl;
 }
+
+
+// JUGADOR HA MUERTO
 
 void NivelSara2State::jugadorHaMuerto()
 {
@@ -921,6 +1221,9 @@ void NivelSara2State::jugadorHaMuerto()
         game->pushState(std::make_unique<PauseState>(window, game));
     }
 }
+
+
+// MOSTRAR MENSAJE (SISTEMA ORIGINAL)
 
 void NivelSara2State::mostrarMensaje(const std::string &texto, float duracion, sf::Color color)
 {
