@@ -20,7 +20,7 @@ Nivel6State::Nivel6State(sf::RenderWindow *window, Game *game)
     m_msjActual.color = sf::Color::Yellow;
 
     m_player.loadAssets();
-    m_player.setPosition(962.f, 136.f);
+    m_player.setPosition(962.f, 261.f);
     m_player.setSpeed(300.0f);
 
     if (game->tienePartidaActiva())
@@ -57,7 +57,7 @@ Nivel6State::Nivel6State(sf::RenderWindow *window, Game *game)
     // Área de salida SOLO en la parte inferior del ascensor
     m_puertaSalidaArea = sf::FloatRect(
         sf::Vector2f(866.f, 61.f), // X, Y (parte baja del ascensor)
-        sf::Vector2f(192.f, 216.f)  // Ancho, Alto (solo 216px de altura)
+        sf::Vector2f(192.f, 216.f) // Ancho, Alto (solo 216px de altura)
     );
 
     configurarColisiones();
@@ -739,12 +739,46 @@ void Nivel6State::configurarColisiones()
 {
     m_mapaFisico.clear();
 
-    m_mapaFisico.emplace_back(-10.f, 0.f, 10.f, m_worldSize.y);
-    m_mapaFisico.emplace_back(m_worldSize.x, 0.f, 10.f, m_worldSize.y);
-    m_mapaFisico.emplace_back(0.f, -10.f, m_worldSize.x, 10.f);
-    m_mapaFisico.emplace_back(0.f, m_worldSize.y, m_worldSize.x, 10.f);
+    // ===== BORDES DEL MUNDO =====
+    m_mapaFisico.emplace_back(0.f, 0.f, 31.f, m_worldSize.y);         // Izquierda
+    m_mapaFisico.emplace_back(m_worldSize.x, 0.f, 10.f, m_worldSize.y); // Derecha
+    m_mapaFisico.emplace_back(0.f, -10.f, m_worldSize.x, 10.f);         // Arriba
+    m_mapaFisico.emplace_back(0.f, m_worldSize.y, m_worldSize.x, 10.f); // Abajo
 
-    std::cout << "Colisiones del Nivel 6 configuradas" << std::endl;
+    // ===== PARED SUPERIOR (0,0) a (1812,211) =====
+    m_mapaFisico.emplace_back(0.f, 0.f, 1812.f, 211.f);
+
+    // ===== PARED IZQUIERDA SALA ASCENSOR (653,0) a (691,347) =====
+    m_mapaFisico.emplace_back(653.f, 0.f, 38.f, 347.f);
+
+    // ===== PARED DERECHA SALA ASCENSOR (1237,0) a (1281,347) =====
+    m_mapaFisico.emplace_back(1237.f, 0.f, 44.f, 347.f);
+
+    // ===== PARED SALA ASCENSOR CON PASILLO (867,351) a (1511,443) =====
+    m_mapaFisico.emplace_back(867.f, 351.f, 644.f, 92.f);
+
+    // ===== PARED SALA ABUELA (1603,351) a (1812,441) =====
+    m_mapaFisico.emplace_back(1603.f, 351.f, 209.f, 90.f);
+
+    // ===== PARED ASCENSOR-PASILLO (573,349) a (737,439) =====
+    m_mapaFisico.emplace_back(573.f, 349.f, 164.f, 90.f);
+
+    // ===== PARED IZQUIERDA PASILLO (573,349) a (605,725) =====
+    m_mapaFisico.emplace_back(573.f, 349.f, 32.f, 376.f);
+
+    // ===== PARED PASILLO (577,575) a (1167,717) =====
+    m_mapaFisico.emplace_back(577.f, 575.f, 590.f, 142.f);
+
+    // ===== PASILLO ABAJO VERTICAL IZQUIERDA (1151,571) a (1171,773) =====
+    m_mapaFisico.emplace_back(1151.f, 571.f, 20.f, 202.f);
+
+    // ===== PASILLO ABAJO VERTICAL IZQ PARTE ABAJO (1151,835) a (1171,1016) =====
+    m_mapaFisico.emplace_back(1151.f, 835.f, 20.f, 181.f);
+
+    // ===== PARED GRANJA (1345,571) a (1811,673) =====
+    m_mapaFisico.emplace_back(1345.f, 571.f, 466.f, 102.f);
+
+    std::cout << "✅ Colisiones del Nivel 6 configuradas: " << m_mapaFisico.size() << " paredes" << std::endl;
 }
 
 void Nivel6State::jugadorHaMuerto()
