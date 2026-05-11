@@ -1,5 +1,4 @@
 #include "CriminalCaseMinigame.hpp"
-#include <iostream>
 #include <memory>
 #include <sstream>
 #include <random>
@@ -150,7 +149,7 @@ void CriminalCaseMinigame::cargarFuente()
         m_font = std::make_unique<sf::Font>();
         if (!m_font->openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf"))
         {
-            std::cerr << "Error cargando fuente" << std::endl;
+            std::cout << "Error cargando fuente" << std::endl;
             return;
         }
         m_fontLoaded = true;
@@ -204,7 +203,7 @@ void CriminalCaseMinigame::cargarFuente()
         m_tituloEleccion->setString("QUIEN ES EL CULPABLE");
 
         m_mensajeAdvertencia = std::make_unique<sf::Text>(*m_font);
-        m_mensajeAdvertencia->setCharacterSize(16);
+        m_mensajeAdvertencia->setCharacterSize(22);
         m_mensajeAdvertencia->setFillColor(sf::Color(255, 200, 100));
         m_mensajeAdvertencia->setOutlineColor(sf::Color::Black);
         m_mensajeAdvertencia->setOutlineThickness(1.0f);
@@ -231,6 +230,7 @@ void CriminalCaseMinigame::escalarAreas()
         objEscalado.nombre = m_objetosOriginales[i].nombre;
         objEscalado.descripcion = m_objetosOriginales[i].descripcion;
         objEscalado.encontrado = m_objetosOriginales[i].encontrado;
+        objEscalado.rutaImagen = m_objetosOriginales[i].rutaImagen;
         objEscalado.area = sf::FloatRect(
             sf::Vector2f(
                 m_objetosOriginales[i].area.position.x * escalaX,
@@ -272,7 +272,7 @@ void CriminalCaseMinigame::generarNuevoCasoCompleto()
 {
     if (m_poolObjetos.empty() || m_poolSospechosos.empty())
     {
-        std::cerr << "Error: No hay suficientes datos en los pools" << std::endl;
+        std::cout<< "Error: No hay suficientes datos en los pools" << std::endl;
         return;
     }
 
@@ -300,14 +300,14 @@ void CriminalCaseMinigame::generarNuevoCasoCompleto()
         !m_poolDialogos[m_setActualDialogos].empty())
     {
         m_dialogosActuales = m_poolDialogos[m_setActualDialogos];
-        std::cout << "Diálogos cargados: " << m_dialogosActuales.size() << std::endl; // DEBUG
+        std::cout << "Dialogos cargados: " << m_dialogosActuales.size() << std::endl;
     }
     else
     {
         m_dialogosActuales.clear();
-        m_dialogosActuales.emplace_back("Testigo", "Las pistas no mienten. Escucha con atención.");
-        m_dialogosActuales.emplace_back("Alguien más", "Todos tenemos algo que decir.");
-        std::cout << "Diálogos por defecto cargados" << std::endl; // DEBUG
+        m_dialogosActuales.emplace_back("Testigo", "Las pistas no mienten. Escucha con atencion.");
+        m_dialogosActuales.emplace_back("Alguien mas", "Todos tenemos algo que decir.");
+        std::cout << "Dialogos por defecto cargados" << std::endl; // DEBUG
     }
 
     // Resetear estados del juego
@@ -334,7 +334,7 @@ void CriminalCaseMinigame::actualizarFondo()
 
     if (!m_backgroundTexture->loadFromFile(m_fondoPath))
     {
-        std::cerr << "Error cargando fondo: " << m_fondoPath << std::endl;
+        std::cout<< "Error cargando fondo: " << m_fondoPath << std::endl;
         return;
     }
 
@@ -343,7 +343,7 @@ void CriminalCaseMinigame::actualizarFondo()
     // Asegurar que m_size tiene valores válidos
     if (m_size.x <= 0 || m_size.y <= 0)
     {
-        std::cerr << "WARNING: m_size inválido en actualizarFondo: " << m_size.x << "x" << m_size.y << std::endl;
+        std::cout<< "WARNING: m_size invalido en actualizarFondo: " << m_size.x << "x" << m_size.y << std::endl;
         return;
     }
 
@@ -386,7 +386,6 @@ void CriminalCaseMinigame::setSize(const sf::Vector2f &size)
         escalarAreas();
     }
     
-    // Si estamos en modo elección final, recalcular las áreas de los botones
     if (m_gameState == CriminalGameState::ELECCION_FINAL) {
         recalcularAreasBotones();
     }
@@ -459,7 +458,7 @@ void CriminalCaseMinigame::generarNuevoCaso()
 {
     if (m_poolObjetos.empty() || m_poolSospechosos.empty())
     {
-        std::cerr << "Error: No hay suficientes datos en los pools" << std::endl;
+        std::cout<< "Error: No hay suficientes datos en los pools" << std::endl;
         return;
     }
 
@@ -470,14 +469,14 @@ void CriminalCaseMinigame::generarNuevoCaso()
     m_setActualSospechosos = mismoSet;
     m_setActualDialogos = mismoSet;
 
-    // ===== COPIAR DATOS FRESCOS =====
+    //  COPIAR DATOS FRESCOS 
     m_objetosOriginales.clear();
     m_sospechososOriginales.clear();
     
     m_objetosOriginales = m_poolObjetos[m_setActualObjetos];
     m_sospechososOriginales = m_poolSospechosos[m_setActualSospechosos];
 
-    // Resetear estados (pero mantener esElCulpable)
+    // Resetear estados 
     for (auto &obj : m_objetosOriginales)
     {
         obj.encontrado = false;
@@ -485,7 +484,6 @@ void CriminalCaseMinigame::generarNuevoCaso()
     for (auto &sos : m_sospechososOriginales)
     {
         sos.acusado = false;
-        // NO tocar sos.esElCulpable
     }
 
     // Cargar diálogos
@@ -500,7 +498,6 @@ void CriminalCaseMinigame::generarNuevoCaso()
         m_dialogosActuales.emplace_back("Alguien mas", "Todos tenemos algo que decir. Escucha con atención.");
     }
 
-    // ===== ESCALAR DESPUÉS DE TENER LOS DATOS =====
     escalarAreas();
 
     // Resetear estado del juego
@@ -524,7 +521,6 @@ void CriminalCaseMinigame::activate()
 {
     if (m_completed)
     {
-        // Si está completado, resetear antes de reactivar
         resetCompletamente();
     }
 
@@ -614,9 +610,9 @@ void CriminalCaseMinigame::iniciarFaseNarrativa()
 {
     if (m_dialogosActuales.empty())
     {
-        std::cout << "ADVERTENCIA: No hay dialogos cargados, pasando directamente a elección" << std::endl;
+        std::cout << "ADVERTENCIA: No hay dialogos cargados, pasando directamente a eleccion" << std::endl;
         m_gameState = CriminalGameState::ELECCION_FINAL;
-        mostrarMensaje("Sin testimonios disponibles. Decide quién es el culpable.", 2.0f);
+        mostrarMensaje("Sin testimonios disponibles. Decide quien es el culpable.", 2.0f);
         return;
     }
 
@@ -641,7 +637,7 @@ void CriminalCaseMinigame::iniciarFaseNarrativa()
         m_position.x + (m_size.x - cuadroAncho) / 2,
         m_position.y + (m_size.y - cuadroAlto) / 2));
 
-    std::cout << "Fase narrativa iniciada - Diálogos disponibles: " << m_dialogosActuales.size() << std::endl;
+    std::cout << "Fase narrativa iniciada - Dialogos disponibles: " << m_dialogosActuales.size() << std::endl;
 }
 
 
@@ -719,7 +715,7 @@ void CriminalCaseMinigame::reiniciarCasoCompleto()
     // Re-escalar áreas
     escalarAreas();
 
-    // ===== Actualizar la UI =====
+    //  Actualizar la UI 
     updateListaTexto();
 }
 void CriminalCaseMinigame::procesarAcusacion(int sospechosoIndex)
@@ -807,14 +803,14 @@ void CriminalCaseMinigame::updateListaTexto()
 
     // TAMAÑO MÁS GRANDE: de 14-28 a 20-36
     float escalaTexto = std::min(m_size.x, m_size.y) / 800.0f;
-    int nuevoTamano = static_cast<int>(20 * escalaTexto); // AUMENTADO de 14 a 20
+    int nuevoTamano = static_cast<int>(20 * escalaTexto); 
     if (nuevoTamano < 16)
         nuevoTamano = 16; 
     if (nuevoTamano > 36)
         nuevoTamano = 36; 
 
     m_listaText->setCharacterSize(nuevoTamano);
-    m_listaText->setOutlineThickness(1.5f); // Outline más grueso para mejor legibilidad
+    m_listaText->setOutlineThickness(1.5f); 
 
     // Posición esquina superior izquierda
     float offsetX = 20.0f * escalaTexto;
@@ -856,7 +852,7 @@ void CriminalCaseMinigame::cargarFondoDialogo(DialogoNarrativo &dialogo)
         }
         else
         {
-            std::cerr << "Error cargando fondo: " << dialogo.fondoPath << std::endl;
+            std::cout<< "Error cargando fondo: " << dialogo.fondoPath << std::endl;
             dialogo.fondoCargado = false;
         }
     }
@@ -867,6 +863,7 @@ void CriminalCaseMinigame::handleEvent(const sf::Event &event, sf::RenderWindow 
     if (!m_active || m_completed)
         return;
 
+    
     if (const auto *mousePressed = event.getIf<sf::Event::MouseButtonPressed>())
     {
         if (mousePressed->button == sf::Mouse::Button::Left)
@@ -890,18 +887,7 @@ void CriminalCaseMinigame::handleEvent(const sf::Event &event, sf::RenderWindow 
                 originalCoords = localMousePos;
             }
 
-            // IMPRESIÓN DE COORDENADAS (solo en modo debug)
-            if (m_debugMode)
-            {
-                std::cout << "\n=== COORDENADAS PARA CONFIGURACIÓN ===" << std::endl;
-                std::cout << "Rectángulo: sf::FloatRect(sf::Vector2f("
-                          << originalCoords.x << "f, " << originalCoords.y << "f), ";
-                std::cout << "sf::Vector2f(30f, 30f))" << std::endl;
-                std::cout << "=======================================" << std::endl;
-                std::cout << "Copia esto: (" << originalCoords.x << ", " << originalCoords.y << ")" << std::endl;
-            }
-
-            // ===== LÓGICA PRINCIPAL SEGÚN EL ESTADO =====
+            //  LÓGICA PRINCIPAL SEGÚN EL ESTADO 
             switch (m_gameState)
             {
             case CriminalGameState::BUSCANDO_EVIDENCIAS:
@@ -913,13 +899,33 @@ void CriminalCaseMinigame::handleEvent(const sf::Event &event, sf::RenderWindow 
                         mostrarMensaje(objeto.nombre + "\n" + objeto.descripcion, 2.0f);
                         updateListaTexto();
 
-                        if (m_inventory)
-                        {
-                            Item nuevoItem;
-                            nuevoItem.name = objeto.nombre;
-                            nuevoItem.color = sf::Color(255, 215, 0);
-                            m_inventory->addItem(nuevoItem);
+                       if (m_inventory) 
+                    {
+                        std::cout << " RECOLECTANDO OBJETO " << std::endl;
+                        std::cout << "Nombre: " << objeto.nombre << std::endl;
+                        std::cout << "Ruta de imagen: " << objeto.rutaImagen << std::endl;
+                        
+                        Item nuevoItem;
+                        nuevoItem.name = objeto.nombre;
+                        nuevoItem.color = sf::Color(255, 215, 0);
+                        nuevoItem.rutaImagen = objeto.rutaImagen;
+                        
+                        if (!objeto.rutaImagen.empty()) {
+                            std::cout << "Intentando cargar: " << objeto.rutaImagen << std::endl;
+                            nuevoItem.textura = std::make_shared<sf::Texture>();
+                            if (nuevoItem.textura->loadFromFile(objeto.rutaImagen)) {
+                                nuevoItem.sprite = std::make_unique<sf::Sprite>(*nuevoItem.textura);
+                                std::cout << "IMAGEN CARGADA" << std::endl;
+                            } else {
+                                std::cout << "ERROR: No se pudo cargar " << objeto.rutaImagen << std::endl;
+                                nuevoItem.textura = nullptr;
+                            }
+                        } else {
+                            std::cout << "Ruta de imagen VACIA" << std::endl;
                         }
+                        
+                        m_inventory->addItem(nuevoItem);
+                    }
 
                         verificarCompletado();
                         break;
@@ -1024,9 +1030,8 @@ void CriminalCaseMinigame::dibujarPantallaNarrativa(sf::RenderWindow &window)
             sf::Vector2f textureSize(static_cast<float>(dialogo.fondoTexture->getSize().x),
                                      static_cast<float>(dialogo.fondoTexture->getSize().y));
 
-            // La imagen ocupará el 45% del ancho y casi toda la altura
             float anchoImagen = m_cuadroDialogo.getSize().x * 0.45f;
-            float altoImagen = m_cuadroDialogo.getSize().y - 20; // Margen pequeño
+            float altoImagen = m_cuadroDialogo.getSize().y - 20; 
 
             float scaleX = anchoImagen / textureSize.x;
             float scaleY = altoImagen / textureSize.y;
@@ -1202,10 +1207,10 @@ void CriminalCaseMinigame::dibujarPantallaEleccion(sf::RenderWindow &window)
         sf::FloatRect nameBounds = nombreText.getLocalBounds();
         nombreText.setPosition(sf::Vector2f(
             x + (botonAncho - nameBounds.size.x) / 2, 
-            y + 20 * escalaReferencia));  // Aumentado de 15 a 20
+            y + 20 * escalaReferencia)); 
         window.draw(nombreText);
 
-        // ===== LÍNEA SEPARADORA DESPUÉS DEL NOMBRE =====
+        //  LÍNEA SEPARADORA DESPUÉS DEL NOMBRE 
         sf::RectangleShape lineaSeparadora;
         lineaSeparadora.setSize(sf::Vector2f(botonAncho - 40 * escalaReferencia, 2.f * escalaReferencia));
         lineaSeparadora.setFillColor(sf::Color(200, 180, 100));
@@ -1214,7 +1219,7 @@ void CriminalCaseMinigame::dibujarPantallaEleccion(sf::RenderWindow &window)
             y + 55 * escalaReferencia));  
         window.draw(lineaSeparadora);
 
-        // ===== DESCRIPCIÓN MULTILÍNEA (más abajo) =====
+        //  DESCRIPCIÓN MULTILÍNEA (más abajo) 
         int tamanoDesc = static_cast<int>(17 * escalaReferencia);
         if (tamanoDesc < 14) tamanoDesc = 14;
         if (tamanoDesc > 26) tamanoDesc = 26;
@@ -1333,7 +1338,7 @@ void CriminalCaseMinigame::draw(sf::RenderWindow &window)
                 rect.setFillColor(sf::Color(255, 255, 0, 100));
                 rect.setOutlineThickness(2.f);
                 rect.setOutlineColor(sf::Color::Yellow);
-                window.draw(rect);
+                // window.draw(rect);
             }
         }
     }
@@ -1370,7 +1375,7 @@ void CriminalCaseMinigame::draw(sf::RenderWindow &window)
         break;
     }
     
-    // ===== MENSAJES TEMPORALES - SIN CAMBIAR LA VISTA =====
+    // MENSAJES TEMPORALES 
     if (m_mensajeTemp.tiempoRestante > 0 && m_mensajeText && !m_mensajeTemp.texto.empty())
     {
         // Obtener el tamaño de la ventana en coordenadas de pantalla

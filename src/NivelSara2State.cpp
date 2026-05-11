@@ -2,7 +2,6 @@
 #include "PauseState.hpp"
 #include "MuerteCentinelaState.hpp"
 #include "CoordenadasDebug.hpp"
-#include <iostream>
 #include <cmath>
 #include <algorithm>
 
@@ -61,7 +60,7 @@ NivelSara2State::NivelSara2State(sf::RenderWindow *window, Game *game)
     }
     else
     {
-        std::cerr << "Error: No se pudo cargar background.jpg para NivelSara2" << std::endl;
+        std::cout << "Error: No se pudo cargar background.jpg para NivelSara2" << std::endl;
         m_worldSize = sf::Vector2f(1754.f, 1587.f);
     }
 
@@ -86,7 +85,7 @@ NivelSara2State::NivelSara2State(sf::RenderWindow *window, Game *game)
     m_fontLoaded = m_font.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf");
     if (!m_fontLoaded)
     {
-        std::cerr << "ERROR en NivelSara2State: No se pudo cargar la fuente" << std::endl;
+        std::cout << "ERROR en NivelSara2State: No se pudo cargar la fuente" << std::endl;
     }
 
     if (m_fontLoaded)
@@ -247,14 +246,14 @@ void NivelSara2State::handleEvent(const sf::Event &event)
                                     if (item && !item->name.empty() && item->name == objRequerido.nombre) 
                                     {
                                         encontrado = true;
-                                        std::cout << "✓ Encontrado: " << objRequerido.nombre << std::endl;
+                                        std::cout << "o Encontrado: " << objRequerido.nombre << std::endl;
                                         break;
                                     }
                                 }
                             }
                             if (!encontrado) 
                             {
-                                std::cout << "✗ FALTA: " << objRequerido.nombre << std::endl;
+                                std::cout << "X FALTA: " << objRequerido.nombre << std::endl;
                                 tieneTodosLosObjetos = false;
                                 break;  
                             }
@@ -262,7 +261,7 @@ void NivelSara2State::handleEvent(const sf::Event &event)
                     } 
                     else 
                     {
-                        std::cerr << "ERROR: casoCompletado inválido: " << casoCompletado << std::endl;
+                        std::cout << "ERROR: casoCompletado inválido: " << casoCompletado << std::endl;
                         tieneTodosLosObjetos = false;
                     }
                     
@@ -279,7 +278,7 @@ void NivelSara2State::handleEvent(const sf::Event &event)
                                     if (item && item->name == objRequerido.nombre) 
                                     {
                                         inv->removeItem(i);
-                                        std::cout << "🗑️ Objeto entregado y eliminado: " << objRequerido.nombre << std::endl;
+                                        std::cout << "Objeto entregado y eliminado: " << objRequerido.nombre << std::endl;
                                         break;
                                     }
                                 }
@@ -385,119 +384,123 @@ void NivelSara2State::configurarMinijuegoCriminal()
     
     // Bloque 1
     std::vector<ObjetoBuscar> objetosBloque1;
-    objetosBloque1.emplace_back("Collar", sf::FloatRect(sf::Vector2f(560.f, 426.f), sf::Vector2f(36.f, 40.f))," ");
-    objetosBloque1.emplace_back("Carta Mojada", sf::FloatRect(sf::Vector2f(191.f, 438.f), sf::Vector2f(75.f, 38.f))," ");
-    objetosBloque1.emplace_back("Reloj Arena", sf::FloatRect(sf::Vector2f(665.f, 357.f), sf::Vector2f(25.f, 70.f))," ");
-    objetosBloque1.emplace_back("Medalla", sf::FloatRect(sf::Vector2f(116.f, 164.f), sf::Vector2f(20.f, 23.f))," ");
-    objetosBloque1.emplace_back("Botella", sf::FloatRect(sf::Vector2f(104.f, 359.f), sf::Vector2f(25.f, 24.f))," ");
-    objetosBloque1.emplace_back("Diario", sf::FloatRect(sf::Vector2f(524.f, 496.f), sf::Vector2f(35.f, 30.f))," ");
-    objetosBloque1.emplace_back("Anillo", sf::FloatRect(sf::Vector2f(504.f, 414.f), sf::Vector2f(21.f, 25.f))," ");
-    objetosBloque1.emplace_back("Foto", sf::FloatRect(sf::Vector2f(744.f, 240.f), sf::Vector2f(34.f, 54.f))," ");
-    objetosBloque1.emplace_back("Cuchillo", sf::FloatRect(sf::Vector2f(348.f, 370.f), sf::Vector2f(36.f, 25.f))," ");
-    objetosBloque1.emplace_back("Bolso", sf::FloatRect(sf::Vector2f(408.f, 473.f), sf::Vector2f(109.f, 80.f))," ");
-    objetosBloque1.emplace_back("Trapo Viejo", sf::FloatRect(sf::Vector2f(766.f, 455.f), sf::Vector2f(26.f, 15.f))," ");
+
+    objetosBloque1.emplace_back("Collar", sf::FloatRect(sf::Vector2f(560.f, 426.f), sf::Vector2f(36.f, 40.f)), " ", "assets/images/niveles/nivel_sara2/collar.png");
+    objetosBloque1.emplace_back("Carta Mojada", sf::FloatRect(sf::Vector2f(191.f, 438.f), sf::Vector2f(75.f, 38.f)), " ", "assets/images/niveles/nivel_sara2/cartaMojada.png");
+    objetosBloque1.emplace_back("Reloj Arena", sf::FloatRect(sf::Vector2f(665.f, 357.f), sf::Vector2f(25.f, 70.f)), " ", "assets/images/niveles/nivel_sara2/relojArena.png");  
+    objetosBloque1.emplace_back("Medalla", sf::FloatRect(sf::Vector2f(116.f, 164.f), sf::Vector2f(20.f, 23.f)), " ", "assets/images/niveles/nivel_sara2/medalla.png");
+    objetosBloque1.emplace_back("Botella", sf::FloatRect(sf::Vector2f(104.f, 359.f), sf::Vector2f(25.f, 24.f)), " ", "assets/images/niveles/nivel_sara2/botellaVidrio.png");
+    objetosBloque1.emplace_back("Diario", sf::FloatRect(sf::Vector2f(524.f, 496.f), sf::Vector2f(35.f, 30.f)), " ", "assets/images/niveles/nivel_sara2/diario.png");
+    objetosBloque1.emplace_back("Anillo", sf::FloatRect(sf::Vector2f(504.f, 414.f), sf::Vector2f(21.f, 25.f)), " ", "assets/images/niveles/nivel_sara2/anillo.png");
+    objetosBloque1.emplace_back("Foto", sf::FloatRect(sf::Vector2f(744.f, 240.f), sf::Vector2f(34.f, 54.f)), " ", "assets/images/niveles/nivel_sara2/foto.png");
+    objetosBloque1.emplace_back("Cuchillo", sf::FloatRect(sf::Vector2f(348.f, 370.f), sf::Vector2f(36.f, 25.f)), " ", "assets/images/niveles/nivel_sara2/cuchillo.png");
+    objetosBloque1.emplace_back("Bolso", sf::FloatRect(sf::Vector2f(408.f, 473.f), sf::Vector2f(109.f, 80.f)), " ", "assets/images/niveles/nivel_sara2/bolso.png"); 
+    objetosBloque1.emplace_back("Trapo Viejo", sf::FloatRect(sf::Vector2f(766.f, 455.f), sf::Vector2f(26.f, 15.f)), " ", "assets/images/niveles/nivel_sara2/trapoViejo.png");
+
     
     std::vector<Sospechoso> sospechososBloque1;
-    sospechososBloque1.emplace_back("Capitan Rodrigo", sf::FloatRect(sf::Vector2f(300.f, 650.f), sf::Vector2f(80.f, 100.f)), "El capitan del barco. Tenia acceso a todo,\npero parece honesto.", false);
-    sospechososBloque1.emplace_back("Isabella la Adivina", sf::FloatRect(sf::Vector2f(750.f, 620.f), sf::Vector2f(70.f, 90.f)), "Siempre supo que algo pasaria", true);
-    sospechososBloque1.emplace_back("Don Julio el Pescador", sf::FloatRect(sf::Vector2f(550.f, 680.f), sf::Vector2f(80.f, 90.f)), "Vio todo desde su bote,\npero jura que no fue el.", false);
+    sospechososBloque1.emplace_back("Capitan Rodrigo", sf::FloatRect(sf::Vector2f(300.f, 650.f), sf::Vector2f(80.f, 100.f)), "Capitan del barco. Acceso a todo,\npero jamas ha fallado a su tripulacion.\nPor que arriesgaria su reputacion?", false);
+    sospechososBloque1.emplace_back("Isabella la Adivina", sf::FloatRect(sf::Vector2f(750.f, 620.f), sf::Vector2f(70.f, 90.f)), "Sintio que algo malo pasaria.\nPero... si realmente lo vio todo,\npor que no lo impidio?", false);
+    sospechososBloque1.emplace_back("Don Julio el Pescador", sf::FloatRect(sf::Vector2f(550.f, 680.f), sf::Vector2f(80.f, 90.f)), "Pescador que siempre esta en el muelle.\nDice que vio todo desde su bote...\nDemasiado cerca del lugar del robo.\nY siempre fue el primero en llegar\na la escena.", true);
     
     std::vector<DialogoNarrativo> dialogosBloque1;
     DialogoNarrativo dialogoDonJulio("Don Julio el Pescador", 
-        "Vi todo desde mi bote esa noche.\nEl barco estaba tranquilo,\n pero vi a alguien moviendose\nsigilosamente cerca\nde las pertenencias de Andrea.",
+        "Estaba en mi bote como cada noche.\nEl barco estaba en calma...\nluego vi a alguien moviendose\nsigilosamente cerca de las pertenencias.\nNo pude ver bien la cara,\nestaba muy oscuro.",
         "assets/images/niveles/nivel_sara2/JulioPescador.png");
     dialogosBloque1.push_back(std::move(dialogoDonJulio));
     
     DialogoNarrativo dialogoCapitan("Capitan Rodrigo", 
-        "Como capitan, conozco a toda mi tripulacion.\nTodos son honorables,\nexcepto que recuerdo que Isabella\nestuvo despierta toda la noche,\nalgo inusual en ella.",
+        "Conozco a mi tripulacion.\nTodos son honorables.\nLo unico raro fue Isabella...\nestuvo despierta toda la noche.\nPero ella es asi, nerviosa a veces.\nJulio, en cambio... lleva semanas\npreguntando por el valor de las joyas.",
         "assets/images/niveles/nivel_sara2/capitanRodrigo.png");
     dialogosBloque1.push_back(std::move(dialogoCapitan));
     
     DialogoNarrativo dialogoIsabella("Isabella la Adivina", 
-        "Mis visiones me advirtieron del robo,\n pero no pude evitarlo.\nVi una figura encapuchada.\nNo me atrevo a decir quien era\n por miedo a represalias.",
+        "Tuve una vision, lo admito.\nVi una figura encapuchada robando.\nPero no quiero decir quien era...\npor miedo a represalias.\nEra alguien en quien\ntodos confian.",
         "assets/images/niveles/nivel_sara2/isabellaAdivina.png");
     dialogosBloque1.push_back(std::move(dialogoIsabella));
     
     DialogoNarrativo dialogoTestigo("Testigo", 
-        "Recuerdo que justo antes de que pasara,\nvi a alguien con una medalla peculiar.\nEra una MEDALLA ANTIGUA.\nSolo una persona en este pueblo\ntiene una igual.",
+        "Recuerdo algo importante.\nJusto antes del robo,\nvi a Alguien revisando las pertenencias\nhoras antes, cuando estaban desatendidas.\nDijo que era para 'revisar sus aparejos'\npero no llevaba aparejos.\nEstaba encapuchado",
         "assets/images/niveles/nivel_sara2/anonimo.jpg");
     dialogosBloque1.push_back(std::move(dialogoTestigo));
-    
+
     // Bloque 2
     std::vector<ObjetoBuscar> objetosBloque2;
-    objetosBloque2.emplace_back("Camaleon", sf::FloatRect(sf::Vector2f(235.f, 400.f), sf::Vector2f(50.f, 17.f))," ");
-    objetosBloque2.emplace_back("Cofre", sf::FloatRect(sf::Vector2f(753.f, 409.f), sf::Vector2f(40.f, 40.f))," ");
-    objetosBloque2.emplace_back("Mapa", sf::FloatRect(sf::Vector2f(591.f, 471.f), sf::Vector2f(131.f, 59.f))," ");
-    objetosBloque2.emplace_back("Reloj Antiguo", sf::FloatRect(sf::Vector2f(604.f, 390.f), sf::Vector2f(24.f, 34.f))," ");
-    objetosBloque2.emplace_back("Microscopio", sf::FloatRect(sf::Vector2f(161.f, 197.f), sf::Vector2f(15.f, 53.f))," ");
-    objetosBloque2.emplace_back("Catalejo", sf::FloatRect(sf::Vector2f(362.f, 485.f), sf::Vector2f(33.f, 15.f))," ");
-    objetosBloque2.emplace_back("Cortina", sf::FloatRect(sf::Vector2f(380.f, 200.f), sf::Vector2f(34.f, 85.f))," ");
-    objetosBloque2.emplace_back("Juego de Llaves", sf::FloatRect(sf::Vector2f(287.f, 507.f), sf::Vector2f(32.f, 42.f))," ");
-    objetosBloque2.emplace_back("Periodico", sf::FloatRect(sf::Vector2f(619.f, 161.f), sf::Vector2f(43.f, 49.f))," ");
-    objetosBloque2.emplace_back("Red", sf::FloatRect(sf::Vector2f(694.f, 95.f), sf::Vector2f(69.f, 98.f))," ");
-    
+
+    objetosBloque2.emplace_back("Camaleon", sf::FloatRect(sf::Vector2f(235.f, 400.f), sf::Vector2f(50.f, 17.f)), " ", "assets/images/niveles/nivel_sara2/camaleon.png");
+    objetosBloque2.emplace_back("Cofre", sf::FloatRect(sf::Vector2f(753.f, 409.f), sf::Vector2f(40.f, 40.f)), " ", "assets/images/niveles/nivel_sara2/cofre.png");
+    objetosBloque2.emplace_back("Mapa", sf::FloatRect(sf::Vector2f(591.f, 471.f), sf::Vector2f(131.f, 59.f)), " ", "assets/images/niveles/nivel_sara2/mapa.png");
+    objetosBloque2.emplace_back("Reloj Antiguo", sf::FloatRect(sf::Vector2f(604.f, 390.f), sf::Vector2f(24.f, 34.f)), " ", "assets/images/niveles/nivel_sara2/relojAntiguo.png");
+    objetosBloque2.emplace_back("Microscopio", sf::FloatRect(sf::Vector2f(161.f, 197.f), sf::Vector2f(15.f, 53.f)), " ", "assets/images/niveles/nivel_sara2/microscopio.png");
+    objetosBloque2.emplace_back("Binocular", sf::FloatRect(sf::Vector2f(362.f, 485.f), sf::Vector2f(33.f, 15.f)), " ", "assets/images/niveles/nivel_sara2/binocular.png");  
+    objetosBloque2.emplace_back("Cortina", sf::FloatRect(sf::Vector2f(380.f, 200.f), sf::Vector2f(34.f, 85.f)), " ", "assets/images/niveles/nivel_sara2/cortinas.png");
+    objetosBloque2.emplace_back("Juego de Llaves", sf::FloatRect(sf::Vector2f(287.f, 507.f), sf::Vector2f(32.f, 42.f)), " ", "assets/images/niveles/nivel_sara2/llaves.png");
+    objetosBloque2.emplace_back("Periodico", sf::FloatRect(sf::Vector2f(619.f, 161.f), sf::Vector2f(43.f, 49.f)), " ", "assets/images/niveles/nivel_sara2/periodico.png");
+    objetosBloque2.emplace_back("Red", sf::FloatRect(sf::Vector2f(694.f, 95.f), sf::Vector2f(69.f, 98.f)), " ", "assets/images/niveles/nivel_sara2/redes.png");
+
     std::vector<Sospechoso> sospechososBloque2;
-    sospechososBloque2.emplace_back("Sebastian el Guardabosques", sf::FloatRect(sf::Vector2f(300.f, 600.f), sf::Vector2f(80.f, 100.f)), "Conoce cada rincon del bosque,\nsabe esconder cosas.", false);
-    sospechososBloque2.emplace_back("Valentina la Arqueologa", sf::FloatRect(sf::Vector2f(550.f, 620.f), sf::Vector2f(75.f, 90.f)), "Experta en tesoros antiguos,\nqueria el cofre para ella sola.", true);
-    sospechososBloque2.emplace_back("Don Mateo el Herrero", sf::FloatRect(sf::Vector2f(750.f, 650.f), sf::Vector2f(85.f, 85.f)), "Fabrica candados\nsabia como abrir el cofre sin forzarlo.", false);
+    sospechososBloque2.emplace_back("Sebastian el Guardabosques", sf::FloatRect(sf::Vector2f(300.f, 600.f), sf::Vector2f(80.f, 100.f)), "Conoce cada rincon del bosque,\nsabe donde esconder cosas.\nParece honesto, pero...\nquien mejor que el para ocultar un robo?", false);
+    sospechososBloque2.emplace_back("Valentina la Arqueologa", sf::FloatRect(sf::Vector2f(550.f, 620.f), sf::Vector2f(75.f, 90.f)), "Especialista en tesoros antiguos.\nSabe exactamente que hay dentro\nde cada cofre sin abrirlo.\nTiene el conocimiento...\ny el motivo.", true);
+    sospechososBloque2.emplace_back("Don Mateo el Herrero", sf::FloatRect(sf::Vector2f(750.f, 650.f), sf::Vector2f(85.f, 85.f)), "Fabrica candados y llaves.\nPodria abrir cualquier cerradura.\nPero por que robaria algo\nque el mismo puede fabricar?", false);
     
     std::vector<DialogoNarrativo> dialogosBloque2;
     DialogoNarrativo dialogoSebastian("Sebastian el Guardabosques", 
-        "He patrullado este bosque por treinta anios.\nVi a alguien merodeando\ncerca del cofre la noche anterior al robo.",
+        "Patrullo este bosque hace 3 siglos.\nLa noche anterior al robo,\nvi a alguien con una linterna\ncerca del cofre. No vi el rostro,\npero llevaba botas sucias y llenas de agua.",
         "assets/images/niveles/nivel_sara2/sebastian.png");
     dialogosBloque2.push_back(std::move(dialogoSebastian));
     
     DialogoNarrativo dialogoMateo("Don Mateo el Herrero", 
-        "Alguien me pidio hacer una copia de\n una llave antigua. El diseno \nera identico al del \ncandado del cofre.",
+        "Me pidieron copiar una llave antigua.\nEl patron era identico al candado\ndel cofre. No se quien fue,\npero la persona sabia exactamente\nque medidas pedir.",
         "assets/images/niveles/nivel_sara2/mateo.png");
     dialogosBloque2.push_back(std::move(dialogoMateo));
     
     DialogoNarrativo dialogoValentina("Valentina la Arqueologa", 
-        "Yo solo queria estudiar\n las piezas del cofre para mi investigacion.\nSe como abrirlo, pero jamas\n robaria algo tan valioso.",
+        "Ese cofre contiene piezas unicas.\nLlevo mucho tiempo por estas tierras\nbuscando objetos antiguos.\nComo podria forzarlo?,\njamas lo robaria...\nSolo estudio para mi investigacion.",
         "assets/images/niveles/nivel_sara2/valentina.png");
     dialogosBloque2.push_back(std::move(dialogoValentina));
     
     DialogoNarrativo dialogoAnonimo("Testigo Anonimo", 
-        "Escuche una discusion acalorada cerca\n del campamento. Alguien gritaba \n'el tesoro me pertenece por derecho'.",
+        "Escuche una discusion acalorada\ncerca del campamento.\nAlguien gritaba: 'Ese tesoro\nes parte de mi,\nme pertenece por derecho'.",
         "assets/images/niveles/nivel_sara2/anonimo.jpg");
     dialogosBloque2.push_back(std::move(dialogoAnonimo));
 
     // Bloque 3
-    std::vector<ObjetoBuscar> objetosBloque3;
-    objetosBloque3.emplace_back("Calaveras", sf::FloatRect(sf::Vector2f(697.f, 262.f), sf::Vector2f(45.f, 48.f))," ");
-    objetosBloque3.emplace_back("Canoa", sf::FloatRect(sf::Vector2f(508.f, 254.f), sf::Vector2f(75.f, 35.f))," ");
-    objetosBloque3.emplace_back("Rueda", sf::FloatRect(sf::Vector2f(219.f, 184.f), sf::Vector2f(67.f, 67.f))," ");
-    objetosBloque3.emplace_back("Botella de Vino", sf::FloatRect(sf::Vector2f(324.f, 312.f), sf::Vector2f(34.f, 51.f))," ");
-    objetosBloque3.emplace_back("Cangrejo", sf::FloatRect(sf::Vector2f(711.f, 446.f), sf::Vector2f(44.f, 24.f))," ");
-    objetosBloque3.emplace_back("Muñeco", sf::FloatRect(sf::Vector2f(370.f, 421.f), sf::Vector2f(24.f, 44.f))," ");
-    objetosBloque3.emplace_back("Maletin Oculto", sf::FloatRect(sf::Vector2f(345.f, 321.f), sf::Vector2f(55.f, 19.f))," ");
-    objetosBloque3.emplace_back("Dado", sf::FloatRect(sf::Vector2f(658.f, 529.f), sf::Vector2f(14.f, 19.f))," ");
-    objetosBloque3.emplace_back("Comida para Gato", sf::FloatRect(sf::Vector2f(379.f, 533.f), sf::Vector2f(34.f, 29.f))," ");
-    objetosBloque3.emplace_back("Caja de Madera", sf::FloatRect(sf::Vector2f(280.f, 345.f), sf::Vector2f(46.f, 19.f))," ");
+   std::vector<ObjetoBuscar> objetosBloque3;
+
+    objetosBloque3.emplace_back("Calaveras", sf::FloatRect(sf::Vector2f(697.f, 262.f), sf::Vector2f(45.f, 48.f)), " ", "assets/images/niveles/nivel_sara2/calaveras.png");
+    objetosBloque3.emplace_back("Bote", sf::FloatRect(sf::Vector2f(508.f, 254.f), sf::Vector2f(75.f, 35.f)), " ", "assets/images/niveles/nivel_sara2/bote.png");
+    objetosBloque3.emplace_back("Rueda", sf::FloatRect(sf::Vector2f(219.f, 184.f), sf::Vector2f(67.f, 67.f)), " ", "assets/images/niveles/nivel_sara2/rueda.png");
+    objetosBloque3.emplace_back("Botella de Vino", sf::FloatRect(sf::Vector2f(324.f, 312.f), sf::Vector2f(34.f, 51.f)), " ", "assets/images/niveles/nivel_sara2/botellaVino.png");
+    objetosBloque3.emplace_back("Cangrejo", sf::FloatRect(sf::Vector2f(711.f, 446.f), sf::Vector2f(44.f, 24.f)), " ", "assets/images/niveles/nivel_sara2/cangrejo.png");
+    objetosBloque3.emplace_back("Juguete de Pirata", sf::FloatRect(sf::Vector2f(370.f, 421.f), sf::Vector2f(24.f, 44.f)), " ", "assets/images/niveles/nivel_sara2/muñeco.png");
+    objetosBloque3.emplace_back("Maletin Oculto", sf::FloatRect(sf::Vector2f(345.f, 321.f), sf::Vector2f(55.f, 19.f)), " ", "assets/images/niveles/nivel_sara2/maletinOculto.png");
+    objetosBloque3.emplace_back("Dado", sf::FloatRect(sf::Vector2f(658.f, 529.f), sf::Vector2f(14.f, 19.f)), " ", "assets/images/niveles/nivel_sara2/dado.png");
+    objetosBloque3.emplace_back("Comida para Gato", sf::FloatRect(sf::Vector2f(379.f, 533.f), sf::Vector2f(34.f, 29.f)), " ", "assets/images/niveles/nivel_sara2/comidaGato.png");
+    objetosBloque3.emplace_back("Caja de Madera", sf::FloatRect(sf::Vector2f(280.f, 345.f), sf::Vector2f(46.f, 19.f)), " ", "assets/images/niveles/nivel_sara2/cajaMadera.png");
 
     std::vector<Sospechoso> sospechososBloque3;
     sospechososBloque3.emplace_back("El Viejo Marino", sf::FloatRect(sf::Vector2f(300.f, 650.f), sf::Vector2f(80.f, 100.f)), "Vive en la costa desde hace decadas.\nConoce cada naufragio.", false);
-    sospechososBloque3.emplace_back("Carmen la Buzo", sf::FloatRect(sf::Vector2f(550.f, 620.f), sf::Vector2f(75.f, 90.f)), "Bucea en busca de tesoros", true);
-    sospechososBloque3.emplace_back("Misterioso\nComerciante", sf::FloatRect(sf::Vector2f(750.f, 650.f), sf::Vector2f(85.f, 85.f)), "Siempre aparece justo\ndespues de los naufragios.\nNadie sabe de donde viene.", false);
+    sospechososBloque3.emplace_back("Carmen la Buzo", sf::FloatRect(sf::Vector2f(550.f, 620.f), sf::Vector2f(75.f, 90.f)), "Bucea en busca de tesoros", false);
+    sospechososBloque3.emplace_back("Misterioso Comerciante", sf::FloatRect(sf::Vector2f(750.f, 650.f), sf::Vector2f(85.f, 85.f)), "Siempre aparece justo\ndespues de los naufragios.\nNadie sabe de donde viene.", true);
 
     std::vector<DialogoNarrativo> dialogosBloque3;
     DialogoNarrativo dialogoMarino("El Viejo Marino", 
-        "Yo conozco cada barco que ha naufragado\n en estas costas. Este ultimo... \nfue sabotaje. Vi a alguien nadando hacia la costa\ncon un maletin la noche del accidente.",
+        "Yo conozco cada barco que ha naufragado\nen estas costas. Este ultimo...\nfue sabotaje. Vi a alguien nadando\nhacia la costa con un maletin\nla noche del accidente.",
         "assets/images/niveles/nivel_sara2/viejoMarino.png");
     dialogosBloque3.push_back(std::move(dialogoMarino));
 
     DialogoNarrativo dialogoComerciante("Misterioso Comerciante", 
-        "Yo solo compro lo que encuentro en la playa.\nPero esa noche... vi a Carmen buceando\nmucho antes de que llegaran los rescatistas.\nQueria algo especifico del barco.",
+        "Yo solo compro lo que encuentro\nen la playa. Es mi negocio.\nCarmen siempre bucea en los pecios.\nElla sabe mas de lo que dice.",
         "assets/images/niveles/nivel_sara2/comerciante.png");
     dialogosBloque3.push_back(std::move(dialogoComerciante));
 
     DialogoNarrativo dialogoBuzo("Carmen la Buzo", 
-        "Es cierto que buceo en busca de tesoros,\npero jamas robaria nada.\nYo fui quien encontre el maletin...\npero alguien me lo robo de mi escondite.",
+        "Es cierto que buceo en busca\nde tesoros, pero jamas robaria nada.\nYo fui quien encontre el maletin...\nalguien me lo robo de mi escondite.\nSolo el Comerciante sabia donde estaba.",
         "assets/images/niveles/nivel_sara2/carmenBuzo.png");
     dialogosBloque3.push_back(std::move(dialogoBuzo));
 
     DialogoNarrativo dialogoTestigo2("Pescador Anonimo", 
-        "Recuerdo que la noche del naufragio\n vi una figura cargando algo pesado.\nTenian una MEDALLA DE BUCEO colgando.\nSolo los buzos profesionales tienen eso.",
+        "La noche del naufragio vi a alguien\ncon una linterna cerca del muelle.\nNo era Carmen, ella bucea de dia.\nEra alguien que nunca se moja...\ncomo el Comerciante.",
         "assets/images/niveles/nivel_sara2/anonimo.jpg");
     dialogosBloque3.push_back(std::move(dialogoTestigo2));
 
@@ -879,7 +882,7 @@ void NivelSara2State::draw()
         colision.setFillColor(sf::Color(255, 0, 0, 100));
         colision.setOutlineThickness(2.f);
         colision.setOutlineColor(sf::Color::Red);
-        window->draw(colision);
+        // window->draw(colision);
     }
     
     // Dibujar bloques interactivos (modo debug)
@@ -890,7 +893,7 @@ void NivelSara2State::draw()
         bloqueDebug.setFillColor(sf::Color(0, 255, 255, 100));
         bloqueDebug.setOutlineThickness(2.f);
         bloqueDebug.setOutlineColor(sf::Color::Cyan);
-        window->draw(bloqueDebug);
+        // window->draw(bloqueDebug);
     }
     
     if (m_mostrarPuertaSalida && m_nivelCompletado)
@@ -900,7 +903,7 @@ void NivelSara2State::draw()
         salidaDebug.setFillColor(sf::Color(0, 255, 0, 50));
         salidaDebug.setOutlineThickness(3.f);
         salidaDebug.setOutlineColor(sf::Color::Green);
-        window->draw(salidaDebug);
+        // window->draw(salidaDebug);
     }
 
     window->setView(window->getDefaultView());
@@ -971,7 +974,7 @@ void NivelSara2State::draw()
             sf::Text tituloText(m_font);
             
             if (m_nivelCompletado)
-                tituloText.setString("0 ANDREA o");
+                tituloText.setString("o ANDREA o");
             else if (m_criminalGameCompleted)
                 tituloText.setString("+ ANDREA +");
             else
@@ -1032,7 +1035,7 @@ void NivelSara2State::draw()
             
             if (m_nivelCompletado)
             {
-                instruccionText.setString("[ ESC ] Cerrar    →    Ve al ascensor y presiona [ E ]");
+                instruccionText.setString("[ ESC ] Cerrar    ->    Ve al ascensor y presiona [ E ]");
                 instruccionText.setFillColor(sf::Color(100, 255, 100, 255));
             }
             else if (m_criminalGameCompleted)
@@ -1079,14 +1082,18 @@ void NivelSara2State::draw()
         if (m_cercaPuertaSalida && m_nivelCompletado)
         {
             m_textoInteraccion->setString("Presiona E para avanzar al siguiente nivel");
+            m_textoInteraccion->setOutlineColor(sf::Color::Black);
+            m_textoInteraccion->setOutlineThickness(2.0f);
             sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
             m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
-            m_textoInteraccion->setPosition(sf::Vector2f(winW / 2.f, winH - 70.f));
+            m_textoInteraccion->setPosition(sf::Vector2f(winW / 2.f, winH - 90.f));
             window->draw(*m_textoInteraccion);
         }
         if (m_cercaBloqueInteractivo && !m_mensajeEmergenteActivo)
         {
             m_textoInteraccion->setString("Presiona R. Andrea quiere decirte algo");
+            m_textoInteraccion->setOutlineColor(sf::Color::Black);      
+            m_textoInteraccion->setOutlineThickness(2.0f);
             sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
             m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
             m_textoInteraccion->setPosition(sf::Vector2f(winW / 2.f, winH - 100.f));
@@ -1095,6 +1102,8 @@ void NivelSara2State::draw()
         
         if (m_cercaCriminalArea && !m_criminalGameCompleted && !m_criminalMinigame.isActive()) {
             m_textoInteraccion->setString("Presiona R para investigar el crimen en la playa");
+            m_textoInteraccion->setOutlineColor(sf::Color::Black);      
+            m_textoInteraccion->setOutlineThickness(2.0f);
             sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
             m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
             m_textoInteraccion->setPosition(sf::Vector2f(winW / 2.f, winH - 130.f));
@@ -1152,12 +1161,13 @@ void NivelSara2State::draw()
         if (m_fontLoaded)
         {
             sf::Text tutorialText(m_font);
-            tutorialText.setString(
-                "BIENVENIDA AL NIVEL 5\n\n"
-                "Has llegado lejos... pero esto no ha terminado.\n\n"
-                "Hay un gran caso que resolver.. estás a cargo de esta mision...\n recorre el mapa y descubrelo\n"
-                "\n\n"
-                "[ESC] Cerrar | [M] Ayuda");
+           tutorialText.setString(
+            "Bienvenido al Nivel 5: EL SECRETO DEL PUERTO\n\n"
+            "Un robo ha sacudido la tranquilidad del muelle.\n"
+            "Andrea confia en ti para resolver el caso.\n\n"
+            "Investiga cada rincon, reune las pistas y\n"
+            "descubre la verdad antes de que sea tarde.\n\n"
+            "[ESC] Cerrar | [M] Ayuda");
             tutorialText.setCharacterSize(20);
             tutorialText.setFillColor(sf::Color::White);
             sf::FloatRect textBounds = tutorialText.getLocalBounds();
@@ -1192,7 +1202,30 @@ void NivelSara2State::configurarColisiones()
     m_mapaFisico.emplace_back(0.f, mapHeight - 30.f, mapWidth, 30.f);
     m_mapaFisico.emplace_back(0.f, 0.f, 30.f, mapHeight);
     m_mapaFisico.emplace_back(mapWidth - 30.f, 0.f, 30.f, mapHeight);
+    m_mapaFisico.emplace_back(32.f,250.f,161.f,171.f);
+    m_mapaFisico.emplace_back(153.f,250.f,273.f,160.f);
+    m_mapaFisico.emplace_back(195.f,423.f, 65.f,37.f);
+    m_mapaFisico.emplace_back(365.f,423.f, 65.f,37.f);
+    m_mapaFisico.emplace_back(32.f,420.f, 111.f,728.f);
+    m_mapaFisico.emplace_back(160.f,857.f, 70.f,117.f);
+    m_mapaFisico.emplace_back(231.f,900.f, 65.f,74.f);
+    m_mapaFisico.emplace_back(147.f,1062.f, 143.f,86.f);
+    m_mapaFisico.emplace_back(997.f,254.f, 300.f,155.f);
+    m_mapaFisico.emplace_back(1108.f,414.f, 60.f,82.f);
+    m_mapaFisico.emplace_back(1176.f,487.f, 122.f,605.f);
+    //silla de descanso
+    m_mapaFisico.emplace_back(984.f,534.f, 72.f,121.f);
+    m_mapaFisico.emplace_back(908.f,615.f, 91.f,40.f);
+    m_mapaFisico.emplace_back(854.f,658.f, 88.f,104.f);
+    //mesa con agua de coco
+    m_mapaFisico.emplace_back(961.f,664.f, 131.f,149.f);
+    //silla 2 de descanso
+    m_mapaFisico.emplace_back(1134.f,729.f, 72.f,121.f);
+    m_mapaFisico.emplace_back(1048.f,814.f, 97.f,102.f);
+    m_mapaFisico.emplace_back(963.f,873.f, 88.f,104.f);
 
+
+    m_mapaFisico.emplace_back(424.f,250.f, 600.f,61.f);
     std::cout << "Colisiones configuradas" << std::endl;
 }
 

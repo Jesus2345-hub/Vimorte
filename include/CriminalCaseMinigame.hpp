@@ -1,4 +1,3 @@
-// CriminalCaseMinigame.hpp - VERSIÓN CORREGIDA
 #pragma once
 #include <SFML/Graphics.hpp>
 #include <vector>
@@ -6,17 +5,20 @@
 #include <functional>
 #include <memory>
 #include <random>
+#include <iostream>
 #include "Inventory.hpp"
 
 struct ObjetoBuscar {
     std::string nombre;
     sf::FloatRect area;
     bool encontrado;
+    std::string rutaImagen;
     std::string descripcion;
     
     ObjetoBuscar() : encontrado(false) {}
-    ObjetoBuscar(const std::string& n, const sf::FloatRect& a, const std::string& d)
-        : nombre(n), area(a), encontrado(false), descripcion(d) {}
+
+    ObjetoBuscar(const std::string& n, const sf::FloatRect& a, const std::string& d, const std::string& img)
+        : nombre(n), area(a), encontrado(false), descripcion(d), rutaImagen(img) {}
 };
 
 struct Sospechoso {

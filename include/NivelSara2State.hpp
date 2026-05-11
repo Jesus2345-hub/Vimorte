@@ -7,6 +7,7 @@
 #include "Obstaculo.hpp"
 #include "Inventory.hpp"
 #include <memory>
+#include <iostream>
 #include <vector>
 
 struct BloqueInteractivo {
