@@ -12,7 +12,7 @@ public:
     void dibujar(sf::RenderWindow& window);
     void setVisible(bool visible) { m_visible = visible; }
     void toggleVisible() { m_visible = !m_visible; }
-
+	bool isVisible() const { return m_visible; }
 private:
     CoordenadasDebug();
     sf::Font m_font;
