@@ -56,41 +56,65 @@ Nivel3State::Nivel3State(sf::RenderWindow* window, Game* game)
     );
     m_lastWindowSize = windowSize;
     
-    // Después de cargar el fondo, añade:
-std::random_device rd;
-std::mt19937 gen(rd());
-m_ordenCorrectoBomba = {0, 1, 2, 3};
-std::shuffle(m_ordenCorrectoBomba.begin(), m_ordenCorrectoBomba.end(), gen);
+    // Generar orden aleatorio
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    m_ordenCorrectoBomba = {0, 1, 2, 3};
+    std::shuffle(m_ordenCorrectoBomba.begin(), m_ordenCorrectoBomba.end(), gen);
 
-std::cout << "[NIVEL 3] Orden correcto: ";
-for (int idx : m_ordenCorrectoBomba) {
-    std::cout << nombreColor(idx) << " ";
-}
-std::cout << std::endl;
+    std::cout << "[NIVEL 3] Orden correcto: ";
+    for (int idx : m_ordenCorrectoBomba) {
+        std::cout << nombreColor(idx) << " ";
+    }
+    std::cout << std::endl;
     
     // Áreas de interacción
-    m_bombaArea    = sf::FloatRect(sf::Vector2f(1100.f, 100.f), sf::Vector2f(150.f, 150.f));
-    m_pista1Area   = sf::FloatRect(sf::Vector2f(600.f, 400.f), sf::Vector2f(150.f, 100.f));
-    m_pista2Area   = sf::FloatRect(sf::Vector2f(900.f, 600.f), sf::Vector2f(150.f, 100.f));
-    m_puertaSalidaArea = sf::FloatRect(sf::Vector2f(100.f, 600.f), sf::Vector2f(100.f, 150.f));
+    m_bombaArea    = sf::FloatRect(sf::Vector2f(1000.f, 100.f), sf::Vector2f(330.f, 350.f));
+    m_pista1Area   = sf::FloatRect(sf::Vector2f(0.f, 0.f), sf::Vector2f(450.f, 450.f));
+    m_pista2Area   = sf::FloatRect(sf::Vector2f(0.f, 850.f), sf::Vector2f(369.f, 280.f));
+    m_puertaSalidaArea = sf::FloatRect(sf::Vector2f(775.f, 210.f), sf::Vector2f(145.f, 116.f));
     
     configurarColisiones();
     
-    // Configurar minijuego de cables
+    // Tamaño base para minijuegos
     float w = windowSize.x * 0.8f;
     float h = windowSize.y * 0.8f;
+    float x = (windowSize.x - w) / 2.f;
+    float y = (windowSize.y - h) / 2.f;
+    
+    // ===== MINIJUEGO DE CABLES (BOMBA - FINAL) =====
     m_minijuegoCables.setSize(sf::Vector2f(w, h));
-    m_minijuegoCables.setPosition(sf::Vector2f((windowSize.x - w) / 2.f, (windowSize.y - h) / 2.f));
+    m_minijuegoCables.setPosition(sf::Vector2f(x, y));
     
     m_minijuegoCables.setOnComplete([this]() {
         m_bombaDesactivada = true;
         m_textoBomba->setString("✅ BOMBA DESACTIVADA");
         m_textoBomba->setFillColor(sf::Color::Green);
-        mostrarMensaje("¡Bomba desactivada! Huye del edificio.", 4.0f, sf::Color::Green);
+        mostrarMensaje("¡Bomba desactivada! Ve al ascensor.", 4.0f, sf::Color::Green);
     });
     
     m_minijuegoCables.setOnFail([this]() {
         explotarBomba();
+    });
+    
+    // ===== MINIJUEGO DE MEMORIA (PISTA 1) =====
+    m_minijuegoMemoria.setSize(sf::Vector2f(w, h));
+    m_minijuegoMemoria.setPosition(sf::Vector2f(x, y));
+    
+    m_minijuegoMemoria.setOnComplete([this]() {
+        m_pista1Encontrada = true;
+        m_pista1Texto = "Pista 1: " + generarTextoPista(m_ordenCorrectoBomba, 0, 3);
+        mostrarMensaje("Pista 1 desbloqueada! Extremos revelados.", 4.0f, sf::Color::Cyan);
+    });
+    
+    // ===== MINIJUEGO DE PATRÓN (PISTA 2) =====
+    m_minijuegoPatron.setSize(sf::Vector2f(w, h));
+    m_minijuegoPatron.setPosition(sf::Vector2f(x, y));
+    
+    m_minijuegoPatron.setOnComplete([this]() {
+        m_pista2Encontrada = true;
+        m_pista2Texto = "Pista 2: " + generarTextoPista(m_ordenCorrectoBomba, 1, 2);
+        mostrarMensaje("Pista 2 desbloqueada! Centro revelado.", 4.0f, sf::Color::Green);
     });
     
     m_fontLoaded = m_font.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf");
@@ -130,10 +154,36 @@ std::cout << std::endl;
 void Nivel3State::configurarColisiones() {
     m_mapaFisico.clear();
     
-    m_mapaFisico.emplace_back(sf::Vector2f(0.f, 0.f), sf::Vector2f(m_worldSize.x, 50.f));
-    m_mapaFisico.emplace_back(sf::Vector2f(0.f, 0.f), sf::Vector2f(50.f, m_worldSize.y));
-    m_mapaFisico.emplace_back(sf::Vector2f(m_worldSize.x - 50.f, 0.f), sf::Vector2f(50.f, m_worldSize.y));
-    m_mapaFisico.emplace_back(sf::Vector2f(0.f, m_worldSize.y - 50.f), sf::Vector2f(m_worldSize.x, 50.f));
+    m_mapaFisico.emplace_back(sf::Vector2f(0.f, 0.f), sf::Vector2f(m_worldSize.x, 15.f));
+    m_mapaFisico.emplace_back(sf::Vector2f(0.f, 0.f), sf::Vector2f(15.f, m_worldSize.y));
+    m_mapaFisico.emplace_back(sf::Vector2f(m_worldSize.x - 15.f, 0.f), sf::Vector2f(15.f, m_worldSize.y));
+    m_mapaFisico.emplace_back(sf::Vector2f(0.f, m_worldSize.y - 15.f), sf::Vector2f(m_worldSize.x, 15.f));
+    
+    //borde de pared
+    m_mapaFisico.emplace_back(sf::Vector2f(644.f, 0.f), sf::Vector2f(30.f, 841.f));
+    m_mapaFisico.emplace_back(sf::Vector2f(570.f, 0.f), sf::Vector2f(80.f, 280.f));
+    m_mapaFisico.emplace_back(sf::Vector2f(649.f, 405.f), sf::Vector2f(241.f, 81.f));
+    m_mapaFisico.emplace_back(sf::Vector2f(722.f, 410.f), sf::Vector2f(128.f, 144.f));
+    m_mapaFisico.emplace_back(sf::Vector2f(728.f, 645.f), sf::Vector2f(10.f, 210.f));
+    m_mapaFisico.emplace_back(sf::Vector2f(885.f, 765.f), sf::Vector2f(225.f, 65.f));
+    m_mapaFisico.emplace_back(sf::Vector2f(1095.f, 650.f), sf::Vector2f(17.f, 233.f));
+      m_mapaFisico.emplace_back(sf::Vector2f(1050.f, 0.f), sf::Vector2f(335.f, 375.f));
+        m_mapaFisico.emplace_back(sf::Vector2f(1120.f, 0.f), sf::Vector2f(244.f, 435.f));
+        
+    m_mapaFisico.emplace_back(sf::Vector2f(735.f, 0.f), sf::Vector2f(41.f, 355.f));
+    m_mapaFisico.emplace_back(sf::Vector2f(920.f, 0.f), sf::Vector2f(56.f, 355.f));
+    
+    //borde de la parte superior izquierda
+    m_mapaFisico.emplace_back(sf::Vector2f(644.f, 0.f), sf::Vector2f(740.f, 292.f));
+    m_mapaFisico.emplace_back(sf::Vector2f(0.f, 0.f), sf::Vector2f(228.f, 34.f));
+    m_mapaFisico.emplace_back(sf::Vector2f(0.f, 264.f), sf::Vector2f(450.f, 130.f));
+    m_mapaFisico.emplace_back(sf::Vector2f(0.f, 0.f), sf::Vector2f(225.f, 392.f));
+    m_mapaFisico.emplace_back(sf::Vector2f(0.f, 0.f), sf::Vector2f(570.f, 219.f));
+    
+    //borde de abajo a la izquierda
+    m_mapaFisico.emplace_back(sf::Vector2f(0.f, 738.f), sf::Vector2f(123.f, 374.f));
+    m_mapaFisico.emplace_back(sf::Vector2f(0.f, 1015.f), sf::Vector2f(365.f, 107.f));
+    m_mapaFisico.emplace_back(sf::Vector2f(260.f, 940.f), sf::Vector2f(105.f, 185.f));
 }
 
 // ============================================================
@@ -195,6 +245,10 @@ void Nivel3State::actualizarTextosMinijuegos() {
     float y = (currentSize.y - h) / 2.f;
     m_minijuegoCables.setSize(sf::Vector2f(w, h));
     m_minijuegoCables.setPosition(sf::Vector2f(x, y));
+    m_minijuegoMemoria.setSize(sf::Vector2f(w, h));
+    m_minijuegoMemoria.setPosition(sf::Vector2f(x, y));
+    m_minijuegoPatron.setSize(sf::Vector2f(w, h));
+    m_minijuegoPatron.setPosition(sf::Vector2f(x, y));
 }
 
 // ============================================================
@@ -207,6 +261,32 @@ void Nivel3State::handleEvent(const sf::Event& event) {
         if (const auto* keyEvent = event.getIf<sf::Event::KeyPressed>()) {
             if (keyEvent->code == sf::Keyboard::Key::Escape) {
                 m_minijuegoCables.deactivate();
+                m_escapeConsumed = true;
+                return;
+            }
+        }
+        return;
+    }
+    
+    // ===== MINIJUEGO DE MEMORIA ACTIVO =====
+    if (m_minijuegoMemoria.isActive()) {
+        m_minijuegoMemoria.handleEvent(event, *window);
+        if (const auto* keyEvent = event.getIf<sf::Event::KeyPressed>()) {
+            if (keyEvent->code == sf::Keyboard::Key::Escape) {
+                m_minijuegoMemoria.deactivate();
+                m_escapeConsumed = true;
+                return;
+            }
+        }
+        return;
+    }
+    
+    // ===== MINIJUEGO DE PATRÓN ACTIVO =====
+    if (m_minijuegoPatron.isActive()) {
+        m_minijuegoPatron.handleEvent(event, *window);
+        if (const auto* keyEvent = event.getIf<sf::Event::KeyPressed>()) {
+            if (keyEvent->code == sf::Keyboard::Key::Escape) {
+                m_minijuegoPatron.deactivate();
                 m_escapeConsumed = true;
                 return;
             }
@@ -250,12 +330,36 @@ void Nivel3State::handleEvent(const sf::Event& event) {
 // ACTUALIZAR
 // ============================================================
 void Nivel3State::update(float dt) {
-     // ===== MINIJUEGO ACTIVO =====
+    // ===== MINIJUEGO DE CABLES ACTIVO =====
     if (m_minijuegoCables.isActive()) {
-        // El cronómetro SIGUE corriendo aunque el minijuego esté abierto
         actualizarCronometro(dt);
-        
         m_minijuegoCables.update(dt);
+        m_player.update(dt);
+        sf::Vector2f pos = m_player.getPosition();
+        pos.x = std::clamp(pos.x, 640.f, m_worldSize.x - 640.f);
+        pos.y = std::clamp(pos.y, 360.f, m_worldSize.y - 360.f);
+        m_camera.setCenter(pos);
+        CoordenadasDebug::getInstance().actualizar(window, m_camera, m_player.getPosition());
+        return;
+    }
+    
+    // ===== MINIJUEGO DE MEMORIA ACTIVO =====
+    if (m_minijuegoMemoria.isActive()) {
+        actualizarCronometro(dt);
+        m_minijuegoMemoria.update(dt);
+        m_player.update(dt);
+        sf::Vector2f pos = m_player.getPosition();
+        pos.x = std::clamp(pos.x, 640.f, m_worldSize.x - 640.f);
+        pos.y = std::clamp(pos.y, 360.f, m_worldSize.y - 360.f);
+        m_camera.setCenter(pos);
+        CoordenadasDebug::getInstance().actualizar(window, m_camera, m_player.getPosition());
+        return;
+    }
+    
+    // ===== MINIJUEGO DE PATRÓN ACTIVO =====
+    if (m_minijuegoPatron.isActive()) {
+        actualizarCronometro(dt);
+        m_minijuegoPatron.update(dt);
         m_player.update(dt);
         sf::Vector2f pos = m_player.getPosition();
         pos.x = std::clamp(pos.x, 640.f, m_worldSize.x - 640.f);
@@ -286,13 +390,12 @@ void Nivel3State::update(float dt) {
     m_cercaPista1 = m_player.getHurtbox().findIntersection(m_pista1Area).has_value();
     m_cercaPista2 = m_player.getHurtbox().findIntersection(m_pista2Area).has_value();
     
-    // ===== INTERACCIÓN CON BOMBA (TECLA F) =====
+    // ===== BOMBA (TECLA F) - Minijuego de cables =====
     static bool fBombaPresionado = false;
     if (m_cercaBomba && !m_bombaDesactivada && !m_bombaExploto && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F)) {
         if (!fBombaPresionado) {
             fBombaPresionado = true;
             
-            // Pasar pistas al minijuego antes de activarlo
             if (m_pista1Encontrada) m_minijuegoCables.setPista1(m_pista1Texto);
             if (m_pista2Encontrada) m_minijuegoCables.setPista2(m_pista2Texto);
             m_minijuegoCables.setOrdenCorrecto(m_ordenCorrectoBomba);
@@ -303,37 +406,32 @@ void Nivel3State::update(float dt) {
         fBombaPresionado = false;
     }
     
-    // ===== PISTA 1: Revela el primer y último cable (extremos) =====
-static bool fPista1Presionado = false;
-if (m_cercaPista1 && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F)) {
-    if (!fPista1Presionado) {
-        fPista1Presionado = true;
-        m_pista1Encontrada = true;
-        
-        // Pista 1: Revela posiciones 0 y 3 (primer y último cable)
-        m_pista1Texto = "Pista 1: " + generarTextoPista(m_ordenCorrectoBomba, 0, 3);
-        
-        mostrarMensaje("Pista encontrada: Extremos revelados!", 3.0f, sf::Color::Cyan);
+    // ===== PISTA 1 (TECLA F) - Minijuego de memoria =====
+    static bool fPista1Presionado = false;
+    if (m_cercaPista1 && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F)) {
+        if (!fPista1Presionado) {
+            fPista1Presionado = true;
+            if (!m_minijuegoMemoria.isCompleted()) {
+                m_minijuegoMemoria.activate();
+            }
+        }
+    } else {
+        fPista1Presionado = false;
     }
-} else {
-    fPista1Presionado = false;
-}
-
-// ===== PISTA 2: Revela los cables del medio (posiciones 1 y 2) =====
-static bool fPista2Presionado = false;
-if (m_cercaPista2 && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F)) {
-    if (!fPista2Presionado) {
-        fPista2Presionado = true;
-        m_pista2Encontrada = true;
-        
-        // Pista 2: Revela posiciones 1 y 2 (cables del medio)
-        m_pista2Texto = "Pista 2: " + generarTextoPista(m_ordenCorrectoBomba, 1, 2);
-        
-        mostrarMensaje("Pista encontrada: Centro revelado!", 3.0f, sf::Color::Green);
+    
+    // ===== PISTA 2 (TECLA F) - Minijuego de patrón =====
+    static bool fPista2Presionado = false;
+    if (m_cercaPista2 && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F)) {
+        if (!fPista2Presionado) {
+            fPista2Presionado = true;
+            if (!m_minijuegoPatron.isCompleted()) {
+                m_minijuegoPatron.activate();
+            }
+        }
+    } else {
+        fPista2Presionado = false;
     }
-} else {
-    fPista2Presionado = false;
-}
+    
     // Movimiento del jugador
     sf::Vector2f movimiento(0.f, 0.f);
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up))    movimiento.y -= 1.f;
@@ -479,10 +577,14 @@ void Nivel3State::draw() {
             drawText("Presiona F para desactivar la bomba");
         if (m_cercaBomba && m_bombaDesactivada)
             drawText("Bomba desactivada. Dirigete a la salida.");
-        if (m_cercaPista1)
-            drawText("Presiona F para examinar");
-        if (m_cercaPista2)
-            drawText("Presiona F para examinar");
+        if (m_cercaPista1 && !m_pista1Encontrada)
+            drawText("Presiona F para buscar pista");
+        if (m_cercaPista1 && m_pista1Encontrada)
+            drawText("Pista 1 encontrada: " + m_pista1Texto);
+        if (m_cercaPista2 && !m_pista2Encontrada)
+            drawText("Presiona F para buscar pista");
+        if (m_cercaPista2 && m_pista2Encontrada)
+            drawText("Pista 2 encontrada: " + m_pista2Texto);
         if (m_cercaPuertaSalida && m_bombaDesactivada)
             drawText("Presiona F para salir del edificio");
         if (m_cercaPuertaSalida && !m_bombaDesactivada && !m_bombaExploto)
@@ -497,9 +599,15 @@ void Nivel3State::draw() {
         window->draw(*m_textoMensaje);
     }
     
-    // Minijuego de cables (se dibuja al final, encima de todo)
+    // Minijuegos
     if (m_minijuegoCables.isActive()) {
         m_minijuegoCables.draw(*window);
+    }
+    if (m_minijuegoMemoria.isActive()) {
+        m_minijuegoMemoria.draw(*window);
+    }
+    if (m_minijuegoPatron.isActive()) {
+        m_minijuegoPatron.draw(*window);
     }
     
     Inventory* inv = m_player.getInventory();
@@ -546,9 +654,7 @@ void Nivel3State::mostrarMensaje(const std::string& texto, float duracion, sf::C
     m_textoMensaje->setFillColor(color);
 }
 
-
 std::string Nivel3State::nombreColor(int indice) const {
-    // Estos colores deben coincidir con los del minijuego
     switch (indice) {
         case 0: return "ROJO";
         case 1: return "AZUL";
@@ -558,7 +664,6 @@ std::string Nivel3State::nombreColor(int indice) const {
     }
 }
 
-// Al final del archivo, después de nombreColor()
 std::string Nivel3State::generarTextoPista(const std::vector<int>& orden,
                                               int revelada1, int revelada2,
                                               int revelada3, int revelada4) const {

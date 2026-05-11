@@ -4,6 +4,8 @@
 #include "State.hpp"
 #include "entities/Player.hpp"
 #include "MinigameCables.hpp"
+#include "MinigamePatron.hpp"
+#include "MinigameMemoria.hpp"
 #include <SFML/Graphics.hpp>
 #include <vector>
 #include <memory>
@@ -90,6 +92,13 @@ private:
     
 std::string generarTextoPista(const std::vector<int>& orden, 
                               int r1, int r2, int r3 = -1, int r4 = -1) const;
+                              
+ 
+
+
+MinigamePatron m_minijuegoPatron;
+
+MinigameMemoria m_minijuegoMemoria;
 };
 
 #endif
