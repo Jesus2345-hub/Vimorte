@@ -116,6 +116,7 @@ Nivel6State::Nivel6State(sf::RenderWindow *window, Game *game)
     }
 
     game->setIsInLevel(true);
+    game->cambiarMusica("assets/sounds/nivel6.ogg");
     std::cout << "Nivel6State inicializado correctamente" << std::endl;
 }
 

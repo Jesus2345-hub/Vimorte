@@ -2,20 +2,17 @@
 #include <iostream>
 #include <algorithm>
 
-Inventory::Inventory() : m_selectedSlot(-1), m_activeHotbarSlot(0), m_isOpen(false),
-                         m_fontLoaded(false), m_infoText(nullptr), m_draggedItemIndex(-1), m_isDraggingItem(false)
-{
+Inventory::Inventory() : m_selectedSlot(-1), m_activeHotbarSlot(0), m_isOpen(false), 
+                         m_fontLoaded(false), m_infoText(nullptr), m_draggedItemIndex(-1), m_isDraggingItem(false) {
     // ========== CARGA DE FUENTE CON VERIFICACIÓN ==========
     m_fontLoaded = m_font.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf");
-    if (!m_fontLoaded)
-    {
+    if (!m_fontLoaded) {
         std::cerr << "ERROR: No se pudo cargar la fuente 'assets/fonts/menu/VCR_OSD_MONO.ttf'." << std::endl;
         std::cerr << "No se mostrarán textos en el inventario." << std::endl;
     }
-
+    
     // Inicializar m_infoText solo si la fuente es válida, de lo contrario se queda nullptr
-    if (m_fontLoaded)
-    {
+    if (m_fontLoaded) {
         m_infoText = std::make_unique<sf::Text>(m_font);
         m_infoText->setCharacterSize(12);
         m_infoText->setFillColor(sf::Color(200, 200, 200));
@@ -62,12 +59,15 @@ Inventory::Inventory() : m_selectedSlot(-1), m_activeHotbarSlot(0), m_isOpen(fal
     m_hotbar.resize(HOTBAR_SIZE, nullptr);
 
     // Cargar texturas de items
-    std::vector<std::string> itemNames = {"Rifle", "Gallina", "Dientes", "Llave"};
+    std::vector<std::string> itemNames = {"Rifle", "Gallina", "Dientes", "Llave", "Balon Basket", "Destornillador"};
     std::vector<std::string> itemFiles = {
         "assets/images/items/rifle.png",
         "assets/images/items/gallo.png",
         "assets/images/items/dientes.png",
-        "assets/images/items/llave.png"};
+        "assets/images/items/llave.png",
+        "assets/images/niveles/nivel7/balon_basket.png",
+        "assets/images/items/destornillador.png"
+    };
 
     for (size_t i = 0; i < itemNames.size(); i++)
     {
@@ -96,23 +96,29 @@ void Inventory::clear()
     m_activeHotbarSlot = 0;
 }
 
-void Inventory::addItem(const Item &item)
-{
-    auto newItem = std::make_unique<Item>(item);
-
-    for (size_t i = 0; i < m_items.size(); ++i)
-    {
-        if (!m_items[i])
-        {
+void Inventory::addItem(const Item& item) {
+    // Crear el Item manualmente sin copiar 
+    auto newItem = std::make_unique<Item>();
+    newItem->name = item.name;
+    newItem->color = item.color;
+    newItem->rutaImagen = item.rutaImagen;
+    
+    // Copiar textura y sprite correctamente
+    if (item.textura) {
+        newItem->textura = item.textura;  
+        if (item.sprite) {
+            newItem->sprite = std::make_unique<sf::Sprite>(*item.sprite);
+        }
+    }
+    
+    for (size_t i = 0; i < m_items.size(); ++i) {
+        if (!m_items[i]) {
             m_items[i] = std::move(newItem);
-            if (i < HOTBAR_SIZE)
-                m_hotbar[i] = m_items[i].get();
+            if (i < HOTBAR_SIZE) m_hotbar[i] = m_items[i].get();
             // Si no hay nada seleccionado, seleccionar este
-            if (m_selectedSlot == -1)
-            {
+            if (m_selectedSlot == -1) {
                 m_selectedSlot = i;
-                if (i < HOTBAR_SIZE)
-                    m_activeHotbarSlot = i;
+                if (i < HOTBAR_SIZE) m_activeHotbarSlot = i;
             }
             return;
         }
@@ -120,14 +126,11 @@ void Inventory::addItem(const Item &item)
 
     m_items.push_back(std::move(newItem));
     size_t index = m_items.size() - 1;
-    if (index < HOTBAR_SIZE)
-        m_hotbar[index] = m_items[index].get();
+    if (index < HOTBAR_SIZE) m_hotbar[index] = m_items[index].get();
     // Si no hay nada seleccionado, seleccionar este
-    if (m_selectedSlot == -1)
-    {
+    if (m_selectedSlot == -1) {
         m_selectedSlot = index;
-        if (index < HOTBAR_SIZE)
-            m_activeHotbarSlot = index;
+        if (index < HOTBAR_SIZE) m_activeHotbarSlot = index;
     }
 }
 
@@ -303,16 +306,12 @@ void Inventory::handleEvent(const sf::Event &event, sf::RenderWindow &window)
     if (m_isOpen)
     {
         sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
-
+        
         // ===== CLICK IZQUIERDO PRESIONADO =====
-        if (const auto *mousePress = event.getIf<sf::Event::MouseButtonPressed>())
-        {
-            if (mousePress->button == sf::Mouse::Button::Left)
-            {
-                for (size_t i = 0; i < m_inventorySlots.size(); ++i)
-                {
-                    if (m_inventorySlots[i].getGlobalBounds().contains(mousePos))
-                    {
+        if (const auto* mousePress = event.getIf<sf::Event::MouseButtonPressed>()) {
+            if (mousePress->button == sf::Mouse::Button::Left) {
+                for (size_t i = 0; i < m_inventorySlots.size(); ++i) {
+                    if (m_inventorySlots[i].getGlobalBounds().contains(mousePos)) {
                         // Verificar si hay item en este slot
                         if (i < m_items.size() && m_items[i])
                         {
@@ -329,12 +328,10 @@ void Inventory::handleEvent(const sf::Event &event, sf::RenderWindow &window)
                 }
             }
         }
-
+        
         // ===== CLICK IZQUIERDO SOLTADO =====
-        if (const auto *mouseRelease = event.getIf<sf::Event::MouseButtonReleased>())
-        {
-            if (mouseRelease->button == sf::Mouse::Button::Left)
-            {
+        if (const auto* mouseRelease = event.getIf<sf::Event::MouseButtonReleased>()) {
+            if (mouseRelease->button == sf::Mouse::Button::Left) {
                 // Si estábamos arrastrando, soltar el item
                 if (m_isDraggingItem)
                 {
@@ -361,18 +358,13 @@ void Inventory::handleEvent(const sf::Event &event, sf::RenderWindow &window)
                 }
             }
         }
-
+        
         // ===== CLICK DERECHO: Eliminar item =====
-        if (const auto *mousePress = event.getIf<sf::Event::MouseButtonPressed>())
-        {
-            if (mousePress->button == sf::Mouse::Button::Right)
-            {
-                for (size_t i = 0; i < m_inventorySlots.size(); ++i)
-                {
-                    if (m_inventorySlots[i].getGlobalBounds().contains(mousePos))
-                    {
-                        if (i < m_items.size() && m_items[i])
-                        {
+        if (const auto* mousePress = event.getIf<sf::Event::MouseButtonPressed>()) {
+            if (mousePress->button == sf::Mouse::Button::Right) {
+                for (size_t i = 0; i < m_inventorySlots.size(); ++i) {
+                    if (m_inventorySlots[i].getGlobalBounds().contains(mousePos)) {
+                        if (i < m_items.size() && m_items[i]) {
                             removeItem(i);
                         }
                         break;
@@ -387,10 +379,9 @@ void Inventory::draw(sf::RenderWindow &window)
 {
     sf::Vector2u windowSize = window.getSize();
     sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
-
+    
     // ========== DIBUJAR HOTBAR (INVENTARIO CERRADO) ==========
-    if (!m_isOpen)
-    {
+    if (!m_isOpen) {
         m_hotbarBg.setPosition(sf::Vector2f(windowSize.x / 2.f, windowSize.y - 35.f));
         window.draw(m_hotbarBg);
 
@@ -400,10 +391,9 @@ void Inventory::draw(sf::RenderWindow &window)
             float y = windowSize.y - 35.f;
 
             m_hotbarSlots[i].setPosition(sf::Vector2f(x, y));
-
+            
             // El slot activo de la hotbar se muestra en amarillo
-            if (i == m_activeHotbarSlot && i < (int)m_items.size() && m_items[i])
-            {
+            if (i == m_activeHotbarSlot && i < (int)m_items.size() && m_items[i]) {
                 m_hotbarSlots[i].setOutlineColor(sf::Color(255, 200, 0));
                 m_hotbarSlots[i].setOutlineThickness(2.f);
             }
@@ -414,38 +404,29 @@ void Inventory::draw(sf::RenderWindow &window)
             }
 
             window.draw(m_hotbarSlots[i]);
-
-            if (i < (int)m_items.size() && m_items[i])
-            {
-                // Verificar si hay textura para este item
-                auto it = m_itemTextures.find(m_items[i]->name);
-                if (it != m_itemTextures.end())
-                {
-                    // Dibujar sprite con la textura
-                    sf::Sprite itemSprite(it->second);
-                    float escala = getItemScale(m_items[i]->name);
-                    itemSprite.setScale(sf::Vector2f(escala, escala));
-                    sf::FloatRect bounds = itemSprite.getLocalBounds();
-                    itemSprite.setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
-                    itemSprite.setPosition(sf::Vector2f(x, y));
-                    window.draw(itemSprite);
-                }
-                else
-                {
-                    // Respaldo: cuadrito de color
-                    sf::RectangleShape itemShape(sf::Vector2f(35.f, 35.f));
-                    itemShape.setFillColor(m_items[i]->color);
-                    itemShape.setOutlineThickness(1.f);
-                    itemShape.setOutlineColor(sf::Color::Black);
-                    itemShape.setOrigin(sf::Vector2f(17.5f, 17.5f));
-                    itemShape.setPosition(sf::Vector2f(x, y));
-                    window.draw(itemShape);
-                }
+            
+            if (i < (int)m_items.size() && m_items[i]) {
+            // Intentar dibujar sprite primero
+            if (m_items[i]->sprite) {
+                m_items[i]->scaleSprite(35.f, 35.f);
+                sf::FloatRect bounds = m_items[i]->sprite->getLocalBounds();
+                m_items[i]->sprite->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
+                m_items[i]->sprite->setPosition(sf::Vector2f(x, y));
+                window.draw(*m_items[i]->sprite);
+            } else {
+                // Fallback: rectángulo de color
+                sf::RectangleShape itemShape(sf::Vector2f(35.f, 35.f));
+                itemShape.setFillColor(m_items[i]->color);
+                itemShape.setOutlineThickness(1.f);
+                itemShape.setOutlineColor(sf::Color::Black);
+                itemShape.setOrigin(sf::Vector2f(17.5f, 17.5f));
+                itemShape.setPosition(sf::Vector2f(x, y));
+                window.draw(itemShape);
             }
-
+        }
+            
             // Dibujar número del slot SÓLO si la fuente es válida
-            if (m_fontLoaded)
-            {
+            if (m_fontLoaded) {
                 sf::Text slotNum(m_font, std::to_string(i + 1), 10);
                 slotNum.setFillColor(sf::Color(150, 150, 150));
                 slotNum.setPosition(sf::Vector2f(x - 18.f, y - 18.f));
@@ -453,16 +434,14 @@ void Inventory::draw(sf::RenderWindow &window)
             }
         }
     }
-
+    
     // ========== DIBUJAR INVENTARIO EXTENDIDO (ABIERTO) ==========
-    if (m_isOpen)
-    {
+    if (m_isOpen) {
         m_inventoryBg.setPosition(sf::Vector2f(windowSize.x / 2.f, windowSize.y / 2.f));
         window.draw(m_inventoryBg);
-
+        
         // Título (solo si fuente cargada)
-        if (m_fontLoaded)
-        {
+        if (m_fontLoaded) {
             sf::Text title(m_font, "INVENTARIO", 18);
             title.setFillColor(sf::Color::White);
             sf::FloatRect titleBounds = title.getLocalBounds();
@@ -470,22 +449,19 @@ void Inventory::draw(sf::RenderWindow &window)
             title.setPosition(sf::Vector2f(windowSize.x / 2.f, windowSize.y / 2.f - 105.f));
             window.draw(title);
         }
-
+        
         // Instrucciones (solo si m_infoText es válido)
-        if (m_infoText)
-        {
+        if (m_infoText) {
             m_infoText->setString("Click: Seleccionar | Arrastrar: Mover | Click der: Eliminar | E: Cerrar");
             sf::FloatRect infoBounds = m_infoText->getLocalBounds();
             m_infoText->setOrigin(sf::Vector2f(infoBounds.size.x / 2.f, 0.f));
             m_infoText->setPosition(sf::Vector2f(windowSize.x / 2.f, windowSize.y / 2.f + 115.f));
             window.draw(*m_infoText);
         }
-
+        
         // Dibujar slots del inventario
-        for (int row = 0; row < INVENTORY_ROWS; ++row)
-        {
-            for (int col = 0; col < INVENTORY_COLS; ++col)
-            {
+        for (int row = 0; row < INVENTORY_ROWS; ++row) {
+            for (int col = 0; col < INVENTORY_COLS; ++col) {
                 int index = row * INVENTORY_COLS + col;
                 float x = windowSize.x / 2.f - 100.f + col * 50.f;
                 float y = windowSize.y / 2.f - 40.f + row * 50.f;
@@ -493,10 +469,9 @@ void Inventory::draw(sf::RenderWindow &window)
                 m_inventorySlots[index].setPosition(sf::Vector2f(x, y));
 
                 bool isHovered = m_inventorySlots[index].getGlobalBounds().contains(mousePos);
-
+                
                 // MOSTRAR BORDE AMARILLO EN EL SLOT SELECCIONADO (CUALQUIER FILA)
-                if (index == m_selectedSlot && index < (int)m_items.size() && m_items[index])
-                {
+                if (index == m_selectedSlot && index < (int)m_items.size() && m_items[index]) {
                     m_inventorySlots[index].setOutlineColor(sf::Color(255, 200, 0));
                     m_inventorySlots[index].setOutlineThickness(3.f);
                 }
@@ -512,25 +487,19 @@ void Inventory::draw(sf::RenderWindow &window)
                 }
 
                 window.draw(m_inventorySlots[index]);
-
+                
                 // Dibujar item si existe y NO es el que se está arrastrando
-                if (index < (int)m_items.size() && m_items[index])
-                {
-                    if (!m_isDraggingItem || index != m_draggedItemIndex)
-                    {
-                        auto it = m_itemTextures.find(m_items[index]->name);
-                        if (it != m_itemTextures.end())
-                        {
-                            sf::Sprite itemSprite(it->second);
-                            float escala = getItemScale(m_items[index]->name);
-                            itemSprite.setScale(sf::Vector2f(escala, escala));
-                            sf::FloatRect bounds = itemSprite.getLocalBounds();
-                            itemSprite.setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
-                            itemSprite.setPosition(sf::Vector2f(x, y));
-                            window.draw(itemSprite);
-                        }
-                        else
-                        {
+                if (index < (int)m_items.size() && m_items[index]) {
+                    if (!m_isDraggingItem || index != m_draggedItemIndex) {
+                        // Intentar dibujar sprite primero
+                        if (m_items[index]->sprite) {
+                            m_items[index]->scaleSprite(35.f, 35.f);
+                            sf::FloatRect bounds = m_items[index]->sprite->getLocalBounds();
+                            m_items[index]->sprite->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
+                            m_items[index]->sprite->setPosition(sf::Vector2f(x, y));
+                            window.draw(*m_items[index]->sprite);
+                        } else {
+                            // Fallback: rectángulo de color
                             sf::RectangleShape itemShape(sf::Vector2f(35.f, 35.f));
                             itemShape.setFillColor(m_items[index]->color);
                             itemShape.setOutlineThickness(1.f);
@@ -541,10 +510,9 @@ void Inventory::draw(sf::RenderWindow &window)
                         }
                     }
                 }
-
+                
                 // Dibujar números en la primera fila (hotbar) SÓLO si la fuente es válida
-                if (row == 0 && m_fontLoaded)
-                {
+                if (row == 0 && m_fontLoaded) {
                     sf::Text slotNum(m_font, std::to_string(col + 1), 10);
                     slotNum.setFillColor(sf::Color(150, 150, 150));
                     slotNum.setPosition(sf::Vector2f(x - 18.f, y - 18.f));
@@ -552,25 +520,18 @@ void Inventory::draw(sf::RenderWindow &window)
                 }
             }
         }
-
+        
         // Dibujar el item que se está arrastrando
-        if (m_isDraggingItem && m_draggedItemIndex != -1 &&
-            m_draggedItemIndex < (int)m_items.size() && m_items[m_draggedItemIndex])
-        {
-
-            auto it = m_itemTextures.find(m_items[m_draggedItemIndex]->name);
-            if (it != m_itemTextures.end())
-            {
-                sf::Sprite itemSprite(it->second);
-                float escala = getItemScale(m_items[m_draggedItemIndex]->name);
-                itemSprite.setScale(sf::Vector2f(escala, escala));
-                sf::FloatRect bounds = itemSprite.getLocalBounds();
-                itemSprite.setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
-                itemSprite.setPosition(mousePos - m_dragOffset);
-                window.draw(itemSprite);
-            }
-            else
-            {
+        if (m_isDraggingItem && m_draggedItemIndex != -1 && 
+            m_draggedItemIndex < (int)m_items.size() && m_items[m_draggedItemIndex]) {
+            
+            if (m_items[m_draggedItemIndex]->sprite) {
+                m_items[m_draggedItemIndex]->scaleSprite(45.f, 45.f);
+                sf::FloatRect bounds = m_items[m_draggedItemIndex]->sprite->getLocalBounds();
+                m_items[m_draggedItemIndex]->sprite->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
+                m_items[m_draggedItemIndex]->sprite->setPosition(mousePos - m_dragOffset);
+                window.draw(*m_items[m_draggedItemIndex]->sprite);
+            } else {
                 sf::RectangleShape itemShape(sf::Vector2f(45.f, 45.f));
                 itemShape.setFillColor(m_items[m_draggedItemIndex]->color);
                 itemShape.setOutlineThickness(2.f);
@@ -600,13 +561,10 @@ void Inventory::addDefaultItems()
     // Vacío por defecto
 }
 
-// ============================================================
 // OBTENER ITEM POR ÍNDICE - Devuelve el item en la posición dada
 // ============================================================
-Item *Inventory::getItem(int index)
-{
-    if (index >= 0 && index < (int)m_items.size() && m_items[index])
-    {
+Item* Inventory::getItem(int index) {
+    if (index >= 0 && index < (int)m_items.size() && m_items[index]) {
         return m_items[index].get();
     }
     return nullptr;
@@ -622,5 +580,9 @@ float Inventory::getItemScale(const std::string &name)
         return 0.12f;
     if (name == "Llave")
         return 0.077f;
+    if (name == "Balon Basket")
+        return 0.15f;
+    if (name == "Destornillador")
+        return 0.15f;
     return 0.5f; // Escala por defecto
 }
