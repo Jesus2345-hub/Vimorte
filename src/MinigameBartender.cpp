@@ -225,7 +225,7 @@ void MinigameBartender::resetearMezcla() {
 
 void MinigameBartender::verificarPedido() {
     if (coloresIguales(m_colorMezcla, m_colorPedido)) {
-        // Correcto
+        // Correcto: gana $1
         m_bebidasServidas++;
         if (m_dineroJugador) *m_dineroJugador += 1;
         
@@ -237,25 +237,22 @@ void MinigameBartender::verificarPedido() {
         resetearMezcla();
         generarNuevoPedido();
     } else {
-        // Error
+        // Error: pierde $1
         m_errores++;
+        if (m_dineroJugador) *m_dineroJugador -= 1;
         
-        m_mensajeResultado = "INCORRECTO!";
+        m_mensajeResultado = "INCORRECTO! -$1";
         m_resultadoText->setFillColor(sf::Color::Red);
         m_mostrandoResultado = true;
         m_tiempoResultado = 1.5f;
         
         resetearMezcla();
-        
-        if (m_errores >= m_maxErrores) {
-            m_mensajeResultado = "GAME OVER! Bebidas: " + std::to_string(m_bebidasServidas);
-        }
     }
 }
 
+
 void MinigameBartender::handleEvent(const sf::Event& event, const sf::RenderWindow& window) {
     if (!m_isActive) return;
-    if (m_errores >= m_maxErrores) return;
     if (m_mostrandoResultado) return;
     
     sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
@@ -391,9 +388,9 @@ void MinigameBartender::draw(sf::RenderWindow& window) {
         window.draw(*m_bebidasText);
     }
     
-    // Errores
+        // Errores
     if (m_erroresText) {
-        m_erroresText->setString("Errores: " + std::to_string(m_errores) + "/" + std::to_string(m_maxErrores));
+        m_erroresText->setString("Errores: " + std::to_string(m_errores));
         m_erroresText->setPosition(sf::Vector2f(m_position.x + m_size.x - 200.f, m_position.y + 65.f));
         window.draw(*m_erroresText);
     }

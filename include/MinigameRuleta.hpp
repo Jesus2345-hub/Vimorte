@@ -21,100 +21,87 @@ public:
     void update(float dt);
     void draw(sf::RenderWindow& window);
     
-    // Devuelve true si ganó, y cuánto
     struct ResultadoApuesta {
         bool gano = false;
         int ganancia = 0;
         std::string mensaje;
     };
     
-    // Para acceder al dinero del jugador
     void setDineroJugador(int* dinero) { m_dineroJugador = dinero; }
     int* getDineroJugador() { return m_dineroJugador; }
     
 private:
-	// Animación de la ruleta
-// Animación de la ruleta
-bool m_girando = false;
-float m_anguloActual = 0.f;
-float m_velocidadGiro = 0.f;
-float m_anguloObjetivo = 0.f;
-sf::CircleShape m_circuloRuleta;
-std::vector<sf::Text> m_numerosRuleta;
-sf::RectangleShape m_flecha;
-
-std::vector<int> m_ordenRuleta;
-
-void inicializarRuletaAnimada();
-
-// Animación de la pelotita
-bool m_pelotitaGirando = false;
-float m_anguloPelotita = 0.f;
-float m_velocidadPelotita = 0.f;
-float m_anguloObjetivoPelotita = 0.f;
-sf::CircleShape m_pelotita;
-
-
+    // Animación de la ruleta
+    bool m_girando = false;
+    float m_anguloActual = 0.f;
+    float m_velocidadGiro = 0.f;
+    float m_anguloObjetivo = 0.f;
+    sf::CircleShape m_circuloRuleta;
+    std::vector<sf::Text> m_numerosRuleta;
+    sf::RectangleShape m_flecha;
+    std::vector<int> m_ordenRuleta;
+    
+    void inicializarRuletaAnimada();
+    
+    // Animación de la pelotita
+    bool m_pelotitaGirando = false;
+    float m_anguloPelotita = 0.f;
+    float m_velocidadPelotita = 0.f;
+    float m_anguloObjetivoPelotita = 0.f;
+    sf::CircleShape m_pelotita;
+    
     bool m_isActive = false;
     sf::Vector2f m_position;
     sf::Vector2f m_size;
     
-    // Fondo del minijuego
     sf::RectangleShape m_background;
-    
-    // Textura de la ruleta
     sf::Texture m_ruletaTexture;
     std::unique_ptr<sf::Sprite> m_ruletaSprite;
     
-    // Estados de apuesta
     enum class TipoApuesta {
         NINGUNA,
         NUMERO_EXACTO,      // 35:1
         CUARTO,             // 3:1  (1-12, 13-24, 25-36)
-        COLOR               // 2:1  (rojo/negro/verde)
+        COLOR,              // 2:1  (rojo/negro/verde)
+        PAR_IMPAR           // 1:1  (par/impar)
     };
     
     TipoApuesta m_tipoApuesta = TipoApuesta::NINGUNA;
     
-    // Para número exacto
     int m_numeroElegido = 0;
-    
-    // Para cuarto
     int m_cuartoElegido = 0; // 0, 1, 2
     
-    // Para color
     enum class ColorElegido { NINGUNO, ROJO, NEGRO, VERDE };
     ColorElegido m_colorElegido = ColorElegido::NINGUNO;
     
-    // Cantidad apostada
+    // Par/Impar
+    int m_parImparElegido = -1; // 0 = Par, 1 = Impar
+    
     int m_apuesta = 5;
     int m_apuestaMinima = 5;
     int m_apuestaMaxima = 100;
     
-    // Dinero del jugador (puntero al dinero del nivel)
     int* m_dineroJugador = nullptr;
     
-    // Resultado
     int m_numeroGanador = -1;
     bool m_mostrandoResultado = false;
     float m_tiempoResultado = 0.0f;
     std::string m_mensajeResultado;
     
-    // Fuente
     sf::Font m_font;
     bool m_fontLoaded = false;
     
-    // Textos
     std::unique_ptr<sf::Text> m_tituloText;
     std::unique_ptr<sf::Text> m_instruccionesText;
     std::unique_ptr<sf::Text> m_apuestaText;
     std::unique_ptr<sf::Text> m_resultadoText;
     std::unique_ptr<sf::Text> m_dineroText;
     
-    // Botones
+    // Botones de tipo de apuesta
     sf::RectangleShape m_btnNumeroExacto;
     sf::RectangleShape m_btnCuarto;
     sf::RectangleShape m_btnColor;
+    sf::RectangleShape m_btnParImpar;            // NUEVO
     sf::RectangleShape m_btnGirar;
     sf::RectangleShape m_btnAumentar;
     sf::RectangleShape m_btnDisminuir;
@@ -122,11 +109,12 @@ sf::CircleShape m_pelotita;
     std::unique_ptr<sf::Text> m_textoBtnExacto;
     std::unique_ptr<sf::Text> m_textoBtnCuarto;
     std::unique_ptr<sf::Text> m_textoBtnColor;
+    std::unique_ptr<sf::Text> m_textoBtnParImpar; // NUEVO
     std::unique_ptr<sf::Text> m_textoBtnGirar;
     std::unique_ptr<sf::Text> m_textoBtnAumentar;
     std::unique_ptr<sf::Text> m_textoBtnDisminuir;
     
-    // Selector de número (para apuesta exacta)
+    // Selector de número
     std::vector<sf::RectangleShape> m_botonesNumeros;
     std::vector<std::unique_ptr<sf::Text>> m_textosNumeros;
     std::vector<bool> m_hoverNumeros;
@@ -150,10 +138,18 @@ sf::CircleShape m_pelotita;
     std::unique_ptr<sf::Text> m_textoVerde;
     bool m_mostrandoSelectorColor = false;
     
+    // Selector de Par/Impar (NUEVO)
+    sf::RectangleShape m_btnPar;
+    sf::RectangleShape m_btnImpar;
+    std::unique_ptr<sf::Text> m_textoPar;
+    std::unique_ptr<sf::Text> m_textoImpar;
+    bool m_mostrandoSelectorParImpar = false;
+    
     // Hover
     bool m_hoverExacto = false;
     bool m_hoverCuarto = false;
     bool m_hoverColor = false;
+    bool m_hoverParImpar = false;   // NUEVO
     bool m_hoverGirar = false;
     bool m_hoverAumentar = false;
     bool m_hoverDisminuir = false;
@@ -163,8 +159,9 @@ sf::CircleShape m_pelotita;
     bool m_hoverRojo = false;
     bool m_hoverNegro = false;
     bool m_hoverVerde = false;
+    bool m_hoverPar = false;        // NUEVO
+    bool m_hoverImpar = false;      // NUEVO
     
-    // Generador aleatorio
     std::random_device m_rd;
     std::mt19937 m_gen;
     
@@ -174,6 +171,7 @@ sf::CircleShape m_pelotita;
     bool esRojo(int numero);
     bool esNegro(int numero);
     int obtenerCuarto(int numero);
+    bool esPar(int numero);          // Para la apuesta par/impar
 };
 
 #endif
