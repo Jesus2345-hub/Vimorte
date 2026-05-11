@@ -97,7 +97,19 @@ void Inventory::clear()
 }
 
 void Inventory::addItem(const Item& item) {
-    auto newItem = std::make_unique<Item>(item);
+    // Crear el Item manualmente sin copiar 
+    auto newItem = std::make_unique<Item>();
+    newItem->name = item.name;
+    newItem->color = item.color;
+    newItem->rutaImagen = item.rutaImagen;
+    
+    // Copiar textura y sprite correctamente
+    if (item.textura) {
+        newItem->textura = item.textura;  
+        if (item.sprite) {
+            newItem->sprite = std::make_unique<sf::Sprite>(*item.sprite);
+        }
+    }
     
     for (size_t i = 0; i < m_items.size(); ++i) {
         if (!m_items[i]) {
@@ -106,8 +118,7 @@ void Inventory::addItem(const Item& item) {
             // Si no hay nada seleccionado, seleccionar este
             if (m_selectedSlot == -1) {
                 m_selectedSlot = i;
-                if (i < HOTBAR_SIZE)
-                    m_activeHotbarSlot = i;
+                if (i < HOTBAR_SIZE) m_activeHotbarSlot = i;
             }
             return;
         }
@@ -119,8 +130,7 @@ void Inventory::addItem(const Item& item) {
     // Si no hay nada seleccionado, seleccionar este
     if (m_selectedSlot == -1) {
         m_selectedSlot = index;
-        if (index < HOTBAR_SIZE)
-            m_activeHotbarSlot = index;
+        if (index < HOTBAR_SIZE) m_activeHotbarSlot = index;
     }
 }
 
@@ -396,6 +406,15 @@ void Inventory::draw(sf::RenderWindow &window)
             window.draw(m_hotbarSlots[i]);
             
             if (i < (int)m_items.size() && m_items[i]) {
+            // Intentar dibujar sprite primero
+            if (m_items[i]->sprite) {
+                m_items[i]->scaleSprite(35.f, 35.f);
+                sf::FloatRect bounds = m_items[i]->sprite->getLocalBounds();
+                m_items[i]->sprite->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
+                m_items[i]->sprite->setPosition(sf::Vector2f(x, y));
+                window.draw(*m_items[i]->sprite);
+            } else {
+                // Fallback: rectángulo de color
                 sf::RectangleShape itemShape(sf::Vector2f(35.f, 35.f));
                 itemShape.setFillColor(m_items[i]->color);
                 itemShape.setOutlineThickness(1.f);
@@ -404,6 +423,7 @@ void Inventory::draw(sf::RenderWindow &window)
                 itemShape.setPosition(sf::Vector2f(x, y));
                 window.draw(itemShape);
             }
+        }
             
             // Dibujar número del slot SÓLO si la fuente es válida
             if (m_fontLoaded) {
@@ -471,13 +491,23 @@ void Inventory::draw(sf::RenderWindow &window)
                 // Dibujar item si existe y NO es el que se está arrastrando
                 if (index < (int)m_items.size() && m_items[index]) {
                     if (!m_isDraggingItem || index != m_draggedItemIndex) {
-                        sf::RectangleShape itemShape(sf::Vector2f(35.f, 35.f));
-                        itemShape.setFillColor(m_items[index]->color);
-                        itemShape.setOutlineThickness(1.f);
-                        itemShape.setOutlineColor(sf::Color::Black);
-                        itemShape.setOrigin(sf::Vector2f(17.5f, 17.5f));
-                        itemShape.setPosition(sf::Vector2f(x, y));
-                        window.draw(itemShape);
+                        // Intentar dibujar sprite primero
+                        if (m_items[index]->sprite) {
+                            m_items[index]->scaleSprite(35.f, 35.f);
+                            sf::FloatRect bounds = m_items[index]->sprite->getLocalBounds();
+                            m_items[index]->sprite->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
+                            m_items[index]->sprite->setPosition(sf::Vector2f(x, y));
+                            window.draw(*m_items[index]->sprite);
+                        } else {
+                            // Fallback: rectángulo de color
+                            sf::RectangleShape itemShape(sf::Vector2f(35.f, 35.f));
+                            itemShape.setFillColor(m_items[index]->color);
+                            itemShape.setOutlineThickness(1.f);
+                            itemShape.setOutlineColor(sf::Color::Black);
+                            itemShape.setOrigin(sf::Vector2f(17.5f, 17.5f));
+                            itemShape.setPosition(sf::Vector2f(x, y));
+                            window.draw(itemShape);
+                        }
                     }
                 }
                 
@@ -495,13 +525,21 @@ void Inventory::draw(sf::RenderWindow &window)
         if (m_isDraggingItem && m_draggedItemIndex != -1 && 
             m_draggedItemIndex < (int)m_items.size() && m_items[m_draggedItemIndex]) {
             
-            sf::RectangleShape itemShape(sf::Vector2f(45.f, 45.f));
-            itemShape.setFillColor(m_items[m_draggedItemIndex]->color);
-            itemShape.setOutlineThickness(2.f);
-            itemShape.setOutlineColor(sf::Color::Yellow);
-            itemShape.setOrigin(sf::Vector2f(22.5f, 22.5f));
-            itemShape.setPosition(mousePos - m_dragOffset);
-            window.draw(itemShape);
+            if (m_items[m_draggedItemIndex]->sprite) {
+                m_items[m_draggedItemIndex]->scaleSprite(45.f, 45.f);
+                sf::FloatRect bounds = m_items[m_draggedItemIndex]->sprite->getLocalBounds();
+                m_items[m_draggedItemIndex]->sprite->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
+                m_items[m_draggedItemIndex]->sprite->setPosition(mousePos - m_dragOffset);
+                window.draw(*m_items[m_draggedItemIndex]->sprite);
+            } else {
+                sf::RectangleShape itemShape(sf::Vector2f(45.f, 45.f));
+                itemShape.setFillColor(m_items[m_draggedItemIndex]->color);
+                itemShape.setOutlineThickness(2.f);
+                itemShape.setOutlineColor(sf::Color::Yellow);
+                itemShape.setOrigin(sf::Vector2f(22.5f, 22.5f));
+                itemShape.setPosition(mousePos - m_dragOffset);
+                window.draw(itemShape);
+            }
         }
     }
 }

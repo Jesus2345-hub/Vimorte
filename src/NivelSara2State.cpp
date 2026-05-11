@@ -202,7 +202,7 @@ void NivelSara2State::configurarBloquesInteractivos()
     
     m_bloquesInteractivos.push_back({
         sf::FloatRect(sf::Vector2f(280.f, 904.f), sf::Vector2f(100.f, 100.f)),
-        "Andrea esta desesperada.\nSus joyas mas preciosas fueron robadas...\nAndrea : Ayudame a encontrar al culpable.\n\n[Presiona R para entregar los objetos si has resuelto el caso]"
+        "Andrea esta desesperada.\nSus joyas mas preciosas fueron robadas...\nAndrea : Ayudame a encontrar al culpable, vi a alguien,\nmerodeando entre las sillas.\n\n[Presiona R para entregar los objetos si has resuelto el caso]"
     });
 }
 
