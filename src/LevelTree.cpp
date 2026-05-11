@@ -2,6 +2,7 @@
 #include "State.hpp"
 #include "Game.hpp"
 #include "Nivel1State.hpp"
+#include "Centinela2.hpp"
 #include "Nivel2State.hpp"  
 #include "NivelSara1State.hpp"
 #include "NivelSara2State.hpp"
@@ -88,7 +89,7 @@ void LevelTree::buildTree()
     auto centinela2 = std::make_unique<LevelNode>("centinela2", "Centinela 2", LevelType::CENTINELA, 0);
     centinela2->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
     {
-        return std::make_unique<Nivel1State>(w, g);
+        return std::make_unique<Centinela2State>(w, g);
     };
     centinela2->permiteRetrocesoDesdeCentinela = true;
 
