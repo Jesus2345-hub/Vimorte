@@ -65,6 +65,7 @@ public:
     void update(float dt);
     void draw(sf::RenderWindow& window);
     void reset();
+    bool isCompleted() const { return m_gameWon; }
     
 private:
     void initBalls();

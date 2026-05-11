@@ -148,23 +148,33 @@ void MinigameCables::inicializarCables() {
     m_cables.clear();
     m_ordenCorrecto.clear();
     
-    // Calcular posición centrada de los cables
-    float cablesWidth = 400.f;
-    float cablesHeight = 260.f; //mas alto
-    float cablesX = m_position.x + (m_size.x - cablesWidth) / 2.4f;
-    float cablesY = m_position.y + m_size.y - cablesHeight - 150.f;
+    // Los cables deben centrarse en la pantalla, no en m_size
+    // Usar coordenadas de pantalla (0 a ancho de ventana)
+    float cablesWidth = 500.f;   // Ancho total de los cables
+    float cablesHeight = 250.f;   // Alto total
+    
+    // Centrar en la pantalla usando la posición actual del minijuego
+    // pero con un desplazamiento para que queden centrados
+    float centerX = m_position.x + m_size.x / 2.f;
+    float cablesX = centerX - cablesWidth / 2.f;
+    
+    // Posición Y: 40% desde arriba de la pantalla (ajusta este valor)
+    float cablesY = m_position.y + m_size.y * 0.35f;
     
     std::vector<sf::Color> colores = {sf::Color::Red, sf::Color::Blue, sf::Color::Green, sf::Color::Yellow};
     std::vector<std::string> nombres = {"ROJO", "AZUL", "VERDE", "AMARILLO"};
     
-    float startY = cablesY + 22.f;
-    float spacing = 50.f; //espacio entre cables
+    float startY = cablesY;
+    float spacing = 55.f;  // Espacio entre cables
     
     for (int i = 0; i < 4; i++) {
-        float x = cablesX + 80.f;  // Más margen izquierdo para números
+        float x = cablesX + 80.f;
         float y = startY + i * spacing;
         crearCable(colores[i], nombres[i], i + 1, x, y);
     }
+    
+    
+
     
 
     
@@ -410,6 +420,39 @@ void MinigameCables::dibujarTijeras(sf::RenderWindow& window) {
     
     m_tijeraPivote.setPosition(sf::Vector2f(x - 5.f, y - 5.f));
     window.draw(m_tijeraPivote);
+}
+
+void MinigameCables::recalcularPosiciones() {
+    if (!m_active) return;
+    
+    float cablesWidth = 500.f;
+    float centerX = m_position.x + m_size.x / 2.f;
+    float cablesX = centerX - cablesWidth / 2.f;
+    float cablesY = m_position.y + m_size.y * 0.35f;  // Mismo porcentaje que en inicializar
+    
+    float startY = cablesY;
+    float spacing = 55.f;
+    
+    for (size_t i = 0; i < m_cables.size(); i++) {
+        float x = cablesX + 80.f;
+        float y = startY + i * spacing;
+        
+        m_cables[i].formaCable->setPosition(sf::Vector2f(x, y));
+        m_cables[i].puntaIzquierda->setPosition(sf::Vector2f(x, y));
+        m_cables[i].puntaDerecha->setPosition(sf::Vector2f(x, y));
+        
+        if (m_cables[i].textoNumero) {
+            m_cables[i].textoNumero->setPosition(sf::Vector2f(x - 40.f, y - 2.f));
+        }
+    }
+    
+    // Actualizar panel
+    m_panel.setSize(sf::Vector2f(m_size.x * 0.85f, m_size.y * 0.75f));
+    m_panel.setPosition(sf::Vector2f(
+        m_position.x + (m_size.x - m_panel.getSize().x) / 2.f,
+        m_position.y + (m_size.y - m_panel.getSize().y) / 2.f + 40.f
+    ));
+
 }
 
 void MinigameCables::update(float dt) {

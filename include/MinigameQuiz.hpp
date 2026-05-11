@@ -76,6 +76,7 @@ public:
     void update(float dt);
     void draw(sf::RenderWindow& window);
     void reset();
+    bool isCompleted() const { return m_juegoTerminado && m_respuestasCorrectas >= m_preguntasPorRonda; }
     
 private:
     void inicializarBancoPreguntas();

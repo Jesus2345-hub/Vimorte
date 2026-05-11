@@ -25,7 +25,7 @@ Nivel3State::Nivel3State(sf::RenderWindow* window, Game* game)
     m_msjActual.color = sf::Color::Yellow;
     
     m_player.loadAssets();
-    m_player.setPosition(400.f, 600.f);
+    m_player.setPosition(840.f, 320.f);
     m_player.setSpeed(300.0f);
     
     if (game->tienePartidaActiva()) {
@@ -243,12 +243,18 @@ void Nivel3State::actualizarTextosMinijuegos() {
     float h = currentSize.y * 0.8f;
     float x = (currentSize.x - w) / 2.f;
     float y = (currentSize.y - h) / 2.f;
+    
     m_minijuegoCables.setSize(sf::Vector2f(w, h));
     m_minijuegoCables.setPosition(sf::Vector2f(x, y));
+    m_minijuegoCables.recalcularPosiciones();  // Añadir esta línea
+    
     m_minijuegoMemoria.setSize(sf::Vector2f(w, h));
     m_minijuegoMemoria.setPosition(sf::Vector2f(x, y));
+    // Si MinigameMemoria tiene recalcularPosiciones, llamarlo también
+    
     m_minijuegoPatron.setSize(sf::Vector2f(w, h));
     m_minijuegoPatron.setPosition(sf::Vector2f(x, y));
+    // Si MinigamePatron tiene recalcularPosiciones, llamarlo también
 }
 
 // ============================================================

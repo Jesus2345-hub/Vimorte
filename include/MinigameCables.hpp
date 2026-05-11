@@ -29,6 +29,8 @@ public:
     void setOrdenCorrecto(const std::vector<int>& orden) { m_ordenPredefinido = orden; }
     void setPista1(const std::string& pista) { m_pista1 = pista; }
     void setPista2(const std::string& pista) { m_pista2 = pista; }
+    
+void recalcularPosiciones();
 
 private:
     struct Cable {

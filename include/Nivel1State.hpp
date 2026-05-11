@@ -8,6 +8,7 @@
 #include "MinigamePool.hpp"
 #include "MinigameQuiz.hpp"
 #include "Inventory.hpp"
+#include "CoordenadasDebug.hpp"
 #include <memory>
 #include <vector>
 
@@ -55,7 +56,7 @@ private:
     sf::Font m_font;
     std::unique_ptr<sf::Text> m_textoInteraccion;
     
-    // === NUEVO: Para conexión con árbol ===
+    // === Para conexión con árbol ===
     bool m_mostrarPuertaSalida;
     bool m_cercaPuertaSalida;
     sf::FloatRect m_puertaSalidaArea;
@@ -66,8 +67,25 @@ private:
     void verificarSalidaNivel();
     void verificarEntradaCentinela();
     void jugadorHaMuerto();
-    sf::Vector2u m_lastWindowSize;  // Para detectar cambios de tamaño
+    sf::Vector2u m_lastWindowSize;
     
+    // Control de debug unificado
+    bool m_debugMode = false;
+    
+    // ===== NUEVOS: Sistema de puzzles completados =====
+    bool m_poolCompletado = false;
+    bool m_quizCompletado = false;
+    bool m_colorMixCompletado = false;
+    bool m_todosPuzzlesCompletados = false;
+    
+    // Variables para detectar cambio de estado (no se usan con isCompleted, pero se declaran)
+    bool m_poolEstabaActivo = false;
+    bool m_quizEstabaActivo = false;
+    bool m_colorMixEstabaActivo = false;
+    
+    void verificarPuzzlesCompletados();
+    void actualizarPuertaSalida();
+    void verificarEstadoMinijuegos();
     
 public:
     Nivel1State(sf::RenderWindow* window, Game* game);
