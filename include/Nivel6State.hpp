@@ -23,6 +23,10 @@ private:
     std::unique_ptr<sf::Sprite> m_background;
     sf::Vector2f m_worldSize;
 
+    // Sprites para objetos en el mapa
+    sf::Texture m_rifleMapTexture;
+    std::unique_ptr<sf::Sprite> m_rifleMapSprite;
+
     // Minijuego RoosterHunt
     MinigameRoosterHunt m_roosterHuntMinigame;
 

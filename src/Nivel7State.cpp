@@ -24,6 +24,7 @@ Nivel7State::Nivel7State(sf::RenderWindow *window, Game *game)
     m_player.setSpeed(300.0f);
 
     // Tutorial
+    
     if (game->tienePartidaActiva())
     {
         const auto &items = game->getSaveManager().getCurrentProgress().itemsRecolectados;
@@ -88,14 +89,47 @@ Nivel7State::Nivel7State(sf::RenderWindow *window, Game *game)
     m_goles = 0;
     m_golesParaGanar = 3;
 
+    // Balón de basket en el mapa
+    if (m_balonBasketMapTexture.loadFromFile("assets/images/niveles/nivel7/balon_basket.png"))
+    {
+        m_balonBasketMapSprite = std::make_unique<sf::Sprite>(m_balonBasketMapTexture);
+        m_balonBasketMapSprite->setScale(sf::Vector2f(0.20f, 0.20f));
+        sf::FloatRect bounds = m_balonBasketMapSprite->getLocalBounds();
+        m_balonBasketMapSprite->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
+        m_balonBasketMapSprite->setPosition(sf::Vector2f(1003.f, 691.f)); // Centro del balón
+    }
+
     // Destornillador (a la izquierda del balón de basket)
     m_tieneDestornillador = false;
     m_destornilladorArea = sf::FloatRect(sf::Vector2f(900.f, 680.f), sf::Vector2f(40.f, 40.f));
     m_cercaDestornillador = false;
 
-    // Entrada al centinela (1437,707) a (1465,741) = ancho 28, alto 34
+    // Destornillador en el mapa
+    if (m_destornilladorMapTexture.loadFromFile("assets/images/items/destornillador.png"))
+    {
+        m_destornilladorMapSprite = std::make_unique<sf::Sprite>(m_destornilladorMapTexture);
+        m_destornilladorMapSprite->setScale(sf::Vector2f(0.015f, 0.015f));
+        sf::FloatRect bounds = m_destornilladorMapSprite->getLocalBounds();
+        m_destornilladorMapSprite->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
+        m_destornilladorMapSprite->setPosition(sf::Vector2f(
+            m_destornilladorArea.position.x + m_destornilladorArea.size.x / 2.f,
+            m_destornilladorArea.position.y + m_destornilladorArea.size.y / 2.f));
+    }
+
+    // Entrada al centinela
     m_entradaCentinelaArea = sf::FloatRect(sf::Vector2f(1437.f, 717.f), sf::Vector2f(28.f, 34.f));
     m_cercaEntradaCentinela = false;
+    // Cargar sprite de la rejilla
+    if (m_rejillaTexture.loadFromFile("assets/images/niveles/nivel7/rejilla.png"))
+    {
+        m_rejillaSprite = std::make_unique<sf::Sprite>(m_rejillaTexture);
+        m_rejillaSprite->setScale(sf::Vector2f(0.15f, 0.15f)); // Ajusta según necesites
+        sf::FloatRect bounds = m_rejillaSprite->getLocalBounds();
+        m_rejillaSprite->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
+        m_rejillaSprite->setPosition(sf::Vector2f(
+            m_entradaCentinelaArea.position.x + m_entradaCentinelaArea.size.x / 2.f,
+            m_entradaCentinelaArea.position.y + m_entradaCentinelaArea.size.y / 2.f));
+    }
 
     // Fuente
     m_fontLoaded = m_font.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf");
@@ -307,7 +341,7 @@ void Nivel7State::update(float dt)
                 Inventory *inv = m_player.getInventory();
                 if (inv)
                 {
-                    Item balonBasket("Balon Basket", sf::Color(255, 140, 0));
+                    Item balonBasket("Balon Basket", sf::Color(255, 140, 0), "assets/images/niveles/nivel7/balon_basket.png");
                     inv->addItem(balonBasket);
                 }
 
@@ -364,7 +398,7 @@ void Nivel7State::update(float dt)
             Inventory *inv = m_player.getInventory();
             if (inv)
             {
-                Item llave("Llave", sf::Color(255, 215, 0));
+                Item llave("Llave", sf::Color(255, 215, 0), "assets/images/items/llave.png");
                 inv->addItem(llave);
             }
 
@@ -411,7 +445,7 @@ void Nivel7State::update(float dt)
                 Inventory *inv = m_player.getInventory();
                 if (inv)
                 {
-                    Item destornillador("Destornillador", sf::Color(192, 192, 192));
+                    Item destornillador("Destornillador", sf::Color(192, 192, 192), "assets/images/items/destornillador.png");
                     inv->addItem(destornillador);
                 }
 
@@ -550,13 +584,10 @@ void Nivel7State::draw()
         balon->draw(*window);
     }
 
-    // DEBUG: Balón basket
-    if (!m_tieneBalonBasket)
+    // Balón basket en el mapa
+    if (!m_tieneBalonBasket && m_balonBasketMapSprite)
     {
-        sf::RectangleShape bbDebug(sf::Vector2f(m_balonBasketArea.size.x, m_balonBasketArea.size.y));
-        bbDebug.setPosition(sf::Vector2f(m_balonBasketArea.position.x, m_balonBasketArea.position.y));
-        bbDebug.setFillColor(sf::Color(255, 165, 0, 150));
-        window->draw(bbDebug);
+        window->draw(*m_balonBasketMapSprite);
     }
 
     m_lebron.draw(*window);
@@ -605,24 +636,17 @@ void Nivel7State::draw()
         window->draw(*m_textoInteraccion);
     }
 
-    // DEBUG: Destornillador
-    if (!m_tieneDestornillador)
+    // Destornillador en el mapa
+    if (!m_tieneDestornillador && m_destornilladorMapSprite)
     {
-        sf::RectangleShape destDebug(sf::Vector2f(m_destornilladorArea.size.x, m_destornilladorArea.size.y));
-        destDebug.setPosition(sf::Vector2f(m_destornilladorArea.position.x, m_destornilladorArea.position.y));
-        destDebug.setFillColor(sf::Color(192, 192, 192, 150));
-        destDebug.setOutlineThickness(2.f);
-        destDebug.setOutlineColor(sf::Color::White);
-        window->draw(destDebug);
+        window->draw(*m_destornilladorMapSprite);
     }
 
-    // DEBUG: Entrada centinela
-    sf::RectangleShape centinelaDebug(sf::Vector2f(m_entradaCentinelaArea.size.x, m_entradaCentinelaArea.size.y));
-    centinelaDebug.setPosition(sf::Vector2f(m_entradaCentinelaArea.position.x, m_entradaCentinelaArea.position.y));
-    centinelaDebug.setFillColor(sf::Color(128, 0, 128, 150));
-    centinelaDebug.setOutlineThickness(2.f);
-    centinelaDebug.setOutlineColor(sf::Color::Magenta);
-    window->draw(centinelaDebug);
+    // Rejilla del centinela
+    if (m_rejillaSprite)
+    {
+        window->draw(*m_rejillaSprite);
+    }
 
     // Jugador (adelante)
     m_player.draw(*window);

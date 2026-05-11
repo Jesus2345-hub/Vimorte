@@ -67,6 +67,18 @@ Nivel6State::Nivel6State(sf::RenderWindow *window, Game *game)
     m_rifleArea = sf::FloatRect(sf::Vector2f(522.f, 500.f), sf::Vector2f(40.f, 40.f));
     m_cercaRifle = false;
 
+    // Cargar sprite del rifle en el mapa
+    if (m_rifleMapTexture.loadFromFile("assets/images/items/rifle.png"))
+    {
+        m_rifleMapSprite = std::make_unique<sf::Sprite>(m_rifleMapTexture);
+        m_rifleMapSprite->setScale(sf::Vector2f(0.05f, 0.05f)); // Ajustar tamaño
+        sf::FloatRect bounds = m_rifleMapSprite->getLocalBounds();
+        m_rifleMapSprite->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
+        m_rifleMapSprite->setPosition(sf::Vector2f(
+            m_rifleArea.position.x + m_rifleArea.size.x / 2.f,
+            m_rifleArea.position.y + m_rifleArea.size.y / 2.f));
+    }
+
     // Gallo
     m_gallo.setPosition(1491.f, 773.f);
     m_gallo.setLimites(1370.f, 1620.f);
@@ -276,7 +288,7 @@ void Nivel6State::update(float dt)
                 Inventory *inv = m_player.getInventory();
                 if (inv)
                 {
-                    Item rifle("Rifle", sf::Color(139, 90, 43)); // Color marrón
+                    Item rifle("Rifle", sf::Color(139, 90, 43), "assets/images/items/rifle.png"); // Color marrón
                     inv->addItem(rifle);
                 }
 
@@ -317,7 +329,7 @@ void Nivel6State::update(float dt)
             Inventory *inv = m_player.getInventory();
             if (inv)
             {
-                Item gallina("Gallina", sf::Color(255, 220, 180)); // Color crema
+                Item gallina("Gallina", sf::Color(255, 220, 180), "assets/images/items/gallo.png"); // Color crema
                 inv->addItem(gallina);
             }
 
@@ -398,7 +410,7 @@ void Nivel6State::update(float dt)
             Inventory *inv = m_player.getInventory();
             if (inv)
             {
-                Item dientes("Dientes", sf::Color::White); // Color blanco
+                Item dientes("Dientes", sf::Color::White, "assets/images/items/dientes.png"); // Color blanco
                 inv->addItem(dientes);
             }
 
@@ -445,7 +457,7 @@ void Nivel6State::update(float dt)
                 Inventory *inv = m_player.getInventory();
                 if (inv)
                 {
-                    Item llave("Llave", sf::Color(255, 215, 0)); // Color dorado
+                    Item llave("Llave", sf::Color(255, 215, 0), "assets/images/items/llave.png"); // Color dorado
                     inv->addItem(llave);
                 }
 
@@ -576,15 +588,10 @@ void Nivel6State::draw()
     // Jugador (adelante)
     m_player.draw(*window);
 
-    // DEBUG: Rifle
-    if (!m_rifleRecogido)
+    // Rifle en el mapa (sprite)
+    if (!m_rifleRecogido && m_rifleMapSprite)
     {
-        sf::RectangleShape rifleDebug(sf::Vector2f(m_rifleArea.size.x, m_rifleArea.size.y));
-        rifleDebug.setPosition(sf::Vector2f(m_rifleArea.position.x, m_rifleArea.position.y));
-        rifleDebug.setFillColor(sf::Color(255, 0, 255, 150));
-        rifleDebug.setOutlineThickness(2.f);
-        rifleDebug.setOutlineColor(sf::Color::Magenta);
-        window->draw(rifleDebug);
+        window->draw(*m_rifleMapSprite);
     }
 
     // ===== FASE 2: UI =====
@@ -741,7 +748,7 @@ void Nivel6State::configurarColisiones()
     m_mapaFisico.clear();
 
     // ===== BORDES DEL MUNDO =====
-    m_mapaFisico.emplace_back(0.f, 0.f, 31.f, m_worldSize.y);         // Izquierda
+    m_mapaFisico.emplace_back(0.f, 0.f, 31.f, m_worldSize.y);           // Izquierda
     m_mapaFisico.emplace_back(m_worldSize.x, 0.f, 10.f, m_worldSize.y); // Derecha
     m_mapaFisico.emplace_back(0.f, -10.f, m_worldSize.x, 10.f);         // Arriba
     m_mapaFisico.emplace_back(0.f, m_worldSize.y, m_worldSize.x, 10.f); // Abajo

@@ -8,6 +8,7 @@
 #include "entities/Balon.hpp"
 #include "entities/LeBron.hpp"
 #include "MinigameBaloncesto.hpp"
+#include "CentinelaConductosState.hpp"
 #include <memory>
 #include <vector>
 
@@ -41,6 +42,12 @@ private:
     } m_msjActual;
     void mostrarMensaje(const std::string &texto, float duracion = 2.0f, sf::Color color = sf::Color::Yellow);
 
+    // Sprites para objetos en el mapa
+    sf::Texture m_balonBasketMapTexture;
+    std::unique_ptr<sf::Sprite> m_balonBasketMapSprite;
+    sf::Texture m_destornilladorMapTexture;
+    std::unique_ptr<sf::Sprite> m_destornilladorMapSprite;
+
     // Balones
     std::vector<std::unique_ptr<Balon>> m_balones;
     std::vector<bool> m_balonEnArco;
@@ -56,6 +63,8 @@ private:
     // Entrada centinela
     sf::FloatRect m_entradaCentinelaArea;
     bool m_cercaEntradaCentinela;
+    sf::Texture m_rejillaTexture;
+    std::unique_ptr<sf::Sprite> m_rejillaSprite;
 
     // Baloncesto
     LeBron m_lebron;
