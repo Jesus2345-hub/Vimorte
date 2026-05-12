@@ -174,6 +174,65 @@ void MinigameRuleta::inicializarUI() {
     m_textoPar->setFillColor(sf::Color(200, 200, 255));
     m_textoImpar = std::make_unique<sf::Text>(m_font, "IMPAR", 16);
     m_textoImpar->setFillColor(sf::Color(255, 200, 150));
+
+    // ===== INICIALIZAR TAPETE INTERACTIVO =====
+    inicializarTapete();
+    
+    // ===== NUEVOS BOTONES DE APUESTA (visibles para ajustar) =====
+    // Docenas
+    float btnDocenaWidth = 200.f;
+    float btnDocenaHeight = 40.f;
+    
+    crearBotonElegante(m_btnDocena1, btnDocenaWidth, btnDocenaHeight,
+                       sf::Color(60, 30, 10, 220), sf::Color(180, 120, 60));
+    if (!m_textoDocena1) m_textoDocena1 = std::make_unique<sf::Text>(m_font, "1ra DOCENA (1-12) x2", 14);
+    m_textoDocena1->setFillColor(sf::Color(255, 200, 150));
+    m_textoDocena1->setStyle(sf::Text::Bold);
+    
+    crearBotonElegante(m_btnDocena2, btnDocenaWidth, btnDocenaHeight,
+                       sf::Color(60, 30, 10, 220), sf::Color(180, 120, 60));
+    if (!m_textoDocena2) m_textoDocena2 = std::make_unique<sf::Text>(m_font, "2da DOCENA (13-24) x2", 14);
+    m_textoDocena2->setFillColor(sf::Color(255, 200, 150));
+    m_textoDocena2->setStyle(sf::Text::Bold);
+    
+    crearBotonElegante(m_btnDocena3, btnDocenaWidth, btnDocenaHeight,
+                       sf::Color(60, 30, 10, 220), sf::Color(180, 120, 60));
+    if (!m_textoDocena3) m_textoDocena3 = std::make_unique<sf::Text>(m_font, "3ra DOCENA (25-36) x2", 14);
+    m_textoDocena3->setFillColor(sf::Color(255, 200, 150));
+    m_textoDocena3->setStyle(sf::Text::Bold);
+    
+    // Columnas
+    crearBotonElegante(m_btnColumna1, btnDocenaWidth, btnDocenaHeight,
+                       sf::Color(20, 50, 20, 220), sf::Color(100, 180, 100));
+    if (!m_textoColumna1) m_textoColumna1 = std::make_unique<sf::Text>(m_font, "COLUMNA 1 (x2)", 14);
+    m_textoColumna1->setFillColor(sf::Color(180, 255, 180));
+    m_textoColumna1->setStyle(sf::Text::Bold);
+    
+    crearBotonElegante(m_btnColumna2, btnDocenaWidth, btnDocenaHeight,
+                       sf::Color(20, 50, 20, 220), sf::Color(100, 180, 100));
+    if (!m_textoColumna2) m_textoColumna2 = std::make_unique<sf::Text>(m_font, "COLUMNA 2 (x2)", 14);
+    m_textoColumna2->setFillColor(sf::Color(180, 255, 180));
+    m_textoColumna2->setStyle(sf::Text::Bold);
+    
+    crearBotonElegante(m_btnColumna3, btnDocenaWidth, btnDocenaHeight,
+                       sf::Color(20, 50, 20, 220), sf::Color(100, 180, 100));
+    if (!m_textoColumna3) m_textoColumna3 = std::make_unique<sf::Text>(m_font, "COLUMNA 3 (x2)", 14);
+    m_textoColumna3->setFillColor(sf::Color(180, 255, 180));
+    m_textoColumna3->setStyle(sf::Text::Bold);
+    
+    // 1-18 / 19-36
+    crearBotonElegante(m_btnMitadBaja, btnDocenaWidth, btnDocenaHeight,
+                       sf::Color(50, 15, 50, 220), sf::Color(180, 100, 200));
+    if (!m_textoMitadBaja) m_textoMitadBaja = std::make_unique<sf::Text>(m_font, "1-18 (x1)", 14);
+    m_textoMitadBaja->setFillColor(sf::Color(220, 180, 255));
+    m_textoMitadBaja->setStyle(sf::Text::Bold);
+    
+    crearBotonElegante(m_btnMitadAlta, btnDocenaWidth, btnDocenaHeight,
+                       sf::Color(50, 15, 50, 220), sf::Color(180, 100, 200));
+    if (!m_textoMitadAlta) m_textoMitadAlta = std::make_unique<sf::Text>(m_font, "19-36 (x1)", 14);
+    m_textoMitadAlta->setFillColor(sf::Color(220, 180, 255));
+    m_textoMitadAlta->setStyle(sf::Text::Bold);
+
 }
 
 
@@ -184,16 +243,18 @@ void MinigameRuleta::activate() {
     m_cuartoElegido = -1;
     m_colorElegido = ColorElegido::NINGUNO;
     m_parImparElegido = -1;
+    m_columnaElegida = -1;      // NUEVO
+    m_mitadElegida = -1;        // NUEVO
     m_apuesta = 5;
     m_mostrandoResultado = false;
     m_mostrandoTableroNumeros = false;
     m_mostrandoSelectorCuarto = false;
     m_mostrandoSelectorColor = false;
     m_mostrandoSelectorParImpar = false;
+    m_mostrandoTapete = true;   // NUEVO: siempre visible
     
     inicializarRuletaAnimada();
     
-    // Cargar la imagen de la ruleta
     if (!m_ruletaSprite) {
         if (m_ruletaTexture.loadFromFile("assets/images/niveles/nivel2/ruleta.jpg")) {
             m_ruletaSprite = std::make_unique<sf::Sprite>(m_ruletaTexture);
@@ -235,8 +296,10 @@ void MinigameRuleta::girarRuleta() {
     // Verificar selección según tipo
     if (m_tipoApuesta == TipoApuesta::NUMERO_EXACTO && m_numeroElegido < 0) return;
     if (m_tipoApuesta == TipoApuesta::CUARTO && m_cuartoElegido < 0) return;
+    if (m_tipoApuesta == TipoApuesta::COLUMNA && m_columnaElegida < 0) return;
     if (m_tipoApuesta == TipoApuesta::COLOR && m_colorElegido == ColorElegido::NINGUNO) return;
     if (m_tipoApuesta == TipoApuesta::PAR_IMPAR && m_parImparElegido < 0) return;
+    if (m_tipoApuesta == TipoApuesta::MANQUE_PASSE && m_mitadElegida < 0) return;
     
     // Cobrar apuesta
     *m_dineroJugador -= m_apuesta;
@@ -297,6 +360,23 @@ void MinigameRuleta::girarRuleta() {
             break;
         }
         
+        case TipoApuesta::COLUMNA: {  // NUEVO
+            if (m_numeroGanador == 0) {
+                m_mensajeResultado = "Cayo 0 verde. Perdiste.";
+            } else {
+                int columnaGanadora = obtenerColumna(m_numeroGanador);
+                if (columnaGanadora == m_columnaElegida) {
+                    ganancia = m_apuesta * 3; // 2:1 (apuesta + ganancia)
+                    *m_dineroJugador += ganancia;
+                    m_mensajeResultado = "GANASTE! $" + std::to_string(ganancia) +
+                        "\nNumero: " + std::to_string(m_numeroGanador) + " (Columna " + std::to_string(m_columnaElegida + 1) + ")";
+                } else {
+                    m_mensajeResultado = "Perdiste... Numero: " + std::to_string(m_numeroGanador);
+                }
+            }
+            break;
+        }
+        
         case TipoApuesta::COLOR: {
             ColorElegido colorGanador;
             if (m_numeroGanador == 0) {
@@ -329,7 +409,25 @@ void MinigameRuleta::girarRuleta() {
                 bool esParNum = (m_numeroGanador % 2 == 0);
                 bool gano = (m_parImparElegido == 0 && esParNum) || (m_parImparElegido == 1 && !esParNum);
                 if (gano) {
-                    ganancia = m_apuesta * 2; // 1:1 (se devuelve el doble: apuesta + ganancia)
+                    ganancia = m_apuesta * 2;
+                    *m_dineroJugador += ganancia;
+                    m_mensajeResultado = "GANASTE! $" + std::to_string(ganancia) +
+                        "\nNumero: " + std::to_string(m_numeroGanador);
+                } else {
+                    m_mensajeResultado = "Perdiste... Numero: " + std::to_string(m_numeroGanador);
+                }
+            }
+            break;
+        }
+        
+        case TipoApuesta::MANQUE_PASSE: {  // NUEVO
+            if (m_numeroGanador == 0) {
+                m_mensajeResultado = "Cayo 0 verde. Perdiste.";
+            } else {
+                bool esManque = (m_numeroGanador >= 1 && m_numeroGanador <= 18);
+                bool gano = (m_mitadElegida == 0 && esManque) || (m_mitadElegida == 1 && !esManque);
+                if (gano) {
+                    ganancia = m_apuesta * 2;
                     *m_dineroJugador += ganancia;
                     m_mensajeResultado = "GANASTE! $" + std::to_string(ganancia) +
                         "\nNumero: " + std::to_string(m_numeroGanador);
@@ -350,6 +448,8 @@ void MinigameRuleta::girarRuleta() {
     m_cuartoElegido = -1;
     m_colorElegido = ColorElegido::NINGUNO;
     m_parImparElegido = -1;
+    m_columnaElegida = -1;
+    m_mitadElegida = -1;
     m_mostrandoTableroNumeros = false;
     m_mostrandoSelectorCuarto = false;
     m_mostrandoSelectorColor = false;
@@ -364,72 +464,26 @@ void MinigameRuleta::handleEvent(const sf::Event& event, const sf::RenderWindow&
     sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
     
     // Actualizar hovers
-    m_hoverExacto = m_btnNumeroExacto.getGlobalBounds().contains(mousePos);
-    m_hoverCuarto = m_btnCuarto.getGlobalBounds().contains(mousePos);
-    m_hoverColor = m_btnColor.getGlobalBounds().contains(mousePos);
-    m_hoverParImpar = m_btnParImpar.getGlobalBounds().contains(mousePos);
+    
     m_hoverGirar = m_btnGirar.getGlobalBounds().contains(mousePos);
     m_hoverAumentar = m_btnAumentar.getGlobalBounds().contains(mousePos);
     m_hoverDisminuir = m_btnDisminuir.getGlobalBounds().contains(mousePos);
     
-    // Actualizar colores de hover
-    m_btnNumeroExacto.setFillColor(m_hoverExacto ? sf::Color(180, 0, 0, 200) : 
-        (m_tipoApuesta == TipoApuesta::NUMERO_EXACTO ? sf::Color(150, 50, 50, 200) : sf::Color(100, 0, 0, 200)));
-    m_btnCuarto.setFillColor(m_hoverCuarto ? sf::Color(0, 180, 0, 200) : 
-        (m_tipoApuesta == TipoApuesta::CUARTO ? sf::Color(50, 150, 50, 200) : sf::Color(0, 80, 0, 200)));
-    m_btnColor.setFillColor(m_hoverColor ? sf::Color(0, 0, 180, 200) : 
-        (m_tipoApuesta == TipoApuesta::COLOR ? sf::Color(50, 50, 150, 200) : sf::Color(0, 0, 100, 200)));
-    m_btnParImpar.setFillColor(m_hoverParImpar ? sf::Color(180, 0, 180, 200) : 
-        (m_tipoApuesta == TipoApuesta::PAR_IMPAR ? sf::Color(150, 50, 150, 200) : sf::Color(100, 0, 100, 200)));
+   
     
+        // Hovers del tapete
+    if (m_mostrandoTapete) {
+        for (size_t i = 0; i < m_hoverCeldas.size(); i++) {
+            m_hoverCeldas[i] = m_celdasTapete[i].getGlobalBounds().contains(mousePos);
+        }
+    }
+
     // Eventos de click
     if (event.is<sf::Event::MouseButtonPressed>()) {
         const auto& mouseEvent = event.getIf<sf::Event::MouseButtonPressed>();
         if (mouseEvent->button == sf::Mouse::Button::Left) {
             
-            // Botón Número Exacto
-            if (m_hoverExacto) {
-                m_tipoApuesta = TipoApuesta::NUMERO_EXACTO;
-                m_mostrandoTableroNumeros = true;
-                m_mostrandoSelectorCuarto = false;
-                m_mostrandoSelectorColor = false;
-                m_mostrandoSelectorParImpar = false;
-                m_numeroElegido = -1;
-                std::cout << "Seleccionado: Número Exacto" << std::endl;
-            }
-            
-            // Botón Cuarto
-            if (m_hoverCuarto) {
-                m_tipoApuesta = TipoApuesta::CUARTO;
-                m_mostrandoTableroNumeros = false;
-                m_mostrandoSelectorCuarto = true;
-                m_mostrandoSelectorColor = false;
-                m_mostrandoSelectorParImpar = false;
-                m_cuartoElegido = -1;
-                std::cout << "Seleccionado: Cuarto" << std::endl;
-            }
-            
-            // Botón Color
-            if (m_hoverColor) {
-                m_tipoApuesta = TipoApuesta::COLOR;
-                m_mostrandoTableroNumeros = false;
-                m_mostrandoSelectorCuarto = false;
-                m_mostrandoSelectorColor = true;
-                m_mostrandoSelectorParImpar = false;
-                m_colorElegido = ColorElegido::NINGUNO;
-                std::cout << "Seleccionado: Color" << std::endl;
-            }
-            
-            // Botón Par/Impar (NUEVO)
-            if (m_hoverParImpar) {
-                m_tipoApuesta = TipoApuesta::PAR_IMPAR;
-                m_mostrandoTableroNumeros = false;
-                m_mostrandoSelectorCuarto = false;
-                m_mostrandoSelectorColor = false;
-                m_mostrandoSelectorParImpar = true;
-                m_parImparElegido = -1;
-                std::cout << "Seleccionado: Par/Impar" << std::endl;
-            }
+           
             
             // Botón Girar
             if (m_hoverGirar) {
@@ -447,49 +501,77 @@ void MinigameRuleta::handleEvent(const sf::Event& event, const sf::RenderWindow&
                 m_apuesta -= 5;
             }
             
-            // Selector de números
-            if (m_mostrandoTableroNumeros) {
-                for (size_t i = 0; i < m_botonesNumeros.size(); i++) {
-                    if (m_hoverNumeros[i]) {
+           
+
+            // ===== TAPETE INTERACTIVO (DENTRO DEL IF DEL LEFT CLICK) =====
+            if (m_mostrandoTapete) {
+                // Clic en celdas de números
+                for (size_t i = 0; i < m_celdasTapete.size(); i++) {
+                    if (m_hoverCeldas[i]) {
+                        m_tipoApuesta = TipoApuesta::NUMERO_EXACTO;
                         m_numeroElegido = i;
-                        std::cout << "Número elegido: " << i << std::endl;
+                        std::cout << "Tapete: Número elegido: " << i << std::endl;
                     }
                 }
-            }
-            
-            // Selector de cuartos
-            if (m_mostrandoSelectorCuarto) {
-                m_hoverCuarto1 = m_btnCuarto1.getGlobalBounds().contains(mousePos);
-                m_hoverCuarto2 = m_btnCuarto2.getGlobalBounds().contains(mousePos);
-                m_hoverCuarto3 = m_btnCuarto3.getGlobalBounds().contains(mousePos);
                 
-                if (m_hoverCuarto1) m_cuartoElegido = 0;
-                if (m_hoverCuarto2) m_cuartoElegido = 1;
-                if (m_hoverCuarto3) m_cuartoElegido = 2;
-            }
-            
-            // Selector de colores
-            if (m_mostrandoSelectorColor) {
-                m_hoverRojo = m_btnRojo.getGlobalBounds().contains(mousePos);
-                m_hoverNegro = m_btnNegro.getGlobalBounds().contains(mousePos);
-                m_hoverVerde = m_btnVerde.getGlobalBounds().contains(mousePos);
+                // Clic en columnas
+                if (m_btnColumna1.getGlobalBounds().contains(mousePos)) {
+                    m_tipoApuesta = TipoApuesta::COLUMNA;
+                    m_columnaElegida = 0;
+                }
+                if (m_btnColumna2.getGlobalBounds().contains(mousePos)) {
+                    m_tipoApuesta = TipoApuesta::COLUMNA;
+                    m_columnaElegida = 1;
+                }
+                if (m_btnColumna3.getGlobalBounds().contains(mousePos)) {
+                    m_tipoApuesta = TipoApuesta::COLUMNA;
+                    m_columnaElegida = 2;
+                }
                 
-                if (m_hoverRojo) m_colorElegido = ColorElegido::ROJO;
-                if (m_hoverNegro) m_colorElegido = ColorElegido::NEGRO;
-                if (m_hoverVerde) m_colorElegido = ColorElegido::VERDE;
-            }
-            
-            // Selector de Par/Impar (NUEVO)
-            if (m_mostrandoSelectorParImpar) {
-                m_hoverPar = m_btnPar.getGlobalBounds().contains(mousePos);
-                m_hoverImpar = m_btnImpar.getGlobalBounds().contains(mousePos);
+                // Clic en docenas
+                if (m_btnDocena1.getGlobalBounds().contains(mousePos)) {
+                    m_tipoApuesta = TipoApuesta::CUARTO;
+                    m_cuartoElegido = 0;
+                }
+                if (m_btnDocena2.getGlobalBounds().contains(mousePos)) {
+                    m_tipoApuesta = TipoApuesta::CUARTO;
+                    m_cuartoElegido = 1;
+                }
+                if (m_btnDocena3.getGlobalBounds().contains(mousePos)) {
+                    m_tipoApuesta = TipoApuesta::CUARTO;
+                    m_cuartoElegido = 2;
+                }
                 
-                if (m_hoverPar) m_parImparElegido = 0;
-                if (m_hoverImpar) m_parImparElegido = 1;
+                // Clic en externas
+                if (m_btnMitadBaja.getGlobalBounds().contains(mousePos)) {
+                    m_tipoApuesta = TipoApuesta::MANQUE_PASSE;
+                    m_mitadElegida = 0;
+                }
+                if (m_btnMitadAlta.getGlobalBounds().contains(mousePos)) {
+                    m_tipoApuesta = TipoApuesta::MANQUE_PASSE;
+                    m_mitadElegida = 1;
+                }
+                if (m_btnPar.getGlobalBounds().contains(mousePos)) {
+                    m_tipoApuesta = TipoApuesta::PAR_IMPAR;
+                    m_parImparElegido = 0;
+                }
+                if (m_btnImpar.getGlobalBounds().contains(mousePos)) {
+                    m_tipoApuesta = TipoApuesta::PAR_IMPAR;
+                    m_parImparElegido = 1;
+                }
+                if (m_btnRojo.getGlobalBounds().contains(mousePos)) {
+                    m_tipoApuesta = TipoApuesta::COLOR;
+                    m_colorElegido = ColorElegido::ROJO;
+                }
+                if (m_btnNegro.getGlobalBounds().contains(mousePos)) {
+                    m_tipoApuesta = TipoApuesta::COLOR;
+                    m_colorElegido = ColorElegido::NEGRO;
+                }
             }
         }
     }
     
+
     // Hover para números
     if (m_mostrandoTableroNumeros) {
         for (size_t i = 0; i < m_botonesNumeros.size(); i++) {
@@ -727,56 +809,6 @@ void MinigameRuleta::draw(sf::RenderWindow& window) {
         window.draw(franjaIluminada);
     }
     
-       // ===== BOTONES DEBAJO DE LA IMAGEN =====
-    // Escalar botones proporcionalmente al tamaño de la ventana
-float escalaBotones = std::min(m_size.x / 800.f, m_size.y / 600.f);
-float btnWidth = 140.f * escalaBotones;
-float btnHeight = 35.f * escalaBotones;
-float btnSpacing = 15.f * escalaBotones;
-    // Calcular posición más abajo
-    float btnStartX = m_position.x + m_size.x * 0.43f;  // 55% del ancho
-float btnStartY = m_position.y + m_size.y * 0.80f;   // 85% del alto
-    // Primera fila: 4 botones de tipo de apuesta
-    m_btnNumeroExacto.setSize(sf::Vector2f(btnWidth, btnHeight));
-    m_btnNumeroExacto.setPosition(sf::Vector2f(btnStartX, btnStartY));
-    
-    m_btnCuarto.setSize(sf::Vector2f(btnWidth, btnHeight));
-    m_btnCuarto.setPosition(sf::Vector2f(btnStartX + btnWidth + btnSpacing, btnStartY));
-    
-    m_btnColor.setSize(sf::Vector2f(btnWidth, btnHeight));
-    m_btnColor.setPosition(sf::Vector2f(btnStartX + (btnWidth + btnSpacing) * 2, btnStartY));
-    
-    m_btnParImpar.setSize(sf::Vector2f(btnWidth, btnHeight));
-    m_btnParImpar.setPosition(sf::Vector2f(btnStartX + (btnWidth + btnSpacing) * 3, btnStartY));
-    
-    // Segunda fila: [- Apuesta +] [GIRAR]
-    float fila2Y = btnStartY + btnHeight + btnSpacing;
-    float apuestaGroupWidth = btnWidth * 2 + btnSpacing; // Ancho del grupo de apuesta
-    float apuestaGroupX = btnStartX;
-    
-    float btnApuestaWidth = 45.f * escalaBotones;
-
-// Botón -
-m_btnDisminuir.setSize(sf::Vector2f(btnApuestaWidth, btnHeight));
-m_btnDisminuir.setPosition(sf::Vector2f(apuestaGroupX, fila2Y));
-
-// Botón +
-m_btnAumentar.setSize(sf::Vector2f(btnApuestaWidth, btnHeight));
-m_btnAumentar.setPosition(sf::Vector2f(apuestaGroupX + apuestaGroupWidth - btnApuestaWidth, fila2Y));
-    
-    // Botón GIRAR (a la derecha del grupo de apuesta)
-    m_btnGirar.setSize(sf::Vector2f(btnWidth * 2 + btnSpacing, btnHeight));
-    m_btnGirar.setPosition(sf::Vector2f(apuestaGroupX + apuestaGroupWidth + btnSpacing, fila2Y));
-    
-    // Dibujar todos los botones
-    window.draw(m_btnNumeroExacto);
-    window.draw(m_btnCuarto);
-    window.draw(m_btnColor);
-    window.draw(m_btnParImpar);
-    window.draw(m_btnDisminuir);
-    window.draw(m_btnAumentar);
-    window.draw(m_btnGirar);
-    
     // Función para centrar texto en botón
     auto centerTextInButton = [](sf::Text& text, const sf::RectangleShape& btn) {
         sf::FloatRect tb = text.getLocalBounds();
@@ -786,49 +818,6 @@ m_btnAumentar.setPosition(sf::Vector2f(apuestaGroupX + apuestaGroupWidth - btnAp
             btn.getPosition().y + btn.getSize().y / 2.f - 2.f
         ));
     };
-    
-    // Centrar textos en los botones de tipo de apuesta
-    if (m_textoBtnExacto) { centerTextInButton(*m_textoBtnExacto, m_btnNumeroExacto); window.draw(*m_textoBtnExacto); }
-    if (m_textoBtnCuarto) { centerTextInButton(*m_textoBtnCuarto, m_btnCuarto); window.draw(*m_textoBtnCuarto); }
-    if (m_textoBtnColor) { centerTextInButton(*m_textoBtnColor, m_btnColor); window.draw(*m_textoBtnColor); }
-    if (m_textoBtnParImpar) { centerTextInButton(*m_textoBtnParImpar, m_btnParImpar); window.draw(*m_textoBtnParImpar); }
-    
-    // Botones +/- (centrados manualmente)
-    if (m_textoBtnDisminuir) { 
-        sf::FloatRect tb = m_textoBtnDisminuir->getLocalBounds();
-        m_textoBtnDisminuir->setOrigin(sf::Vector2f(tb.size.x / 2.f, tb.size.y / 2.f));
-        m_textoBtnDisminuir->setPosition(sf::Vector2f(
-    m_btnDisminuir.getPosition().x + btnApuestaWidth / 2.f,
-    m_btnDisminuir.getPosition().y + btnHeight / 2.f
-));
-        window.draw(*m_textoBtnDisminuir); 
-    }
-    if (m_textoBtnAumentar) { 
-        sf::FloatRect tb = m_textoBtnAumentar->getLocalBounds();
-        m_textoBtnAumentar->setOrigin(sf::Vector2f(tb.size.x / 2.f, tb.size.y / 2.f));
-        m_apuestaText->setPosition(sf::Vector2f(
-    m_btnDisminuir.getPosition().x + btnApuestaWidth + 
-    (m_btnAumentar.getPosition().x - m_btnDisminuir.getPosition().x - btnApuestaWidth) / 2.f,
-    fila2Y + btnHeight / 2.f
-));
-        window.draw(*m_textoBtnAumentar); 
-    }
-    
-    // Texto de apuesta entre - y +
-    if (m_apuestaText) {
-        m_apuestaText->setString("$" + std::to_string(m_apuesta));
-        sf::FloatRect tb = m_apuestaText->getLocalBounds();
-        m_apuestaText->setOrigin(sf::Vector2f(tb.size.x / 2.f, tb.size.y / 2.f));
-        m_apuestaText->setPosition(sf::Vector2f(
-    m_btnDisminuir.getPosition().x + btnApuestaWidth + 
-    (m_btnAumentar.getPosition().x - m_btnDisminuir.getPosition().x - btnApuestaWidth) / 2.f,
-    fila2Y + btnHeight / 2.f
-));
-        window.draw(*m_apuestaText);
-    }
-    
-    // Botón GIRAR
-    if (m_textoBtnGirar) { centerTextInButton(*m_textoBtnGirar, m_btnGirar); window.draw(*m_textoBtnGirar); }
     
     // Título centrado arriba
     if (m_tituloText) {
@@ -857,112 +846,261 @@ m_btnAumentar.setPosition(sf::Vector2f(apuestaGroupX + apuestaGroupWidth - btnAp
         window.draw(*m_instruccionesText);
     }
     
-    // Selector de números
-        // Selector de números
-    if (m_mostrandoTableroNumeros) {
-        float numX = m_position.x + 15.f;
-        float numY = m_position.y + m_size.y * 0.80f;
+    // ===== TAPETE INTERACTIVO =====
+    if (m_mostrandoTapete) {
+        // Resolución base de referencia: 1280x720
+        float refWidth = 1280.f;
+        float refHeight = 720.f;
         
-        for (size_t i = 0; i < m_botonesNumeros.size(); i++) {
-            int col = i % 10;
-            int row = i / 10;
+        // Proporciones basadas en los valores deseados
+        float propX1 = 415.f / refWidth;
+        float propX2 = 1235.f / refWidth;
+        float propY1 = 165.f / refHeight;
+        float propY2 = 190.f / refHeight;
+        
+        // Calcular espacio disponible
+        float anchoDisponible = (propX2 - propX1) * m_size.x;
+        float altoDisponible = (propY2 - propY1) * m_size.y;
+        
+        // Posición del tapete
+        m_tapeteX = m_position.x + propX1 * m_size.x;
+        m_tapeteY = m_position.y + propY1 * m_size.y;
+        
+        // Calcular escala
+        float escalaTapete = anchoDisponible / (13.f * (41.f + 2.f));
+        
+        m_celdaWidth = 35.f * escalaTapete;
+        m_celdaHeight = 55.f * escalaTapete;
+        float celdaSpacing = 2.f * escalaTapete;
+        
+        // Cero
+        float ceroX = m_tapeteX;
+        float ceroY = m_tapeteY;
+        m_celdasTapete[0].setSize(sf::Vector2f(m_celdaWidth, m_celdaHeight * 3.f));
+        m_celdasTapete[0].setPosition(sf::Vector2f(ceroX, ceroY));
+        m_celdasTapete[0].setFillColor(sf::Color::Transparent);  // ✅ INVISIBLE
+        
+        if (m_hoverCeldas[0]) {
+            m_celdasTapete[0].setOutlineColor(sf::Color::White);
+            m_celdasTapete[0].setOutlineThickness(2.5f);
+        } else if (m_numeroElegido == 0 && m_tipoApuesta == TipoApuesta::NUMERO_EXACTO) {
+            m_celdasTapete[0].setOutlineColor(sf::Color::Yellow);
+            m_celdasTapete[0].setOutlineThickness(3.f);
+        } else {
+            m_celdasTapete[0].setOutlineColor(sf::Color(100, 100, 100));
+            m_celdasTapete[0].setOutlineThickness(1.5f);
+        }
+        window.draw(m_celdasTapete[0]);
+        
+        
+        
+        // Números 1-36
+        for (int fila = 0; fila < 3; fila++) {
+            for (int col = 0; col < 12; col++) {
+                int numero;
+                if (fila == 0) numero = 3 + col * 3;
+                else if (fila == 1) numero = 2 + col * 3;
+                else numero = 1 + col * 3;
+                
+                int idx = numero;
+                
+                float x = ceroX + m_celdaWidth + celdaSpacing + col * (m_celdaWidth + celdaSpacing);
+                float y = ceroY + fila * (m_celdaHeight + celdaSpacing);
+                
+                m_celdasTapete[idx].setSize(sf::Vector2f(m_celdaWidth, m_celdaHeight));
+                m_celdasTapete[idx].setPosition(sf::Vector2f(x, y));
+                m_celdasTapete[idx].setFillColor(sf::Color::Transparent);  // ✅ INVISIBLE
+                
+                if (m_hoverCeldas[idx]) {
+                    m_celdasTapete[idx].setOutlineColor(sf::Color::White);
+                    m_celdasTapete[idx].setOutlineThickness(2.5f);
+                } else if (m_numeroElegido == numero && m_tipoApuesta == TipoApuesta::NUMERO_EXACTO) {
+                    m_celdasTapete[idx].setOutlineColor(sf::Color::Yellow);
+                    m_celdasTapete[idx].setOutlineThickness(3.f);
+                } else {
+                    m_celdasTapete[idx].setOutlineColor(sf::Color(100, 100, 100));
+                    m_celdasTapete[idx].setOutlineThickness(1.5f);
+                }
+                
+                window.draw(m_celdasTapete[idx]);
+                
+                
+            }
+        }
+        
+        // Botones "2 to 1" (columnas)
+        for (int fila = 0; fila < 3; fila++) {
+            float xBtn = ceroX + m_celdaWidth + celdaSpacing + 12 * (m_celdaWidth + celdaSpacing);
+            float yBtn = ceroY + fila * (m_celdaHeight + celdaSpacing);
             
-            m_botonesNumeros[i].setPosition(sf::Vector2f(numX + col * 42.f, numY + row * 35.f));
+            sf::RectangleShape* btnColumna = nullptr;
+            std::unique_ptr<sf::Text>* textoColumna = nullptr;
             
-            if (i == 0) {
-                m_botonesNumeros[i].setFillColor(sf::Color(0, 100, 0, 200));
-            } else if (esRojo(i)) {
-                m_botonesNumeros[i].setFillColor(sf::Color(180, 0, 0, 200));
+            if (fila == 0) { btnColumna = &m_btnColumna3; textoColumna = &m_textoColumna3; }
+            else if (fila == 1) { btnColumna = &m_btnColumna2; textoColumna = &m_textoColumna2; }
+            else { btnColumna = &m_btnColumna1; textoColumna = &m_textoColumna1; }
+            
+            btnColumna->setSize(sf::Vector2f(m_celdaWidth, m_celdaHeight));
+            btnColumna->setPosition(sf::Vector2f(xBtn, yBtn));
+            btnColumna->setFillColor(sf::Color::Transparent);  // ✅ INVISIBLE
+            
+            if (m_columnaElegida == (2 - fila) && m_tipoApuesta == TipoApuesta::COLUMNA) {
+                btnColumna->setOutlineColor(sf::Color::Yellow);
+                btnColumna->setOutlineThickness(3.f);
             } else {
-                m_botonesNumeros[i].setFillColor(sf::Color(30, 30, 30, 200));
+                btnColumna->setOutlineColor(sf::Color(100, 100, 100));
+                btnColumna->setOutlineThickness(1.5f);
             }
             
-            if ((int)i == m_numeroElegido) {
-                m_botonesNumeros[i].setOutlineColor(sf::Color::Yellow);
-                m_botonesNumeros[i].setOutlineThickness(3.f);
-            } else if (m_hoverNumeros[i]) {
-                m_botonesNumeros[i].setOutlineColor(sf::Color::White);
-                m_botonesNumeros[i].setOutlineThickness(2.f);
+            window.draw(*btnColumna);
+            
+        }
+        
+        // Docenas
+        float docenaY = ceroY + 3 * (m_celdaHeight + celdaSpacing);
+        float docenaWidth = (m_celdaWidth + celdaSpacing) * 4.f - celdaSpacing;
+        
+        for (int d = 0; d < 3; d++) {
+            float x = ceroX + m_celdaWidth + celdaSpacing + d * (docenaWidth + celdaSpacing);
+            
+            sf::RectangleShape* btnDocena = nullptr;
+            std::unique_ptr<sf::Text>* textoDocena = nullptr;
+            
+            if (d == 0) { btnDocena = &m_btnDocena1; textoDocena = &m_textoDocena1; }
+            else if (d == 1) { btnDocena = &m_btnDocena2; textoDocena = &m_textoDocena2; }
+            else { btnDocena = &m_btnDocena3; textoDocena = &m_textoDocena3; }
+            
+            btnDocena->setSize(sf::Vector2f(docenaWidth, m_celdaHeight));
+            btnDocena->setPosition(sf::Vector2f(x, docenaY));
+            btnDocena->setFillColor(sf::Color::Transparent);  // ✅ INVISIBLE
+            
+            if (m_cuartoElegido == d && m_tipoApuesta == TipoApuesta::CUARTO) {
+                btnDocena->setOutlineColor(sf::Color::Yellow);
+                btnDocena->setOutlineThickness(3.f);
             } else {
-                m_botonesNumeros[i].setOutlineColor(sf::Color(100, 100, 100));
-                m_botonesNumeros[i].setOutlineThickness(1.f);
+                btnDocena->setOutlineColor(sf::Color(180, 160, 120));
+                btnDocena->setOutlineThickness(1.5f);
             }
             
-            window.draw(m_botonesNumeros[i]);
-            if (m_textosNumeros[i]) {
-                centerTextInButton(*m_textosNumeros[i], m_botonesNumeros[i]);
-                window.draw(*m_textosNumeros[i]);
+            window.draw(*btnDocena);
+            
+        }
+        
+        // Apuestas externas
+        float externaY = docenaY + m_celdaHeight + celdaSpacing;
+        float externaWidth = (m_celdaWidth + celdaSpacing) * 2.f - celdaSpacing;
+        
+        for (int e = 0; e < 6; e++) {
+            float x = ceroX + m_celdaWidth + celdaSpacing + e * (externaWidth + celdaSpacing);
+            
+            sf::RectangleShape* btnExterno = nullptr;
+            std::unique_ptr<sf::Text>* textoExterno = nullptr;
+            bool seleccionado = false;
+            
+            switch (e) {
+                case 0: btnExterno = &m_btnMitadBaja; textoExterno = &m_textoMitadBaja; 
+                        seleccionado = (m_mitadElegida == 0 && m_tipoApuesta == TipoApuesta::MANQUE_PASSE);
+                        break;
+                case 1: btnExterno = &m_btnPar; textoExterno = &m_textoPar;
+                        seleccionado = (m_parImparElegido == 0 && m_tipoApuesta == TipoApuesta::PAR_IMPAR);
+                        break;
+                case 2: btnExterno = &m_btnRojo; textoExterno = &m_textoRojo;
+                        seleccionado = (m_colorElegido == ColorElegido::ROJO && m_tipoApuesta == TipoApuesta::COLOR);
+                        break;
+                case 3: btnExterno = &m_btnNegro; textoExterno = &m_textoNegro;
+                        seleccionado = (m_colorElegido == ColorElegido::NEGRO && m_tipoApuesta == TipoApuesta::COLOR);
+                        break;
+                case 4: btnExterno = &m_btnImpar; textoExterno = &m_textoImpar;
+                        seleccionado = (m_parImparElegido == 1 && m_tipoApuesta == TipoApuesta::PAR_IMPAR);
+                        break;
+                case 5: btnExterno = &m_btnMitadAlta; textoExterno = &m_textoMitadAlta;
+                        seleccionado = (m_mitadElegida == 1 && m_tipoApuesta == TipoApuesta::MANQUE_PASSE);
+                        break;
             }
+            
+            btnExterno->setSize(sf::Vector2f(externaWidth, m_celdaHeight));
+            btnExterno->setPosition(sf::Vector2f(x, externaY));
+            btnExterno->setFillColor(sf::Color::Transparent);  // ✅ INVISIBLE
+            
+            if (seleccionado) {
+                btnExterno->setOutlineColor(sf::Color::Yellow);
+                btnExterno->setOutlineThickness(3.f);
+            } else {
+                btnExterno->setOutlineColor(sf::Color(150, 150, 150));
+                btnExterno->setOutlineThickness(1.5f);
+            }
+            
+            window.draw(*btnExterno);
+            
         }
     }
     
-    // Selector de cuartos
-    if (m_mostrandoSelectorCuarto) {
-        float cy = m_position.y + m_size.y * 0.80f;
-        float cx = m_position.x + 15.f;
-        
-        m_btnCuarto1.setPosition(sf::Vector2f(cx, cy));
-        m_btnCuarto2.setPosition(sf::Vector2f(cx, cy + 40.f));
-        m_btnCuarto3.setPosition(sf::Vector2f(cx, cy + 80.f));
-        
-        m_btnCuarto1.setFillColor(m_cuartoElegido == 0 ? sf::Color(0, 150, 0, 200) : sf::Color(50, 50, 50, 200));
-        m_btnCuarto2.setFillColor(m_cuartoElegido == 1 ? sf::Color(0, 150, 0, 200) : sf::Color(50, 50, 50, 200));
-        m_btnCuarto3.setFillColor(m_cuartoElegido == 2 ? sf::Color(0, 150, 0, 200) : sf::Color(50, 50, 50, 200));
-        
-        window.draw(m_btnCuarto1);
-        window.draw(m_btnCuarto2);
-        window.draw(m_btnCuarto3);
-        
-        if (m_textoCuarto1) { centerTextInButton(*m_textoCuarto1, m_btnCuarto1); window.draw(*m_textoCuarto1); }
-        if (m_textoCuarto2) { centerTextInButton(*m_textoCuarto2, m_btnCuarto2); window.draw(*m_textoCuarto2); }
-        if (m_textoCuarto3) { centerTextInButton(*m_textoCuarto3, m_btnCuarto3); window.draw(*m_textoCuarto3); }
+    // ===== BOTONES DE APUESTA Y GIRAR =====
+    float escalaBotones = std::min(m_size.x / 800.f, m_size.y / 600.f);
+    float btnWidth = 140.f * escalaBotones;
+    float btnHeight = 40.f * escalaBotones;
+    float btnSpacing = 15.f * escalaBotones;
+    
+    float btnStartX = m_position.x + 30.f;
+    float btnStartY = m_position.y + m_size.y * 0.85f;
+    
+    float btnApuestaWidth = 50.f * escalaBotones;
+    float apuestaGroupWidth = btnWidth * 2 + btnSpacing;
+    
+    // Botón -
+    m_btnDisminuir.setSize(sf::Vector2f(btnApuestaWidth, btnHeight));
+    m_btnDisminuir.setPosition(sf::Vector2f(btnStartX, btnStartY));
+    
+    // Botón +
+    m_btnAumentar.setSize(sf::Vector2f(btnApuestaWidth, btnHeight));
+    m_btnAumentar.setPosition(sf::Vector2f(btnStartX + apuestaGroupWidth - btnApuestaWidth, btnStartY));
+    
+    // Texto de apuesta
+    if (m_apuestaText) {
+        m_apuestaText->setString("$" + std::to_string(m_apuesta));
+        sf::FloatRect tb = m_apuestaText->getLocalBounds();
+        m_apuestaText->setOrigin(sf::Vector2f(tb.size.x / 2.f, tb.size.y / 2.f));
+        m_apuestaText->setPosition(sf::Vector2f(
+            btnStartX + apuestaGroupWidth / 2.f,
+            btnStartY + btnHeight / 2.f
+        ));
+        window.draw(*m_apuestaText);
     }
     
-    // Selector de colores
-    if (m_mostrandoSelectorColor) {
-        float cy = m_position.y + m_size.y * 0.80f;
-        float cx = m_position.x + 15.f;
-        
-        m_btnRojo.setPosition(sf::Vector2f(cx, cy));
-        m_btnNegro.setPosition(sf::Vector2f(cx, cy + 40.f));
-        m_btnVerde.setPosition(sf::Vector2f(cx, cy + 80.f));
-        
-        m_btnRojo.setOutlineThickness(m_colorElegido == ColorElegido::ROJO ? 3.f : 1.f);
-        m_btnRojo.setOutlineColor(m_colorElegido == ColorElegido::ROJO ? sf::Color::Yellow : sf::Color::Red);
-        
-        m_btnNegro.setOutlineThickness(m_colorElegido == ColorElegido::NEGRO ? 3.f : 1.f);
-        m_btnNegro.setOutlineColor(m_colorElegido == ColorElegido::NEGRO ? sf::Color::Yellow : sf::Color::White);
-        
-        m_btnVerde.setOutlineThickness(m_colorElegido == ColorElegido::VERDE ? 3.f : 1.f);
-        m_btnVerde.setOutlineColor(m_colorElegido == ColorElegido::VERDE ? sf::Color::Yellow : sf::Color::Green);
-        
-        window.draw(m_btnRojo);
-        window.draw(m_btnNegro);
-        window.draw(m_btnVerde);
-        
-        if (m_textoRojo) { centerTextInButton(*m_textoRojo, m_btnRojo); window.draw(*m_textoRojo); }
-        if (m_textoNegro) { centerTextInButton(*m_textoNegro, m_btnNegro); window.draw(*m_textoNegro); }
-        if (m_textoVerde) { centerTextInButton(*m_textoVerde, m_btnVerde); window.draw(*m_textoVerde); }
+    // Botón GIRAR
+    m_btnGirar.setSize(sf::Vector2f(btnWidth * 2 + btnSpacing, btnHeight));
+    m_btnGirar.setPosition(sf::Vector2f(btnStartX + apuestaGroupWidth + btnSpacing, btnStartY));
+    
+    // Dibujar botones
+    window.draw(m_btnDisminuir);
+    window.draw(m_btnAumentar);
+    window.draw(m_btnGirar);
+    
+    // Textos
+    if (m_textoBtnDisminuir) {
+        sf::FloatRect tb = m_textoBtnDisminuir->getLocalBounds();
+        m_textoBtnDisminuir->setOrigin(sf::Vector2f(tb.size.x / 2.f, tb.size.y / 2.f));
+        m_textoBtnDisminuir->setPosition(sf::Vector2f(
+            m_btnDisminuir.getPosition().x + btnApuestaWidth / 2.f,
+            m_btnDisminuir.getPosition().y + btnHeight / 2.f
+        ));
+        window.draw(*m_textoBtnDisminuir);
     }
     
-	    
-    // Selector de Par/Impar (NUEVO)
-    if (m_mostrandoSelectorParImpar) {
-        float cy = m_position.y + m_size.y * 0.80f;
-        float cx = m_position.x + 15.f;
-        
-        m_btnPar.setPosition(sf::Vector2f(cx, cy));
-        m_btnImpar.setPosition(sf::Vector2f(cx, cy + 40.f));
-        
-        m_btnPar.setFillColor(m_parImparElegido == 0 ? sf::Color(100, 0, 100, 200) : sf::Color(50, 50, 50, 200));
-        m_btnImpar.setFillColor(m_parImparElegido == 1 ? sf::Color(100, 0, 100, 200) : sf::Color(50, 50, 50, 200));
-        
-        window.draw(m_btnPar);
-        window.draw(m_btnImpar);
-        
-        if (m_textoPar) { centerTextInButton(*m_textoPar, m_btnPar); window.draw(*m_textoPar); }
-        if (m_textoImpar) { centerTextInButton(*m_textoImpar, m_btnImpar); window.draw(*m_textoImpar); }
-    }    
+    if (m_textoBtnAumentar) {
+        sf::FloatRect tb = m_textoBtnAumentar->getLocalBounds();
+        m_textoBtnAumentar->setOrigin(sf::Vector2f(tb.size.x / 2.f, tb.size.y / 2.f));
+        m_textoBtnAumentar->setPosition(sf::Vector2f(
+            m_btnAumentar.getPosition().x + btnApuestaWidth / 2.f,
+            m_btnAumentar.getPosition().y + btnHeight / 2.f
+        ));
+        window.draw(*m_textoBtnAumentar);
+    }
+    
+    if (m_textoBtnGirar) {
+        centerTextInButton(*m_textoBtnGirar, m_btnGirar);
+        window.draw(*m_textoBtnGirar);
+    }
     
     // Resultado
     if (m_mostrandoResultado && m_resultadoText) {
@@ -986,7 +1124,6 @@ m_btnAumentar.setPosition(sf::Vector2f(apuestaGroupX + apuestaGroupWidth - btnAp
             m_position.y + m_size.y / 2.f + 150.f
         ));
         window.draw(fondoMensaje);
-        
         window.draw(*m_resultadoText);
         
         // Número ganador
@@ -1001,7 +1138,6 @@ m_btnAumentar.setPosition(sf::Vector2f(apuestaGroupX + apuestaGroupWidth - btnAp
             m_position.y + m_size.y / 2.f + 50.f
         ));
         
-                // Y fondo para el número también
         sf::RectangleShape fondoNumero(sf::Vector2f(numBounds.size.x + 40.f, numBounds.size.y + 30.f));
         fondoNumero.setFillColor(sf::Color(0, 0, 0, 200));
         fondoNumero.setOutlineThickness(2.f);
@@ -1012,8 +1148,6 @@ m_btnAumentar.setPosition(sf::Vector2f(apuestaGroupX + apuestaGroupWidth - btnAp
             m_position.y + m_size.y / 2.f + 50.f
         ));
         window.draw(fondoNumero);
-
-        
         window.draw(numeroGanadorText);
     }
 }
@@ -1058,4 +1192,82 @@ m_pelotita.setOutlineColor(sf::Color(180, 180, 180));
 m_pelotita.setOrigin(sf::Vector2f(7.f, 7.f));
 
 
+}
+
+void MinigameRuleta::inicializarTapete() {
+    if (!m_fontLoaded) return;
+    
+    // Crear las celdas del tapete (0-36)
+    for (int i = 0; i <= 36; i++) {
+        sf::RectangleShape celda(sf::Vector2f(42.f, 34.f));
+        celda.setOutlineThickness(1.5f);
+        m_celdasTapete.push_back(celda);
+        
+        auto texto = std::make_unique<sf::Text>(m_font, std::to_string(i), 14);
+        texto->setStyle(sf::Text::Bold);
+        m_textosTapete.push_back(std::move(texto));
+        m_hoverCeldas.push_back(false);
+    }
+    
+    // Crear botones de docenas (1st 12, 2nd 12, 3rd 12)
+    auto crearBotonDocena = [this](sf::RectangleShape& btn, std::unique_ptr<sf::Text>& texto, const std::string& str) {
+        btn.setSize(sf::Vector2f(126.f, 34.f)); // 3 celdas de ancho
+        btn.setFillColor(sf::Color(30, 30, 30, 180));
+        btn.setOutlineThickness(1.5f);
+        btn.setOutlineColor(sf::Color(180, 160, 120));
+        
+        texto = std::make_unique<sf::Text>(m_font, str, 13);
+        texto->setFillColor(sf::Color(200, 200, 180));
+        texto->setStyle(sf::Text::Bold);
+    };
+    
+    crearBotonDocena(m_btnDocena1, m_textoDocena1, "1st 12");
+    crearBotonDocena(m_btnDocena2, m_textoDocena2, "2nd 12");
+    crearBotonDocena(m_btnDocena3, m_textoDocena3, "3rd 12");
+    
+    // Crear botones de columna (2 to 1)
+    auto crearBotonColumna = [this](sf::RectangleShape& btn, std::unique_ptr<sf::Text>& texto) {
+        btn.setSize(sf::Vector2f(42.f, 34.f));
+        btn.setFillColor(sf::Color(20, 20, 20, 180));
+        btn.setOutlineThickness(1.5f);
+        btn.setOutlineColor(sf::Color(100, 100, 100));
+        
+        texto = std::make_unique<sf::Text>(m_font, "2 to 1", 11);
+        texto->setFillColor(sf::Color(180, 180, 180));
+        texto->setStyle(sf::Text::Bold);
+    };
+    
+    crearBotonColumna(m_btnColumna1, m_textoColumna1);
+    crearBotonColumna(m_btnColumna2, m_textoColumna2);
+    crearBotonColumna(m_btnColumna3, m_textoColumna3);
+    
+    // Crear botones de apuestas externas inferiores
+    auto crearBotonExterno = [this](sf::RectangleShape& btn, std::unique_ptr<sf::Text>& texto, 
+                                     const std::string& str, sf::Color fillColor) {
+        btn.setSize(sf::Vector2f(84.f, 34.f));
+        btn.setFillColor(fillColor);
+        btn.setOutlineThickness(1.5f);
+        btn.setOutlineColor(sf::Color(150, 150, 150));
+        
+        texto = std::make_unique<sf::Text>(m_font, str, 13);
+        texto->setFillColor(sf::Color::White);
+        texto->setStyle(sf::Text::Bold);
+    };
+    
+    crearBotonExterno(m_btnMitadBaja, m_textoMitadBaja, "1 to 18", sf::Color(20, 50, 20, 180));
+        // Para el tapete, reutilizamos los botones existentes m_btnPar, m_btnRojo, m_btnNegro, m_btnImpar
+    // Solo configuramos sus textos si no existen
+    if (!m_textoPar) m_textoPar = std::make_unique<sf::Text>(m_font, "EVEN", 13);
+    if (!m_textoRojo) m_textoRojo = std::make_unique<sf::Text>(m_font, "RED", 13);
+    if (!m_textoNegro) m_textoNegro = std::make_unique<sf::Text>(m_font, "BLACK", 13);
+    if (!m_textoImpar) m_textoImpar = std::make_unique<sf::Text>(m_font, "ODD", 13);
+    crearBotonExterno(m_btnMitadAlta, m_textoMitadAlta, "19 to 36", sf::Color(20, 50, 20, 180));
+}
+
+int MinigameRuleta::obtenerColumna(int numero) {
+    if (numero == 0) return -1;
+    // Columna 0: 1,4,7,10,13,16,19,22,25,28,31,34
+    // Columna 1: 2,5,8,11,14,17,20,23,26,29,32,35
+    // Columna 2: 3,6,9,12,15,18,21,24,27,30,33,36
+    return (numero - 1) % 3;
 }
