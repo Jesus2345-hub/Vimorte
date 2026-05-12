@@ -3,6 +3,7 @@
 #include "Game.hpp"
 #include "Nivel1State.hpp"
 #include "Centinela2.hpp"
+#include "CentinelaConductosState.hpp"
 #include "Nivel2State.hpp"  
 #include "NivelSara1State.hpp"
 #include "NivelSara2State.hpp"
@@ -93,10 +94,10 @@ void LevelTree::buildTree()
     };
     centinela2->permiteRetrocesoDesdeCentinela = true;
 
-    auto centinela3 = std::make_unique<LevelNode>("centinela3", "Centinela 3", LevelType::CENTINELA, 0);
+    auto centinela3 = std::make_unique<LevelNode>("centinela3", "Conductos", LevelType::CENTINELA, 0);
     centinela3->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
     {
-        return std::make_unique<Nivel1State>(w, g);
+        return std::make_unique<CentinelaConductosState>(w, g);
     };
     centinela3->permiteRetrocesoDesdeCentinela = true;
 
@@ -109,9 +110,9 @@ void LevelTree::buildTree()
     root->left->left->left->left->left = std::move(nivel6);
     root->left->left->left->left->left->right = std::move(centinela2);
     root->left->left->left->left->left->left = std::move(nivel7);
+    root->left->left->left->left->left->left->right = std::move(centinela3);
     root->left->left->left->left->left->left->left = std::move(nivel8);
     root->left->left->left->left->left->left->left->left = std::move(nivel9);
-    root->left->left->left->left->left->left->left->left->right = std::move(centinela3);
     root->left->left->left->left->left->left->left->left->left = std::move(nivel10);
 
     currentNode = root.get();

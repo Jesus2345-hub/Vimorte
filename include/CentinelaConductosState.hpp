@@ -9,6 +9,15 @@
 class CentinelaConductosState : public State
 {
 private:
+    // Cámara
+    sf::View m_camera;
+    sf::Vector2f m_worldSize;
+
+    // Salida con rejilla
+    sf::Texture m_rejillaSalidaTexture;
+    std::unique_ptr<sf::Sprite> m_rejillaSalidaSprite;
+    bool m_cercaSalida = false;
+
     // Jugador
     Player m_player;
 
@@ -40,6 +49,8 @@ private:
     std::unique_ptr<sf::Text> m_cronometroText;
     std::unique_ptr<sf::Text> m_instruccionesText;
     std::unique_ptr<sf::Text> m_mensajeText;
+
+    bool m_debugMode = false;
 
     // Mensaje temporal
     float m_mensajeTimer;
