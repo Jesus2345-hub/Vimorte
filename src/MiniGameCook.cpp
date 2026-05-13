@@ -1,9 +1,8 @@
 #include "MiniGameCook.hpp"
 #include <iostream>
 #include <algorithm>
+#include <random>
 #include <cmath>
-
-// ==================== MiniGameCook ====================
 
 MiniGameCook::MiniGameCook(Inventory* inventory)
     : m_estadoActual(EstadoMinijuego::ESPERANDO)
@@ -13,13 +12,11 @@ MiniGameCook::MiniGameCook(Inventory* inventory)
     , m_platoEntregado(false)
     , m_misionCompletada(false)
     , m_inventory(inventory)
-    , m_tiempoFeedback(0.0f)
     , m_font(nullptr)
     , m_tituloEstante(nullptr)
     , m_textoInstrucciones(nullptr)
     , m_platoRequerido("", {}, "", sf::Color::White)
 {
-    // Inicializar fuente con puntero
     m_font = std::make_unique<sf::Font>();
     if (m_font->openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf")) {
         m_tituloEstante = std::make_unique<sf::Text>(*m_font);
@@ -38,42 +35,39 @@ MiniGameCook::MiniGameCook(Inventory* inventory)
 
 void MiniGameCook::inicializarIngredientes()
 {
-    // Estante de CARNES
     Estante estanteCarnes;
     estanteCarnes.nombre = "Carnes";
     estanteCarnes.visible = true;
     estanteCarnes.ingredientes = {
-        Ingrediente("Carne de Res", "carne", sf::Color(139, 69, 19), "assets/images/items/carne_res.png"),
-        Ingrediente("Pollo", "carne", sf::Color(255, 228, 196), "assets/images/items/pollo.png"),
-        Ingrediente("Cerdo", "carne", sf::Color(255, 182, 193), "assets/images/items/cerdo.png"),
-        Ingrediente("Cordero", "carne", sf::Color(160, 82, 45), "assets/images/items/cordero.png")
+        Ingrediente("Carne de Res", "carne", sf::Color(139, 69, 19), "assets/images/niveles/centinela2/carne_res.png"),
+        Ingrediente("Pollo", "carne", sf::Color(255, 228, 196), "assets/images/niveles/centinela2/pollo.png"),
+        Ingrediente("Cerdo", "carne", sf::Color(255, 182, 193), "assets/images/niveles/centinela2/cerdo.png"),
+        Ingrediente("Cordero", "carne", sf::Color(160, 82, 45), "assets/images/niveles/centinela2/cordero.png")
     };
     m_estantes.push_back(estanteCarnes);
     
-    // Estante de VERDURAS
     Estante estanteVerduras;
     estanteVerduras.nombre = "Verduras";
     estanteVerduras.visible = true;
     estanteVerduras.ingredientes = {
-        Ingrediente("Tomate", "verdura", sf::Color(255, 99, 71), "assets/images/items/tomate.png"),
-        Ingrediente("Lechuga", "verdura", sf::Color(124, 252, 0), "assets/images/items/lechuga.png"),
-        Ingrediente("Cebolla", "verdura", sf::Color(255, 215, 0), "assets/images/items/cebolla.png"),
-        Ingrediente("Zanahoria", "verdura", sf::Color(255, 140, 0), "assets/images/items/zanahoria.png"),
-        Ingrediente("Papa", "verdura", sf::Color(222, 184, 135), "assets/images/items/papa.png")
+        Ingrediente("Tomate", "verdura", sf::Color(255, 99, 71), "assets/images/niveles/centinela2/tomate.png"),
+        Ingrediente("Lechuga", "verdura", sf::Color(124, 252, 0), "assets/images/niveles/centinela2/lechuga.png"),
+        Ingrediente("Cebolla", "verdura", sf::Color(255, 215, 0), "assets/images/niveles/centinela2/cebolla.png"),
+        Ingrediente("Zanahoria", "verdura", sf::Color(255, 140, 0), "assets/images/niveles/centinela2/zanahoria.png"),
+        Ingrediente("Papa", "verdura", sf::Color(222, 184, 135), "assets/images/niveles/centinela2/papa.png")
     };
     m_estantes.push_back(estanteVerduras);
     
-    // Estante de OTROS
     Estante estanteOtros;
     estanteOtros.nombre = "Lacteos y Embutidos";
     estanteOtros.visible = true;
     estanteOtros.ingredientes = {
-        Ingrediente("Huevo", "otros", sf::Color(255, 255, 200), "assets/images/items/huevo.png"),
-        Ingrediente("Leche", "otros", sf::Color(255, 255, 255), "assets/images/items/leche.png"),
-        Ingrediente("Queso", "otros", sf::Color(255, 215, 0), "assets/images/items/queso.png"),
-        Ingrediente("Jamon", "otros", sf::Color(255, 182, 193), "assets/images/items/jamon.png"),
-        Ingrediente("Salchicha", "otros", sf::Color(205, 92, 92), "assets/images/items/salchicha.png"),
-        Ingrediente("Tocino", "otros", sf::Color(165, 42, 42), "assets/images/items/tocino.png")
+        Ingrediente("Huevo", "otros", sf::Color(255, 255, 200), "assets/images/niveles/centinela2/huevo.png"),
+        Ingrediente("Leche", "otros", sf::Color(255, 255, 255), "assets/images/niveles/centinela2/leche.png"),
+        Ingrediente("Queso", "otros", sf::Color(255, 215, 0), "assets/images/niveles/centinela2/queso.png"),
+        Ingrediente("Jamon", "otros", sf::Color(255, 182, 193), "assets/images/niveles/centinela2/jamon.png"),
+        Ingrediente("Salchicha", "otros", sf::Color(205, 92, 92), "assets/images/niveles/centinela2/salchicha.png"),
+        Ingrediente("Tocino", "otros", sf::Color(165, 42, 42), "assets/images/niveles/centinela2/tocino.png")
     };
     m_estantes.push_back(estanteOtros);
 }
@@ -91,9 +85,9 @@ void MiniGameCook::inicializarRecetas()
               "Pollo asado con verduras al horno",
               sf::Color(255, 140, 0)),
         
-        Plato("Tortilla Española",
+        Plato("Tortilla",
               {"Huevo", "Papa", "Cebolla"},
-              "Clásica tortilla de papas",
+              "Clasica tortilla de papas",
               sf::Color(255, 215, 0)),
         
         Plato("Sandwich de Jamon",
@@ -106,29 +100,40 @@ void MiniGameCook::inicializarRecetas()
               "Huevos estrellados con tocino crujiente",
               sf::Color(255, 182, 193)),
         
-        Plato("Milanesa",
-              {"Carne de Res", "Huevo", "Queso"},
-              "Milanesa napolitana con queso gratinado",
-              sf::Color(205, 92, 92))
+        Plato("Estofado de Cordero",
+              {"Cordero", "Leche", "Salchicha", "Cerdo"},
+              "Estofado de cordero con salchichas en salsa de leche",
+              sf::Color(160, 82, 45))
     };
     
+    // Mezclar para orden aleatorio
+    std::random_device rd;
+    std::mt19937 g(rd());
+    std::shuffle(m_recetasDisponibles.begin(), m_recetasDisponibles.end(), g);
+    
     if (!m_recetasDisponibles.empty()) {
-        int indice = rand() % m_recetasDisponibles.size();
-        m_platoRequerido = m_recetasDisponibles[indice];
+        m_platoRequerido = m_recetasDisponibles[0];
     }
 }
 
 void MiniGameCook::cargarTexturas()
 {
     std::vector<std::pair<std::string, std::string>> texturasCargar = {
-        {"Carne de Res", "assets/images/items/carne_res.png"},
-        {"Pollo", "assets/images/items/pollo.png"},
-        {"Cerdo", "assets/images/items/cerdo.png"},
-        {"Tomate", "assets/images/items/tomate.png"},
-        {"Lechuga", "assets/images/items/lechuga.png"},
-        {"Huevo", "assets/images/items/huevo.png"},
-        {"Leche", "assets/images/items/leche.png"},
-        {"Queso", "assets/images/items/queso.png"}
+        {"Carne de Res", "assets/images/niveles/centinela2/carne.png"},
+        {"Pollo", "assets/images/niveles/centinela2/pollo.png"},
+        {"Cerdo", "assets/images/niveles/centinela2/cerdo.png"},
+        {"Cordero", "assets/images/niveles/centinela2/cordero.png"},
+        {"Tomate", "assets/images/niveles/centinela2/tomate.png"},
+        {"Lechuga", "assets/images/niveles/centinela2/lechuga.png"},
+        {"Cebolla", "assets/images/niveles/centinela2/cebolla.png"},
+        {"Zanahoria", "assets/images/niveles/centinela2/zanahoria.png"},
+        {"Papa", "assets/images/niveles/centinela2/papa.png"},
+        {"Huevo", "assets/images/niveles/centinela2/huevo.png"},
+        {"Leche", "assets/images/niveles/centinela2/leche.png"},
+        {"Queso", "assets/images/niveles/centinela2/queso.png"},
+        {"Jamon", "assets/images/niveles/centinela2/jamon.png"},
+        {"Salchicha", "assets/images/niveles/centinela2/salchicha.png"},
+        {"Tocino", "assets/images/niveles/centinela2/tocino.png"}
     };
     
     for (const auto& [nombre, ruta] : texturasCargar) {
@@ -136,6 +141,35 @@ void MiniGameCook::cargarTexturas()
         if (tex.loadFromFile(ruta)) {
             tex.setSmooth(true);
             m_texturasIngredientes[nombre] = tex;
+        }
+    }
+}
+
+void MiniGameCook::reiniciarMision()
+{
+    m_misionCompletada = false;
+    m_platoEntregado = false;
+    
+    // Seleccionar un nuevo plato aleatorio de los disponibles
+    if (!m_recetasDisponibles.empty()) {
+        int indice = rand() % m_recetasDisponibles.size();
+        m_platoRequerido = m_recetasDisponibles[indice];
+    }
+    
+    m_estadoActual = EstadoMinijuego::ESPERANDO;
+    m_mostrarUIEstante = false;
+    m_estanteActual = nullptr;
+}
+
+
+void MiniGameCook::actualizarAreaEstante(const std::string& nombre, const sf::FloatRect& area)
+{
+    for (auto& estante : m_estantes) {
+        if (estante.nombre == nombre) {
+            estante.areaInteraccion = area;
+            std::cout << "DEBUG: Area actualizada para " << nombre << " -> pos: " 
+                      << area.position.x << "," << area.position.y << std::endl;
+            break;
         }
     }
 }
@@ -162,12 +196,7 @@ void MiniGameCook::agregarIngredienteAEstante(const std::string& nombreEstante, 
 
 void MiniGameCook::update(float dt, const sf::Vector2f& playerPos)
 {
-    if (m_tiempoFeedback > 0.0f) {
-        m_tiempoFeedback -= dt;
-        if (m_tiempoFeedback <= 0.0f) {
-            m_mensajeFeedback = "";
-        }
-    }
+   
     
     if (m_mostrarUIEstante && m_estanteActual) {
         sf::Vector2f centroEstante(
@@ -200,152 +229,20 @@ std::string MiniGameCook::getEstanteCerca(const sf::Vector2f& playerPos) const
 
 bool MiniGameCook::estaCercaCocina(const sf::Vector2f& playerPos) const
 {
-    return m_areaCocina.findIntersection(sf::FloatRect(playerPos, sf::Vector2f(10.f, 10.f))).has_value();
+    sf::FloatRect playerRect(playerPos - sf::Vector2f(5.f, 5.f), sf::Vector2f(10.f, 10.f));
+    return m_areaCocina.findIntersection(playerRect).has_value();
 }
 
 bool MiniGameCook::estaCercaEntrega(const sf::Vector2f& playerPos) const
 {
-    return m_areaEntrega.findIntersection(sf::FloatRect(playerPos, sf::Vector2f(10.f, 10.f))).has_value();
+    sf::FloatRect playerRect(playerPos - sf::Vector2f(5.f, 5.f), sf::Vector2f(10.f, 10.f));
+    return m_areaEntrega.findIntersection(playerRect).has_value();
 }
 
 bool MiniGameCook::estaCercaMenu(const sf::Vector2f& playerPos) const
 {
-    return m_areaMenu.findIntersection(sf::FloatRect(playerPos, sf::Vector2f(10.f, 10.f))).has_value();
-}
-
-void MiniGameCook::handleEvent(const sf::Event& event, sf::RenderWindow& window, const sf::Vector2f& playerPos)
-{
-    if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>()) {
-        
-        if (m_mostrarUIEstante && m_estanteActual) {
-            if (keyPressed->code == sf::Keyboard::Key::Escape) {
-                m_mostrarUIEstante = false;
-                m_estanteActual = nullptr;
-                m_indiceSeleccionado = -1;
-                return;
-            }
-            
-            int numSeleccionado = -1;
-            switch (keyPressed->code) {
-                case sf::Keyboard::Key::Num1: numSeleccionado = 0; break;
-                case sf::Keyboard::Key::Num2: numSeleccionado = 1; break;
-                case sf::Keyboard::Key::Num3: numSeleccionado = 2; break;
-                case sf::Keyboard::Key::Num4: numSeleccionado = 3; break;
-                case sf::Keyboard::Key::Num5: numSeleccionado = 4; break;
-                case sf::Keyboard::Key::Num6: numSeleccionado = 5; break;
-                case sf::Keyboard::Key::Num7: numSeleccionado = 6; break;
-                case sf::Keyboard::Key::Num8: numSeleccionado = 7; break;
-                case sf::Keyboard::Key::Num9: numSeleccionado = 8; break;
-                default: break;
-            }
-            
-            if (numSeleccionado >= 0 && numSeleccionado < (int)m_estanteActual->ingredientes.size()) {
-                const auto& ing = m_estanteActual->ingredientes[numSeleccionado];
-                Item nuevoItem(ing.nombre, ing.color, ing.rutaImagen);
-                
-                auto it = m_texturasIngredientes.find(ing.nombre);
-                if (it != m_texturasIngredientes.end() && nuevoItem.textura) {
-                    *nuevoItem.textura = it->second;
-                    nuevoItem.sprite = std::make_unique<sf::Sprite>(*nuevoItem.textura);
-                }
-                
-                if (m_inventory && m_inventory->tryCollectItem(ing.nombre, ing.color)) {
-                    m_mensajeFeedback = "Obtuviste: " + ing.nombre;
-                    m_tiempoFeedback = 2.0f;
-                } else {
-                    m_mensajeFeedback = "Inventario lleno!";
-                    m_tiempoFeedback = 2.0f;
-                }
-                
-                m_mostrarUIEstante = false;
-                m_estanteActual = nullptr;
-                return;
-            }
-            return;
-        }
-        if (keyPressed->code == sf::Keyboard::Key::R) {
-            
-            //Verificar si está cerca del MENU/RECETARIO
-            if (estaCercaMenu(playerPos) && !m_misionCompletada) {
-                std::string platoReq = m_platoRequerido.nombre;
-                std::string descripcion = m_platoRequerido.descripcion;
-                
-                // Mostrar ingredientes necesarios
-                std::string ingredientes = "Ingredientes: ";
-                for (size_t i = 0; i < m_platoRequerido.ingredientesNecesarios.size(); i++) {
-                    if (i > 0) ingredientes += ", ";
-                    ingredientes += m_platoRequerido.ingredientesNecesarios[i];
-                }
-                
-                m_mensajeFeedback = "=== PLATO REQUERIDO ===\n" + platoReq + "\n" + ingredientes + "\n" + descripcion;
-                m_tiempoFeedback = 5.0f;
-                return;
-            }
-            // Verificar estantes
-            std::string estanteCerca = getEstanteCerca(playerPos);
-            if (!estanteCerca.empty() && !m_mostrarUIEstante) {
-                for (auto& estante : m_estantes) {
-                    if (estante.nombre == estanteCerca) {
-                        m_estanteActual = &estante;
-                        m_mostrarUIEstante = true;
-                        m_indiceSeleccionado = -1;
-                        return;
-                    }
-                }
-            }
-        }
-        if (keyPressed->code == sf::Keyboard::Key::R) {
-            
-            std::string estanteCerca = getEstanteCerca(playerPos);
-            if (!estanteCerca.empty() && !m_mostrarUIEstante) {
-                for (auto& estante : m_estantes) {
-                    if (estante.nombre == estanteCerca) {
-                        m_estanteActual = &estante;
-                        m_mostrarUIEstante = true;
-                        m_indiceSeleccionado = -1;
-                        return;
-                    }
-                }
-            }
-            
-            if (estaCercaCocina(playerPos) && !m_misionCompletada) {
-                if (tieneIngredientes(m_platoRequerido)) {
-                    if (consumirIngredientes(m_platoRequerido)) {
-                        agregarPlatoAlInventario(m_platoRequerido);
-                        m_mensajeFeedback = "Cocinaste: " + m_platoRequerido.nombre + "!";
-                        m_tiempoFeedback = 2.0f;
-                    }
-                } else {
-                    m_mensajeFeedback = "Te faltan ingredientes para " + m_platoRequerido.nombre;
-                    m_tiempoFeedback = 2.0f;
-                }
-                return;
-            }
-            
-            if (estaCercaEntrega(playerPos) && !m_misionCompletada) {
-                bool platoEncontrado = false;
-                for (int i = 0; i < 15; i++) {
-                    Item* item = m_inventory->getItem(i);
-                    if (item && item->name == m_platoRequerido.nombre) {
-                        platoEncontrado = true;
-                        m_inventory->removeItem(i);
-                        break;
-                    }
-                }
-                
-                if (platoEncontrado) {
-                    m_mensajeFeedback = "Excelente! El alienigena amo tu " + m_platoRequerido.nombre + "!";
-                    m_tiempoFeedback = 3.0f;
-                    m_misionCompletada = true;
-                    m_platoEntregado = true;
-                } else {
-                    m_mensajeFeedback = "Necesitas entregar: " + m_platoRequerido.nombre;
-                    m_tiempoFeedback = 2.0f;
-                }
-                return;
-            }
-        }
-    }
+    sf::FloatRect playerRect(playerPos - sf::Vector2f(5.f, 5.f), sf::Vector2f(10.f, 10.f));
+    return m_areaMenu.findIntersection(playerRect).has_value();
 }
 
 bool MiniGameCook::tieneIngredientes(const Plato& plato)
@@ -387,37 +284,19 @@ void MiniGameCook::agregarPlatoAlInventario(const Plato& plato)
 {
     if (!m_inventory) return;
     
-    Item platoItem(plato.nombre, plato.color, "assets/images/items/plato_cocido.png");
+    Item platoItem(plato.nombre, plato.color, "assets/images/niveles/centinela2/plato.png");
     m_inventory->addItem(platoItem);
-}
-
-void MiniGameCook::reiniciarMision()
-{
-    m_misionCompletada = false;
-    m_platoEntregado = false;
-    
-    if (!m_recetasDisponibles.empty()) {
-        int indice = rand() % m_recetasDisponibles.size();
-        m_platoRequerido = m_recetasDisponibles[indice];
-    }
-    
-    m_estadoActual = EstadoMinijuego::ESPERANDO;
-    m_mostrarUIEstante = false;
-    m_estanteActual = nullptr;
 }
 
 void MiniGameCook::draw(sf::RenderWindow& window)
 {
     sf::Vector2u windowSize = window.getSize();
     
-    // Verificar que la fuente existe antes de dibujar
     if (m_mostrarUIEstante && m_estanteActual && m_font) {
-        // Fondo semitransparente
         sf::RectangleShape fondo(sf::Vector2f(static_cast<float>(windowSize.x), static_cast<float>(windowSize.y)));
         fondo.setFillColor(sf::Color(0, 0, 0, 200));
         window.draw(fondo);
         
-        // Panel del estante
         sf::RectangleShape panel(sf::Vector2f(500.f, 350.f));
         panel.setFillColor(sf::Color(30, 30, 50, 240));
         panel.setOutlineThickness(2.f);
@@ -453,22 +332,139 @@ void MiniGameCook::draw(sf::RenderWindow& window)
         }
     }
     
-    if (!m_mensajeFeedback.empty() && m_tiempoFeedback > 0.0f && m_font) {
-        sf::Text textoFeedback(*m_font);
-        textoFeedback.setString(m_mensajeFeedback);
-        textoFeedback.setCharacterSize(24);
-        textoFeedback.setFillColor(sf::Color::Yellow);
-        textoFeedback.setOutlineThickness(1.f);
-        textoFeedback.setOutlineColor(sf::Color::Black);
+}
+
+void MiniGameCook::handleEvent(const sf::Event& event, sf::RenderWindow& window, const sf::Vector2f& playerPos)
+{
+    if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>()) {
         
-        sf::FloatRect bounds = textoFeedback.getLocalBounds();
-        textoFeedback.setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
-        textoFeedback.setPosition(sf::Vector2f(static_cast<float>(windowSize.x) / 2.f, static_cast<float>(windowSize.y) / 2.f - 200.f));
-        window.draw(textoFeedback);
+        if (m_mostrarUIEstante && m_estanteActual) {
+            if (keyPressed->code == sf::Keyboard::Key::Escape) {
+                m_mostrarUIEstante = false;
+                m_estanteActual = nullptr;
+                m_indiceSeleccionado = -1;
+                return;
+            }
+            
+            int numSeleccionado = -1;
+            switch (keyPressed->code) {
+                case sf::Keyboard::Key::Num1: numSeleccionado = 0; break;
+                case sf::Keyboard::Key::Num2: numSeleccionado = 1; break;
+                case sf::Keyboard::Key::Num3: numSeleccionado = 2; break;
+                case sf::Keyboard::Key::Num4: numSeleccionado = 3; break;
+                case sf::Keyboard::Key::Num5: numSeleccionado = 4; break;
+                case sf::Keyboard::Key::Num6: numSeleccionado = 5; break;
+                case sf::Keyboard::Key::Num7: numSeleccionado = 6; break;
+                case sf::Keyboard::Key::Num8: numSeleccionado = 7; break;
+                case sf::Keyboard::Key::Num9: numSeleccionado = 8; break;
+                default: break;
+            }
+            
+           if (numSeleccionado >= 0 && numSeleccionado < (int)m_estanteActual->ingredientes.size()) {
+                const auto& ing = m_estanteActual->ingredientes[numSeleccionado];
+                Item nuevoItem(ing.nombre, ing.color, ing.rutaImagen);
+                
+                auto it = m_texturasIngredientes.find(ing.nombre);
+                if (it != m_texturasIngredientes.end() && nuevoItem.textura) {
+                    *nuevoItem.textura = it->second;
+                    nuevoItem.sprite = std::make_unique<sf::Sprite>(*nuevoItem.textura);
+                }
+                
+                if (m_inventory && m_inventory->tryCollectItem(ing.nombre, ing.color)) {
+                    if (m_mensajeCallback) {
+                        m_mensajeCallback("Obtuviste: " + ing.nombre, 2.0f, sf::Color::Green);
+                    }
+                } else {
+                    if (m_mensajeCallback) {
+                        m_mensajeCallback("Inventario lleno!", 2.0f, sf::Color::Red);
+                    }
+                }
+                
+                m_mostrarUIEstante = false;
+                m_estanteActual = nullptr;
+                return;
+            }
+            return;
+        }
+        
+        if (keyPressed->code == sf::Keyboard::Key::R) 
+        {
+            
+           if (estaCercaMenu(playerPos) && !m_misionCompletada) {
+                std::string platoReq = m_platoRequerido.nombre;
+                std::string descripcion = m_platoRequerido.descripcion;
+                
+                std::string ingredientes = "Ingredientes: ";
+                for (size_t i = 0; i < m_platoRequerido.ingredientesNecesarios.size(); i++) {
+                    if (i > 0) ingredientes += ", ";
+                    ingredientes += m_platoRequerido.ingredientesNecesarios[i];
+                }
+                
+                std::string mensaje = "=== PLATO REQUERIDO ===\n\n" + platoReq + "\n\n" + ingredientes + "\n\n" + descripcion;
+                if (m_mensajeCallback) {
+                    m_mensajeCallback(mensaje, 5.0f, sf::Color::Yellow);
+                }
+                return;
+            }
+            
+            std::string estanteCerca = getEstanteCerca(playerPos);
+            if (!estanteCerca.empty() && !m_mostrarUIEstante) {
+                for (auto& estante : m_estantes) {
+                    if (estante.nombre == estanteCerca) {
+                        m_estanteActual = &estante;
+                        m_mostrarUIEstante = true;
+                        m_indiceSeleccionado = -1;
+                        return;
+                    }
+                }
+            }
+            // ========== COCINA ==========
+            if (estaCercaCocina(playerPos) && !m_misionCompletada) {
+                if (tieneIngredientes(m_platoRequerido)) {
+                    if (consumirIngredientes(m_platoRequerido)) {
+                        agregarPlatoAlInventario(m_platoRequerido);
+                        if (m_mensajeCallback) {
+                            m_mensajeCallback("Cocinaste: " + m_platoRequerido.nombre + "!", 2.0f, sf::Color::Green);
+                        }
+                    }
+                } else {
+                    if (m_mensajeCallback) {
+                        m_mensajeCallback("Te faltan ingredientes para " + m_platoRequerido.nombre, 2.0f, sf::Color::Yellow);
+                    }
+                }
+                return;
+            }
+
+            
+            if (estaCercaEntrega(playerPos) && !m_misionCompletada) {
+                bool platoEncontrado = false;
+                for (int i = 0; i < 15; i++) {
+                    Item* item = m_inventory->getItem(i);
+                    if (item && item->name == m_platoRequerido.nombre) {
+                        platoEncontrado = true;
+                        m_inventory->removeItem(i);
+                        break;
+                    }
+                }
+                
+                if (platoEncontrado) {
+                    if (m_mensajeCallback) {
+                        m_mensajeCallback("Excelente! El alienigena amo tu " + m_platoRequerido.nombre + "!", 3.0f, sf::Color::Green);
+                    }
+                    m_misionCompletada = true;
+                    m_platoEntregado = true;
+                } else {
+                    if (m_mensajeCallback) {
+                        m_mensajeCallback("Necesitas entregar: " + m_platoRequerido.nombre, 2.0f, sf::Color::Yellow);
+                    }
+                }
+                return;
+            }
+        }
     }
 }
 
-// ==================== CocinaMinigameState ====================
+// ==================== COCINA MINIGAME STATE ====================
 
 CocinaMinigameState::CocinaMinigameState(Inventory* inventory)
     : m_miniGame(inventory)
@@ -516,17 +512,5 @@ void CocinaMinigameState::draw(sf::RenderWindow& window)
 {
     if (m_activo) {
         m_miniGame.draw(window);
-    }
-}
-
-void MiniGameCook::actualizarAreaEstante(const std::string& nombre, const sf::FloatRect& area)
-{
-    for (auto& estante : m_estantes) {
-        if (estante.nombre == nombre) {
-            estante.areaInteraccion = area;
-            std::cout << "DEBUG: Área actualizada para " << nombre << " -> pos: " 
-                      << area.position.x << "," << area.position.y << std::endl;
-            break;
-        }
     }
 }

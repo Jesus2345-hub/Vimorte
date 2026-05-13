@@ -1,6 +1,6 @@
 #include "Lobby.hpp"
 #include "PauseState.hpp"
-#include "Nivel1State.hpp"
+#include "Nivel2State.hpp"
 #include <iostream>
 #include <cmath>
 
@@ -115,8 +115,8 @@ void LobbyState::update(float dt)
                 std::cout << "💾 Partida guardada automáticamente al entrar al Nivel 1" << std::endl;
             }
 
-            std::cout << "¡Transición al Nivel 1!" << std::endl;
-            game->changeState(std::make_unique<Nivel1State>(window, game));
+            std::cout << "Transición al Nivel 1" << std::endl;
+            game->changeState(std::make_unique<Nivel2State>(window, game));
             return;
         }
     }

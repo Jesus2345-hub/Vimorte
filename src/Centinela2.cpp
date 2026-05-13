@@ -66,6 +66,11 @@ Centinela2State::Centinela2State(sf::RenderWindow *window, Game *game)
     configurarAreasCocina();
     configurarBloqueAscensor();
     
+    m_cocinaMinigame->getMiniGame()->setMensajeCallback(
+        [this](const std::string& texto, float duracion, sf::Color color) {
+            mostrarMensajeFlotante(texto, duracion, color);
+        }
+    );
     // Cargar fuente
     m_fontLoaded = m_font.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf");
     if (m_fontLoaded)
@@ -116,7 +121,8 @@ Centinela2State::Centinela2State(sf::RenderWindow *window, Game *game)
     }
     
     game->setIsInLevel(true);
-    actualizarPlatoRequerido();
+    m_mensajeEmergenteActivo = true;
+    m_bloqueActualIndex = 0;
     
     std::cout << "=== CENTINELA 2 ACTIVADO ===" << std::endl;
     std::cout << "Objetivo: Cocina 6 platos diferentes antes de que se acabe el tiempo" << std::endl;
@@ -134,14 +140,13 @@ void Centinela2State::configurarColisiones()
 
 void Centinela2State::configurarAreasCocina()
 {
-    m_areaCocina = sf::FloatRect(sf::Vector2f(1253.f, 394.f), sf::Vector2f(80.f, 80.f));
-    m_areaEntrega = sf::FloatRect(sf::Vector2f(931.f, 310.f), sf::Vector2f(80.f, 80.f));
-    m_areaMenuPlato = sf::FloatRect(sf::Vector2f(163.f, 832.f), sf::Vector2f(100.f, 60.f));
+    m_areaCocina = sf::FloatRect(sf::Vector2f(1114.f, 440.f), sf::Vector2f(106.f, 80.f));
+    m_areaEntrega = sf::FloatRect(sf::Vector2f(597.f, 220.f), sf::Vector2f(452.f, 94.f));
+    m_areaMenuPlato = sf::FloatRect(sf::Vector2f(66.f, 780.f), sf::Vector2f(223.f, 234.f));
     
-    m_areaEstanteCarnes = sf::FloatRect(sf::Vector2f(549.f, 593.f), sf::Vector2f(100.f, 200.f));
-    m_areaEstanteVerduras = sf::FloatRect(sf::Vector2f(783.f, 590.f), sf::Vector2f(100.f, 200.f));
-    m_areaEstanteOtros = sf::FloatRect(sf::Vector2f(1042.f, 590.f), sf::Vector2f(100.f, 200.f));
-    m_centinelaArea = sf::FloatRect(sf::Vector2f(600.f, 300.f), sf::Vector2f(150.f, 150.f));
+    m_areaEstanteCarnes = sf::FloatRect(sf::Vector2f(549.f, 538.f), sf::Vector2f(190.f, 370.f));
+    m_areaEstanteVerduras = sf::FloatRect(sf::Vector2f(783.f, 538.f), sf::Vector2f(190.f, 370.f));
+    m_areaEstanteOtros = sf::FloatRect(sf::Vector2f(1042.f, 538.f), sf::Vector2f(190.f, 370.f));
     
     if (m_cocinaMinigame) {
         m_cocinaMinigame->setAreas(m_areaCocina, m_areaEntrega, m_areaMenuPlato);
@@ -157,16 +162,16 @@ void Centinela2State::configurarBloqueAscensor()
     
     // El ascensor está en la misma posición donde inició el jugador
     m_bloquesInteractivos.push_back({
-        sf::FloatRect(sf::Vector2f(254.f, 310.f), sf::Vector2f(80.f, 80.f)),
-        "ASCENSOR\n\n"
+        sf::FloatRect(sf::Vector2f(254.f, 300.f), sf::Vector2f(100.f, 100.f)),
+        "\n\n"
         "Este ascensor te llevara de regreso...\n\n"
         "Pero antes debes completar tu mision.\n"
         "Prepara 6 platos para los alienigenas.\n\n"
         "Usa los estantes de ingredientes (Carnes, Verduras, Lacteos)\n"
-        "Cocina en la zona VERDE\n"
-        "Revisa el plato requerido en la zona AZUL\n"
-        "Entrega el plato en la zona ROJA\n"
-        "Habla con el centinela (ZONA MORADA) para recordar el plato"
+        "Cocina en la zona fuego\n"
+        "Revisa el plato requerido en la zona de recepcion\n"
+        "Entrega el plato a los jueces\n"
+    
     });
 }
 
@@ -200,14 +205,14 @@ void Centinela2State::actualizarTimer(float dt)
         // Actualizar el mensaje del bloque para mostrar derrota
         if (!m_bloquesInteractivos.empty()) {
             m_bloquesInteractivos[0].mensaje = 
-                "ASCENSOR - DERROTA\n\n"
+                "DERROTA\n\n"
                 "Has agotado el tiempo...\n"
                 "Los alienigenas no estan satisfechos.\n\n"
                 "Presiona R para regresar al nivel anterior\n"
                 "y volver a intentarlo mas tarde.";
         }
         
-        mostrarMensajeFlotante("TIEMPO AGOTADO! No has satisfecho a los alienigenas...\nPresiona R en el ascensor para regresar.", 4.0f, sf::Color::Red);
+        mostrarMensajeFlotante("TIEMPO AGOTADO! No has satisfecho a los alienigenas...\nPresiona R en el ascensor para regresar.", 5.0f, sf::Color::Red);
     }
 }
 
@@ -229,7 +234,7 @@ void Centinela2State::verificarEntregaPlato()
             // Actualizar el mensaje del bloque para mostrar victoria
             if (!m_bloquesInteractivos.empty()) {
                 m_bloquesInteractivos[0].mensaje = 
-                    "ASCENSOR - VICTORIA\n\n"
+                    "VICTORIA\n\n"
                     "Has preparado los 6 platos!\n"
                     "Los alienigenas estan impresionados.\n\n"
                     "Ahora tienes una decision que tomara:\n"
@@ -238,7 +243,7 @@ void Centinela2State::verificarEntregaPlato()
                     "Presiona R para tomar tu decision.";
             }
             
-            mostrarMensajeFlotante("¡MISION COMPLETADA! Ve al ascensor y presiona R", 3.0f, sf::Color::Green);
+            mostrarMensajeFlotante("MISION COMPLETADA! Ve al ascensor y presiona R", 3.0f, sf::Color::Green);
             return;
         }
         
@@ -373,6 +378,47 @@ void Centinela2State::handleEvent(const sf::Event& event)
         return;
     }
     
+    // ========== ABRIR ESTANTE ==========
+    if (!m_estanteCerca.empty() && !m_estanteAbierto && !m_mensajeEmergenteActivo && !m_dialogoDecisionActivo) {
+        if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>()) {
+            if (keyPressed->code == sf::Keyboard::Key::R) {
+                m_estanteActualNombre = m_estanteCerca;
+                m_estanteAbierto = true;
+                m_mensajeEmergenteActivo = true;
+                
+                // Cargar ingredientes CON sus rutas de imagen correctas
+                m_ingredientesEstanteActual.clear();
+                
+                if (m_estanteCerca == "Carnes") {
+                    m_ingredientesEstanteActual = {
+                        {"Carne de Res", "carne", sf::Color(139, 69, 19), "assets/images/niveles/centinela2/carne.png"},
+                        {"Pollo", "carne", sf::Color(255, 228, 196), "assets/images/niveles/centinela2/pollo.png"},
+                        {"Cerdo", "carne", sf::Color(255, 182, 193), "assets/images/niveles/centinela2/cerdo.png"},
+                        {"Cordero", "carne", sf::Color(160, 82, 45), "assets/images/niveles/centinela2/cordero.png"}
+                    };
+                } else if (m_estanteCerca == "Verduras") {
+                    m_ingredientesEstanteActual = {
+                        {"Tomate", "verdura", sf::Color(255, 99, 71), "assets/images/niveles/centinela2/tomate.png"},
+                        {"Lechuga", "verdura", sf::Color(124, 252, 0), "assets/images/niveles/centinela2/lechuga.png"},
+                        {"Cebolla", "verdura", sf::Color(255, 215, 0), "assets/images/niveles/centinela2/cebolla.png"},
+                        {"Zanahoria", "verdura", sf::Color(255, 140, 0), "assets/images/niveles/centinela2/zanahoria.png"},
+                        {"Papa", "verdura", sf::Color(222, 184, 135), "assets/images/niveles/centinela2/papa.png"}
+                    };
+                } else if (m_estanteCerca == "Lacteos y Embutidos") {
+                    m_ingredientesEstanteActual = {
+                        {"Huevo", "otros", sf::Color(255, 255, 200), "assets/images/niveles/centinela2/huevo.png"},
+                        {"Leche", "otros", sf::Color(255, 255, 255), "assets/images/niveles/centinela2/leche.png"},
+                        {"Queso", "otros", sf::Color(255, 215, 0), "assets/images/niveles/centinela2/queso.png"},
+                        {"Jamon", "otros", sf::Color(255, 182, 193), "assets/images/niveles/centinela2/jamon.png"},
+                        {"Salchicha", "otros", sf::Color(205, 92, 92), "assets/images/niveles/centinela2/salchicha.png"},
+                        {"Tocino", "otros", sf::Color(165, 42, 42), "assets/images/niveles/centinela2/tocino.png"}
+                    };
+                }
+                return;
+            }
+        }
+    }
+    
     // ========== ESTANTE ABIERTO (prioridad) ==========
     if (m_estanteAbierto) {
         if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>()) {
@@ -401,12 +447,24 @@ void Centinela2State::handleEvent(const sf::Event& event)
             if (numSeleccionado >= 0 && numSeleccionado < (int)m_ingredientesEstanteActual.size()) {
                 const auto& ing = m_ingredientesEstanteActual[numSeleccionado];
                 Inventory* inv = m_player.getInventory();
-                if (inv && inv->tryCollectItem(ing.nombre, ing.color)) {
-                    mostrarMensajeFlotante("Obtuviste: " + ing.nombre, 2.0f, sf::Color::Green);
-                } else {
-                    mostrarMensajeFlotante("Inventario lleno!", 2.0f, sf::Color::Red);
+                
+                if (inv) {
+                    if (inv->tryCollectItem(ing.nombre, ing.color)) {
+                        // Buscar el item recién agregado y asignarle la textura
+                        for (int i = 0; i < 15; i++) {
+                            Item* item = inv->getItem(i);
+                            if (item && item->name == ing.nombre && !item->sprite) {
+                                item->textura = std::make_shared<sf::Texture>();
+                                if (item->textura->loadFromFile(ing.rutaImagen)) {
+                                    item->sprite = std::make_unique<sf::Sprite>(*item->textura);
+                                }
+                                break;
+                            }
+                        }
+                    } else {
+                        mostrarMensajeFlotante("Inventario lleno!", 2.0f, sf::Color::Red);
+                    }
                 }
-                // No cerramos el estante, puede seguir tomando
             }
         }
         return;
@@ -463,50 +521,6 @@ void Centinela2State::handleEvent(const sf::Event& event)
         }
     }
     
-    // ========== ABRIR ESTANTE ==========
-    if (!m_estanteCerca.empty() && !m_estanteAbierto && !m_mensajeEmergenteActivo && !m_dialogoDecisionActivo) {
-        if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>()) {
-            if (keyPressed->code == sf::Keyboard::Key::R) {
-                // Obtener ingredientes del estante actual desde MiniGameCook
-                if (m_cocinaMinigame && m_cocinaMinigame->getMiniGame()) {
-                    // Necesitas un método para obtener ingredientes del estante por nombre
-                    m_estanteActualNombre = m_estanteCerca;
-                    m_estanteAbierto = true;
-                    m_mensajeEmergenteActivo = true;  // Para bloquear movimiento
-                    
-                    // Aquí deberías llenar m_ingredientesEstanteActual con los ingredientes reales
-                    // Por ahora, un ejemplo:
-                    if (m_estanteCerca == "Carnes") {
-                        m_ingredientesEstanteActual = {
-                            {"Carne de Res", "carne", sf::Color(139, 69, 19), ""},
-                            {"Pollo", "carne", sf::Color(255, 228, 196), ""},
-                            {"Cerdo", "carne", sf::Color(255, 182, 193), ""},
-                            {"Cordero", "carne", sf::Color(160, 82, 45), ""}
-                        };
-                    } else if (m_estanteCerca == "Verduras") {
-                        m_ingredientesEstanteActual = {
-                            {"Tomate", "verdura", sf::Color(255, 99, 71), ""},
-                            {"Lechuga", "verdura", sf::Color(124, 252, 0), ""},
-                            {"Cebolla", "verdura", sf::Color(255, 215, 0), ""},
-                            {"Zanahoria", "verdura", sf::Color(255, 140, 0), ""},
-                            {"Papa", "verdura", sf::Color(222, 184, 135), ""}
-                        };
-                    } else if (m_estanteCerca == "Lacteos y Embutidos") {
-                        m_ingredientesEstanteActual = {
-                            {"Huevo", "otros", sf::Color(255, 255, 200), ""},
-                            {"Leche", "otros", sf::Color(255, 255, 255), ""},
-                            {"Queso", "otros", sf::Color(255, 215, 0), ""},
-                            {"Jamon", "otros", sf::Color(255, 182, 193), ""},
-                            {"Salchicha", "otros", sf::Color(205, 92, 92), ""},
-                            {"Tocino", "otros", sf::Color(165, 42, 42), ""}
-                        };
-                    }
-                }
-                return;
-            }
-        }
-    }
-    
     // ========== INVENTARIO ==========
     Inventory* inv = m_player.getInventory();
     if (inv) inv->handleEvent(event, *window);
@@ -516,7 +530,6 @@ void Centinela2State::handleEvent(const sf::Event& event)
         m_cocinaMinigame->handleEvent(event, *window, m_player.getPosition());
     }
 }
-
 void Centinela2State::update(float dt)
 {
     // Actualizar mensajes
@@ -541,7 +554,6 @@ void Centinela2State::update(float dt)
     m_cercaEntrega = m_cocinaMinigame->getMiniGame()->estaCercaEntrega(playerPos);
     m_cercaMenu = m_cocinaMinigame->getMiniGame()->estaCercaMenu(playerPos);
     m_cercaCentinela = m_player.getHurtbox().findIntersection(m_centinelaArea).has_value();
-    m_estanteCerca = m_cocinaMinigame->getMiniGame()->getEstanteCerca(playerPos);
     m_estanteCerca = m_cocinaMinigame->getMiniGame()->getEstanteCerca(playerPos);
   
     // Detectar bloque interactivo (ascensor)
@@ -667,56 +679,49 @@ void Centinela2State::draw()
     m_player.draw(*window);
     
     // Áreas interactivas (solo debug)
-    if (m_debugMode) {
+    // if (m_debugMode) {
 
-        sf::RectangleShape estanteCarnes(sf::Vector2f(80.f, 80.f));
+        sf::RectangleShape estanteCarnes(sf::Vector2f(m_areaEstanteCarnes.size.x, m_areaEstanteCarnes.size.y));
         estanteCarnes.setPosition(m_areaEstanteCarnes.position);
         estanteCarnes.setFillColor(sf::Color(139, 0, 0, 100));
         estanteCarnes.setOutlineThickness(2.f);
         estanteCarnes.setOutlineColor(sf::Color::Red);
         window->draw(estanteCarnes);
         
-        sf::RectangleShape estanteVerduras(sf::Vector2f(80.f, 80.f));
+        sf::RectangleShape estanteVerduras(sf::Vector2f(m_areaEstanteVerduras.size.x, m_areaEstanteVerduras.size.y));
         estanteVerduras.setPosition(m_areaEstanteVerduras.position);
         estanteVerduras.setFillColor(sf::Color(0, 100, 0, 100));
         estanteVerduras.setOutlineThickness(2.f);
         estanteVerduras.setOutlineColor(sf::Color::Green);
         window->draw(estanteVerduras);
         
-        sf::RectangleShape estanteOtros(sf::Vector2f(80.f, 80.f));
+        sf::RectangleShape estanteOtros(sf::Vector2f(m_areaEstanteOtros.size.x, m_areaEstanteOtros.size.y));
         estanteOtros.setPosition(m_areaEstanteOtros.position);
         estanteOtros.setFillColor(sf::Color(139, 139, 0, 100));
         estanteOtros.setOutlineThickness(2.f);
         estanteOtros.setOutlineColor(sf::Color::Yellow);
         window->draw(estanteOtros);
         
-        sf::RectangleShape cocinaArea(sf::Vector2f(80.f, 80.f));
+        sf::RectangleShape cocinaArea(sf::Vector2f(m_areaCocina.size.x, m_areaCocina.size.y));
         cocinaArea.setPosition(m_areaCocina.position);
         cocinaArea.setFillColor(sf::Color(0, 200, 0, 100));
         cocinaArea.setOutlineThickness(2.f);
         cocinaArea.setOutlineColor(sf::Color::Green);
         window->draw(cocinaArea);
         
-        sf::RectangleShape entregaArea(sf::Vector2f(80.f, 80.f));
+        sf::RectangleShape entregaArea(sf::Vector2f(m_areaEntrega.size.x, m_areaEntrega.size.y));
         entregaArea.setPosition(m_areaEntrega.position);
         entregaArea.setFillColor(sf::Color(0, 0, 200, 100));
         entregaArea.setOutlineThickness(2.f);
         entregaArea.setOutlineColor(sf::Color::Blue);
         window->draw(entregaArea);
         
-        sf::RectangleShape menuArea(sf::Vector2f(100.f, 60.f));
+        sf::RectangleShape menuArea(sf::Vector2f(m_areaMenuPlato.size.x, m_areaMenuPlato.size.y));
         menuArea.setPosition(m_areaMenuPlato.position);
         menuArea.setFillColor(sf::Color(100, 100, 200, 100));
         menuArea.setOutlineThickness(2.f);
         menuArea.setOutlineColor(sf::Color::Yellow);
         window->draw(menuArea);
-        
-        sf::RectangleShape centinelaArea(sf::Vector2f(150.f, 150.f));
-        centinelaArea.setPosition(m_centinelaArea.position);
-        centinelaArea.setFillColor(sf::Color(128, 0, 128, 100));
-        centinelaArea.setOutlineThickness(2.f);
-        centinelaArea.setOutlineColor(sf::Color::Magenta);
-        window->draw(centinelaArea);
         
         for (const auto &bloque : m_bloquesInteractivos) {
             sf::RectangleShape ascensorRect(sf::Vector2f(bloque.area.size.x, bloque.area.size.y));
@@ -736,7 +741,7 @@ void Centinela2State::draw()
             colision.setOutlineColor(sf::Color::Red);
             window->draw(colision);
         }
-    }
+    // }
     
     if (m_cocinaMinigame) m_cocinaMinigame->draw(*window);
     
@@ -806,7 +811,10 @@ void Centinela2State::draw()
     }
     
     // Mensaje flotante centrado (con fondo)
-    if (m_tiempoFlotante > 0.0f && m_mensajeFlotante && !m_mensajeFlotante->getString().isEmpty() && !m_mensajeEmergenteActivo) {
+    if (m_tiempoFlotante > 0.0f && m_mensajeFlotante && !m_mensajeFlotante->getString().isEmpty() && !m_mensajeEmergenteActivo)
+    {
+        sf::Vector2f posPantalla(winW / 2.f, winH / 2.f);
+        
         sf::FloatRect textBounds = m_mensajeFlotante->getLocalBounds();
         
         sf::RectangleShape fondoRect(sf::Vector2f(textBounds.size.x + 40.f, textBounds.size.y + 30.f));
@@ -814,12 +822,14 @@ void Centinela2State::draw()
         fondoRect.setOutlineColor(m_mensajeFlotante->getFillColor());
         fondoRect.setOutlineThickness(2.f);
         fondoRect.setOrigin(sf::Vector2f(fondoRect.getSize().x / 2.f, fondoRect.getSize().y / 2.f));
-        fondoRect.setPosition(sf::Vector2f(winW / 2.f, winH / 2.f));
+        fondoRect.setPosition(posPantalla);
         window->draw(fondoRect);
         
-        m_mensajeFlotante->setPosition(sf::Vector2f(winW / 2.f, winH / 2.f));
+        m_mensajeFlotante->setPosition(posPantalla);
         window->draw(*m_mensajeFlotante);
     }
+    
+    if (m_debugMode) CoordenadasDebug::getInstance().dibujar(*window);
     
     // Mensaje temporal
     if (m_textoMensaje && m_msjActual.tiempoRestante > 0.0f && !m_textoMensaje->getString().isEmpty() && !m_mensajeEmergenteActivo) {
@@ -961,7 +971,7 @@ void Centinela2State::draw()
         cornerBR.setPosition(sf::Vector2f(dialogX + dialogWidth - 9.f, dialogY + dialogHeight - 9.f));
         window->draw(cornerBR);
     }
-        // DIÁLOGO DEL ESTANTE (estilo Sara2)
+        // DIÁLOGO DEL ESTANTE 
     if (m_estanteAbierto && m_fontLoaded)
     {
         sf::RectangleShape overlay(sf::Vector2f(winW, winH));
@@ -1022,7 +1032,7 @@ void Centinela2State::draw()
         
         // Instrucciones
         sf::Text instruccionText(m_font);
-        instruccionText.setString("[ 1-9 ] Tomar ingrediente     |     [ ESC ] Cerrar");
+        instruccionText.setString("Presionar [1-9] para tomar ingrediente |     [ ESC ] Cerrar");
         instruccionText.setCharacterSize(16);
         instruccionText.setFillColor(sf::Color(200, 200, 100, 255));
         sf::FloatRect instrBounds = instruccionText.getLocalBounds();
@@ -1075,7 +1085,7 @@ void Centinela2State::draw()
         window->draw(*m_textoOpcion2);
         
         sf::Text instrucciones(m_font);
-        instrucciones.setString("FLECHAS  ↑↓  |  ENTER para seleccionar");
+        instrucciones.setString("FLECHAS  [Up][Down] |  ENTER para seleccionar");
         instrucciones.setCharacterSize(16);
         instrucciones.setFillColor(sf::Color(150, 150, 150));
         instrucciones.setOrigin(sf::Vector2f(instrucciones.getLocalBounds().size.x / 2.f, 0.f));

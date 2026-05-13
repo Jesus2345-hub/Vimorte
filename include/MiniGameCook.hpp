@@ -62,18 +62,15 @@ private:
     
     bool m_mostrarUIEstante;
     
-    // Usar punteros para SFML 3.0.2
     std::unique_ptr<sf::Font> m_font;
     std::unique_ptr<sf::Text> m_tituloEstante;
     std::vector<std::unique_ptr<sf::Text>> m_textosIngredientes;
     std::unique_ptr<sf::Text> m_textoInstrucciones;
     
-    std::string m_mensajeFeedback;
-    float m_tiempoFeedback;
-    
     Inventory* m_inventory;
     std::map<std::string, sf::Texture> m_texturasIngredientes;
-    
+    std::function<void(const std::string&, float, sf::Color)> m_mensajeCallback;
+
     void inicializarIngredientes();
     void inicializarRecetas();
     void cargarTexturas();
@@ -84,7 +81,10 @@ private:
 public:
     MiniGameCook(Inventory* inventory);
     ~MiniGameCook() = default;
-    
+    void setMensajeCallback(std::function<void(const std::string&, float, sf::Color)> callback) 
+    {
+        m_mensajeCallback = callback;
+    }
     void actualizarAreaEstante(const std::string& nombre, const sf::FloatRect& area);
     void update(float dt, const sf::Vector2f& playerPos);
     void handleEvent(const sf::Event& event, sf::RenderWindow& window, const sf::Vector2f& playerPos);
@@ -107,7 +107,7 @@ public:
     std::string getPlatoRequeridoNombre() const { return m_platoRequerido.nombre; }
     std::string getPlatoRequeridoDescripcion() const { return m_platoRequerido.descripcion; }
     std::vector<std::string> getIngredientesRequeridos() const { 
-    return m_platoRequerido.ingredientesNecesarios; 
+        return m_platoRequerido.ingredientesNecesarios; 
     }
 };
 

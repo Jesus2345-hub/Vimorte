@@ -29,7 +29,7 @@ void LevelTree::buildTree()
     auto nivel2 = std::make_unique<LevelNode>("nivel2", "Casino Vimorte", LevelType::NORMAL, 2);
     nivel2->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
     {
-        return std::make_unique<Nivel2State>(w, g); // ← CREA EL NIVEL 2
+        return std::make_unique<Nivel2State>(w, g); 
     };
 
     auto nivel3 = std::make_unique<LevelNode>("nivel3", "Bomba", LevelType::NORMAL, 3);

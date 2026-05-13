@@ -78,8 +78,7 @@ private:
     std::unique_ptr<sf::Text> m_mensajeFlotante;
     float m_tiempoFlotante;
     sf::Clock m_clockFlotante;
-    void mostrarMensajeFlotante(const std::string& texto, float duracion = 3.0f, sf::Color color = sf::Color::Yellow);
-    
+    void mostrarMensajeFlotante(const std::string& texto, float duracion = 3.0f, sf::Color color = sf::Color::Yellow);    
     // ========== INTERACCIÓN ==========
     bool m_cercaCocina;
     bool m_cercaEntrega;
