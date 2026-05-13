@@ -212,17 +212,14 @@ void Centinela2State::actualizarTimer(float dt)
         m_gameOver = true;
         m_juegoActivo = false;
         
-        // Actualizar el mensaje del bloque para mostrar derrota
-        if (!m_bloquesInteractivos.empty()) {
-            m_bloquesInteractivos[0].mensaje = 
-                "DERROTA\n\n"
-                "Has agotado el tiempo...\n"
-                "Los alienigenas no estan satisfechos.\n\n"
-                "Presiona R para regresar al nivel anterior\n"
-                "y volver a intentarlo mas tarde.";
+        // GAME OVER - Ir al final malo
+        LevelTree& levelTree = game->getLevelTree();
+        if (levelTree.jumpToNode("final_malo")) {
+            std::unique_ptr<State> newState = levelTree.createCurrentState(window, game);
+            if (newState) {
+                game->changeState(std::move(newState));
+            }
         }
-        
-        mostrarMensajeFlotante("TIEMPO AGOTADO! No has satisfecho a los alienigenas...\nPresiona R en el ascensor para regresar.", 5.0f, sf::Color::Red);
     }
 }
 
@@ -326,7 +323,8 @@ void Centinela2State::handleDecisionInput()
     static bool downPressed = false;
     static bool enterPressed = false;
     
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up)) {
+    // SFML 3.0.2 usa Scancode en lugar de Key::Up/Down
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Scancode::Up)) {
         if (!upPressed) {
             upPressed = true;
             m_opcionSeleccionada = 0;
@@ -335,7 +333,7 @@ void Centinela2State::handleDecisionInput()
         upPressed = false;
     }
     
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down)) {
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Scancode::Down)) {
         if (!downPressed) {
             downPressed = true;
             m_opcionSeleccionada = 1;
@@ -344,32 +342,38 @@ void Centinela2State::handleDecisionInput()
         downPressed = false;
     }
     
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Enter)) {
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Scancode::Enter)) {
         if (!enterPressed) {
             enterPressed = true;
             m_dialogoDecisionActivo = false;
             
+            LevelTree& levelTree = game->getLevelTree();
+            LevelNode* currentNode = levelTree.getCurrentNode(); // centinela2
+            
             if (m_opcionSeleccionada == 0) {
-                mostrarMensajeFlotante("Has decidido ESCAPAR del laboratorio...", 2.0f, sf::Color::Green);
-                if (game->tienePartidaActiva()) {
-                    game->getSaveManager().addItemRecolectado("DecisionEscapar");
-                    game->guardarPartidaActual();
+                // FINAL BUENO: Ir al hijo izquierdo
+                if (currentNode && currentNode->left) {
+                    levelTree.jumpToNode("final_bueno");
+                    std::unique_ptr<State> newState = levelTree.createCurrentState(window, game);
+                    if (newState) {
+                        game->changeState(std::move(newState));
+                    }
                 }
-                game->avanzarNivel();
             } else {
-                mostrarMensajeFlotante("Has decidido UNIRTE a los experimentos humanos...", 2.0f, sf::Color::Magenta);
-                if (game->tienePartidaActiva()) {
-                    game->getSaveManager().addItemRecolectado("DecisionUnirse");
-                    game->guardarPartidaActual();
+                // FINAL MALO: Ir al hijo derecho
+                if (currentNode && currentNode->right) {
+                    levelTree.jumpToNode("final_malo");
+                    std::unique_ptr<State> newState = levelTree.createCurrentState(window, game);
+                    if (newState) {
+                        game->changeState(std::move(newState));
+                    }
                 }
-                game->avanzarNivel();
             }
         }
     } else {
         enterPressed = false;
     }
 }
-
 void Centinela2State::handleEvent(const sf::Event& event)
 {
     // F3 para debug
