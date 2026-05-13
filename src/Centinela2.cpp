@@ -140,13 +140,13 @@ void Centinela2State::configurarColisiones()
 
 void Centinela2State::configurarAreasCocina()
 {
-    m_areaCocina = sf::FloatRect(sf::Vector2f(1114.f, 440.f), sf::Vector2f(106.f, 80.f));
-    m_areaEntrega = sf::FloatRect(sf::Vector2f(597.f, 220.f), sf::Vector2f(452.f, 94.f));
-    m_areaMenuPlato = sf::FloatRect(sf::Vector2f(66.f, 780.f), sf::Vector2f(223.f, 234.f));
+    m_areaCocina = sf::FloatRect(sf::Vector2f(1104.f, 309.f), sf::Vector2f(117.f, 210.f));
+    m_areaEntrega = sf::FloatRect(sf::Vector2f(575.f, 307.f), sf::Vector2f(475.f, 199.f));
+    m_areaMenuPlato = sf::FloatRect(sf::Vector2f(66.f, 780.f), sf::Vector2f(223.f, 250.f));
     
-    m_areaEstanteCarnes = sf::FloatRect(sf::Vector2f(549.f, 538.f), sf::Vector2f(190.f, 370.f));
-    m_areaEstanteVerduras = sf::FloatRect(sf::Vector2f(783.f, 538.f), sf::Vector2f(190.f, 370.f));
-    m_areaEstanteOtros = sf::FloatRect(sf::Vector2f(1042.f, 538.f), sf::Vector2f(190.f, 370.f));
+    m_areaEstanteCarnes = sf::FloatRect(sf::Vector2f(549.f, 510.f), sf::Vector2f(190.f, 370.f));
+    m_areaEstanteVerduras = sf::FloatRect(sf::Vector2f(783.f, 510.f), sf::Vector2f(190.f, 370.f));
+    m_areaEstanteOtros = sf::FloatRect(sf::Vector2f(1042.f, 510.f), sf::Vector2f(190.f, 370.f));
     
     if (m_cocinaMinigame) {
         m_cocinaMinigame->setAreas(m_areaCocina, m_areaEntrega, m_areaMenuPlato);
@@ -179,8 +179,18 @@ void Centinela2State::actualizarPlatoRequerido()
 {
     if (m_cocinaMinigame && m_cocinaMinigame->getMiniGame()) {
         m_cocinaMinigame->getMiniGame()->reiniciarMision();
-        std::string platoNombre = m_cocinaMinigame->getMiniGame()->getPlatoRequeridoNombre();
-        mostrarMensajeFlotante("NUEVO PLATO: " + platoNombre, 3.0f, sf::Color::Yellow);
+        auto* miniGame = m_cocinaMinigame->getMiniGame();
+        std::string platoNombre = miniGame->getPlatoRequeridoNombre();
+        auto ingredientes = miniGame->getIngredientesRequeridos();
+        
+        std::string textoIngredientes = "Ingredientes: ";
+        for (size_t i = 0; i < ingredientes.size(); i++) {
+            if (i > 0) textoIngredientes += ", ";
+            textoIngredientes += ingredientes[i];
+        }
+        
+        std::string mensaje = "NUEVO PLATO: " + platoNombre + "\n\n" + textoIngredientes;
+        mostrarMensajeFlotante(mensaje, 4.0f, sf::Color::Yellow);
     }
 }
 
@@ -513,7 +523,7 @@ void Centinela2State::handleEvent(const sf::Event& event)
                         textoIngredientes += ingredientes[i];
                     }
                     
-                    std::string mensaje = "=== PLATO REQUERIDO ===\n\n" + platoReq + "\n\n" + textoIngredientes + "\n\n" + descripcion;
+                    std::string mensaje = "=== PLATO REQUERIDO ===\n\n" + platoReq + "\n\n" + textoIngredientes + "\n\n" + descripcion + "\n\n[REGRESA AQUI SI OLVIDASTE UN INGREDIENTE]";
                     mostrarMensajeFlotante(mensaje, 5.0f, sf::Color::Yellow);
                 }
                 return;
@@ -793,7 +803,7 @@ void Centinela2State::draw()
             m_textoInteraccion->setString(textoActual);
             sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
             m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
-            m_textoInteraccion->setPosition(sf::Vector2f(winW / 2.f, winH - 60.f));
+            m_textoInteraccion->setPosition(sf::Vector2f(winW / 2.f, winH - 80.f));
             window->draw(*m_textoInteraccion);
         }
     } else if (m_fontLoaded && m_textoInteraccion && (m_nivelCompletado || m_gameOver) && m_cercaBloqueInteractivo) {
