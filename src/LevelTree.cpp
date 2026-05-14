@@ -3,6 +3,8 @@
 #include "Game.hpp"
 #include "Nivel1State.hpp"
 #include "Centinela2.hpp"
+#include "MenuState.hpp"
+#include "CentinelaConductosState.hpp"
 #include "Nivel2State.hpp"  
 #include "NivelSara1State.hpp"
 #include "VideoFinalState.hpp"
@@ -82,7 +84,7 @@ void LevelTree::buildTree()
     auto finalBueno = std::make_unique<LevelNode>("final_bueno_Centinela2", "Final Bueno Centinela 2", LevelType::NORMAL, 0);
     finalBueno->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
     {
-        return std::make_unique<VideoFinalState>(w, g, "assets/videos/final_bueno", true);
+        return std::make_unique<VideoFinalState>(w, g, "assets/videos/Centinela2_BuenFinal", true);
     };
 
     // Final malo - UNIRSE (hijo derecho)
@@ -97,10 +99,10 @@ void LevelTree::buildTree()
     centinela2->right = std::move(finalMalo);  
 
 
-    auto centinela3 = std::make_unique<LevelNode>("centinela3", "Centinela 3", LevelType::CENTINELA, 0);
+    auto centinela3 = std::make_unique<LevelNode>("centinela3", "Conductos", LevelType::CENTINELA, 0);
     centinela3->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
     {
-        return std::make_unique<Nivel1State>(w, g);
+        return std::make_unique<CentinelaConductosState>(w, g);
     };
     centinela3->permiteRetrocesoDesdeCentinela = true;
 
@@ -114,6 +116,8 @@ void LevelTree::buildTree()
     root->left->left->left->left->left->right = std::move(centinela2);
     root->left->left->left->left->left->left = std::move(nivel7);
    
+    root->left->left->left->left->left->left->right = std::move(centinela3);
+    
 
     currentNode = root.get();
     visitedNodes.push_back(currentNode->id);
@@ -155,11 +159,11 @@ bool LevelTree::goToCentinela()
         currentNode = currentNode->right.get();
         visitedNodes.push_back(currentNode->id);
         inCentinelaPath = true;
-        std::cout << "🔮 Entrando a centinela: " << currentNode->displayName << std::endl;
+        std::cout << " Entrando a centinela: " << currentNode->displayName << std::endl;
         return true;
     }
 
-    std::cout << "❌ Este nivel no tiene centinela" << std::endl;
+    std::cout << " Este nivel no tiene centinela" << std::endl;
     return false;
 }
 

@@ -14,36 +14,29 @@ CentinelaConductosState::CentinelaConductosState(sf::RenderWindow *window, Game 
     : State(window, game), m_tiempoRestante(60.0f), m_tiempoAgotado(false), m_nivelCompletado(false), m_fontLoaded(false), m_mensajeTimer(0.f), m_parpadeoTimer(0.f), m_parpadeoVisible(true)
 {
     // ============================================================
-    // FONDO OSCURO
+    // FONDO
     // ============================================================
-    m_background.setSize(sf::Vector2f(1280.f, 720.f));
-    m_background.setFillColor(sf::Color(25, 25, 30));
-
-    // Cargar fondo del conducto
     if (m_backgroundTexture.loadFromFile("assets/images/niveles/nivel7/conductos_bg.png"))
     {
         m_backgroundSprite = std::make_unique<sf::Sprite>(m_backgroundTexture);
-
-        // Escalar para que ocupe toda la pantalla
-        float escalaX = 1280.f / 1024.f;
-        float escalaY = 720.f / 1053.f;
-        float escala = std::min(escalaX, escalaY);
-
-        m_backgroundSprite->setScale(sf::Vector2f(escala, escala));
-        m_backgroundSprite->setPosition(sf::Vector2f(0.f, 0.f));
-
-        std::cout << "Fondo de conductos cargado" << std::endl;
+        sf::Vector2u texSize = m_backgroundTexture.getSize();
+        m_worldSize = sf::Vector2f(static_cast<float>(texSize.x), static_cast<float>(texSize.y));
     }
     else
     {
         std::cerr << "Error cargando conductos_bg.png" << std::endl;
+        m_worldSize = sf::Vector2f(1537.f, 1023.f);
     }
+
+    // Configurar cámara fija 1280x720
+    m_camera = sf::View(sf::Vector2f(m_worldSize.x / 2.f, m_worldSize.y / 2.f),
+                        sf::Vector2f(1280.f, 720.f));
 
     // ============================================================
     // JUGADOR
     // ============================================================
     m_player.loadAssets();
-    m_player.setPosition(100.f, 350.f);
+    m_player.setPosition(264.f, 900.f);
     m_player.setSpeed(200.f);
 
     // ============================================================
@@ -52,14 +45,19 @@ CentinelaConductosState::CentinelaConductosState(sf::RenderWindow *window, Game 
     configurarLaberinto();
 
     // ============================================================
-    // SALIDA
+    // SALIDA - Rejilla en esquina superior derecha
     // ============================================================
-    m_exitZone.setSize(sf::Vector2f(60.f, 60.f));
-    m_exitZone.setFillColor(sf::Color(0, 255, 0, 100));
-    m_exitZone.setOutlineThickness(3.f);
-    m_exitZone.setOutlineColor(sf::Color::Green);
-    m_exitZone.setPosition(sf::Vector2f(1150.f, 580.f));
-    m_exitBounds = m_exitZone.getGlobalBounds();
+    if (m_rejillaSalidaTexture.loadFromFile("assets/images/niveles/nivel7/rejilla.png"))
+    {
+        m_rejillaSalidaSprite = std::make_unique<sf::Sprite>(m_rejillaSalidaTexture);
+        m_rejillaSalidaSprite->setScale(sf::Vector2f(0.15f, 0.15f));
+        sf::FloatRect bounds = m_rejillaSalidaSprite->getLocalBounds();
+        m_rejillaSalidaSprite->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
+        m_rejillaSalidaSprite->setPosition(sf::Vector2f(1061.f, 120.f));
+    }
+
+    // Área de interacción para salir (fuera de la zona de colisión)
+    m_exitBounds = sf::FloatRect(sf::Vector2f(1000.f, 60.f), sf::Vector2f(120.f, 120.f));
 
     // ============================================================
     // FUENTE Y TEXTOS
@@ -78,7 +76,7 @@ CentinelaConductosState::CentinelaConductosState(sf::RenderWindow *window, Game 
         m_cronometroText->setOutlineColor(sf::Color::Black);
 
         m_instruccionesText = std::make_unique<sf::Text>(m_font,
-                                                         "WASD/Flechas: Mover | ESC: Pausa", 14);
+                                                         "WASD/Flechas: Mover | ESC: Pausa | F3: Debug", 14);
         m_instruccionesText->setFillColor(sf::Color(150, 150, 150));
 
         m_mensajeText = std::make_unique<sf::Text>(m_font, "", 20);
@@ -108,39 +106,57 @@ void CentinelaConductosState::configurarLaberinto()
 
     auto crearPared = [&](float x, float y, float w, float h)
     {
-        // Escalar las coordenadas al tamaño de la ventana (1280x720)
-        float escalaX = 1280.f / 1024.f;
-        float escalaY = 720.f / 1053.f;
-
-        sf::RectangleShape wall(sf::Vector2f(w * escalaX, h * escalaY));
-        wall.setPosition(sf::Vector2f(x * escalaX, y * escalaY));
-        wall.setFillColor(sf::Color::Transparent); // Invisibles (solo colisión)
+        sf::RectangleShape wall(sf::Vector2f(w, h));
+        wall.setPosition(sf::Vector2f(x, y));
+        wall.setFillColor(sf::Color::Transparent);
         wall.setOutlineThickness(0.f);
         m_walls.push_back(wall);
         m_wallBounds.push_back(wall.getGlobalBounds());
     };
 
-    // ============================================================
-    // PAREDES EXTERIORES
-    // ============================================================
-    crearPared(0.f, 0.f, 310.f, 40.f);     // Techo izquierdo
-    crearPared(470.f, 0.f, 554.f, 40.f);   // Techo derecho
-    crearPared(0.f, 0.f, 40.f, 410.f);     // Lateral izq superior
-    crearPared(0.f, 600.f, 40.f, 453.f);   // Lateral izq inferior
-    crearPared(984.f, 0.f, 40.f, 1053.f);  // Lateral derecho
-    crearPared(0.f, 1013.f, 1024.f, 40.f); // Piso
+    // Borde superior: (0,0) a (1537,55)
+    crearPared(0.f, 0.f, 1537.f, 55.f);
 
-    // ============================================================
-    // BLOQUES INTERNOS
-    // ============================================================
-    crearPared(310.f, 290.f, 540.f, 400.f); // Bloque central grande
-    crearPared(310.f, 40.f, 160.f, 250.f);  // Divisor superior
-    crearPared(120.f, 120.f, 190.f, 170.f); // Codo superior izq
-    crearPared(120.f, 410.f, 190.f, 470.f); // Pasillo izquierdo
-    crearPared(720.f, 810.f, 264.f, 203.f); // Bloque inferior der
-    crearPared(580.f, 810.f, 40.f, 203.f);  // Divisor inferior
+    // Pared superior: (369,55) a (1168,116)
+    crearPared(369.f, 55.f, 1168.f, 116.f);
 
-    std::cout << "Laberinto creado con " << m_wallBounds.size() << " paredes" << std::endl;
+    // Borde inferior: (0,997) a (1537,26)
+    crearPared(0.f, 997.f, 1537.f, 26.f);
+
+    // Borde izquierdo
+    crearPared(0.f, 0.f, 40.f, 1023.f);
+
+    // Borde derecho
+    crearPared(1497.f, 0.f, 40.f, 1023.f);
+
+    // Muro 1: (0,731) a (593,182)
+    crearPared(0.f, 731.f, 593.f, 182.f);
+
+    // Muro 2: (0,417) a (141,314)
+    crearPared(0.f, 417.f, 141.f, 314.f);
+
+    // Muro central 1: (293,285) a (562,360)
+    crearPared(293.f, 285.f, 562.f, 360.f);
+
+    // Muro central 2: (951,260) a (460,385)
+    crearPared(951.f, 260.f, 460.f, 385.f);
+
+    // Muro 3: (109,131) a (391,190)
+    crearPared(109.f, 131.f, 391.f, 190.f);
+
+    // Muro 4: (673,731) a (827,186)
+    crearPared(673.f, 731.f, 827.f, 186.f);
+
+    // Pared izquierda: (191,893) a (48,107)
+    crearPared(191.f, 893.f, 48.f, 107.f);
+
+    // Pared derecha: (887,915) a (30,85)
+    crearPared(887.f, 915.f, 30.f, 85.f);
+
+    // Pared izquierda de la sala de arriba: (951,171) a (74,89)
+    crearPared(951.f, 171.f, 74.f, 89.f);
+
+    std::cout << "✅ Laberinto creado con " << m_wallBounds.size() << " paredes" << std::endl;
 }
 
 // ============================================================
@@ -153,6 +169,10 @@ void CentinelaConductosState::handleEvent(const sf::Event &event)
         if (keyPressed->code == sf::Keyboard::Key::Escape)
         {
             game->pushState(std::make_unique<PauseState>(window, game));
+        }
+        if (keyPressed->code == sf::Keyboard::Key::F3)
+        {
+            m_debugMode = !m_debugMode;
         }
     }
 }
@@ -307,12 +327,6 @@ void CentinelaConductosState::update(float dt)
     m_player.move(movimiento, dt);
     m_player.update(dt);
 
-    // Límites de la pantalla
-    sf::Vector2f playerPos = m_player.getPosition();
-    playerPos.x = std::clamp(playerPos.x, 35.f, 1245.f);
-    playerPos.y = std::clamp(playerPos.y, 35.f, 685.f);
-    m_player.setPosition(playerPos.x, playerPos.y);
-
     // Colisiones con paredes
     for (const auto &wall : m_wallBounds)
     {
@@ -323,104 +337,184 @@ void CentinelaConductosState::update(float dt)
         }
     }
 
-    verificarSalida();
+    // Límites del jugador en el mundo
+    sf::Vector2f playerPos = m_player.getPosition();
+    playerPos.x = std::clamp(playerPos.x, 35.f, m_worldSize.x - 35.f);
+    playerPos.y = std::clamp(playerPos.y, 35.f, m_worldSize.y - 35.f);
+    m_player.setPosition(playerPos.x, playerPos.y);
+
+    // Cámara sigue al jugador
+    sf::Vector2f cameraPos = m_player.getPosition();
+
+    float halfWidth = 640.f;
+    float halfHeight = 360.f;
+
+    if (cameraPos.x < halfWidth)
+        cameraPos.x = halfWidth;
+    if (cameraPos.x > m_worldSize.x - halfWidth)
+        cameraPos.x = m_worldSize.x - halfWidth;
+    if (cameraPos.y < halfHeight)
+        cameraPos.y = halfHeight;
+    if (cameraPos.y > m_worldSize.y - halfHeight)
+        cameraPos.y = m_worldSize.y - halfHeight;
+
+    m_camera.setCenter(cameraPos);
+
+    // Verificar si está cerca de la salida
+    m_cercaSalida = m_player.getHurtbox().findIntersection(m_exitBounds).has_value();
+
+    // Interacción con la salida
+    static bool fSalidaPresionado = false;
+    if (m_cercaSalida)
+    {
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F))
+        {
+            if (!fSalidaPresionado)
+            {
+                fSalidaPresionado = true;
+                verificarSalida();
+            }
+        }
+        else
+        {
+            fSalidaPresionado = false;
+        }
+    }
 }
 
 // ============================================================
 // DIBUJAR
 // ============================================================
-void CentinelaConductosState::draw() {
-    if (!window) return;
-    
-    window->setView(window->getDefaultView());
-    
-    // Fondo
-    if (m_backgroundSprite) {
+void CentinelaConductosState::draw()
+{
+    if (!window)
+        return;
+
+    // ===== FASE 1: MUNDO CON CÁMARA =====
+    window->setView(m_camera);
+
+
+    if (m_backgroundSprite)
+    {
         window->draw(*m_backgroundSprite);
-    } else {
-        window->draw(m_background);
     }
-    
-    // ============================================================
-    // DEBUG: Dibujar colisiones (BORRAR cuando estén bien)
-    // ============================================================
-    for (auto& wall : m_walls) {
-        sf::RectangleShape debugWall = wall;
-        debugWall.setFillColor(sf::Color(255, 0, 0, 80));
-        debugWall.setOutlineThickness(2.f);
-        debugWall.setOutlineColor(sf::Color::Red);
-        window->draw(debugWall);
+    else
+    {
+        sf::RectangleShape fallback(m_worldSize);
+        fallback.setFillColor(sf::Color(25, 25, 30));
+        window->draw(fallback);
     }
-    
-    // Efecto de parpadeo
-    if (m_tiempoRestante < 10.f && !m_parpadeoVisible && !m_nivelCompletado) {
-        sf::RectangleShape overlay(sf::Vector2f(1280.f, 720.f));
-        overlay.setFillColor(sf::Color(255, 0, 0, 30));
-        window->draw(overlay);
+
+    // Colisiones debug (F3)
+    if (m_debugMode)
+    {
+        for (auto &wall : m_walls)
+        {
+            sf::RectangleShape debugWall = wall;
+            debugWall.setFillColor(sf::Color(255, 0, 0, 80));
+            debugWall.setOutlineThickness(2.f);
+            debugWall.setOutlineColor(sf::Color::Red);
+            window->draw(debugWall);
+        }
     }
-    
-    // Salida
-    window->draw(m_exitZone);
-    
-    if (m_fontLoaded) {
-        sf::Text salidaText(m_font, "SALIDA", 14);
-        salidaText.setFillColor(sf::Color::Green);
-        salidaText.setPosition(sf::Vector2f(1155.f, 600.f));
-        window->draw(salidaText);
+
+    // Salida (rejilla)
+    if (m_rejillaSalidaSprite)
+    {
+        window->draw(*m_rejillaSalidaSprite);
     }
-    
+    else
+    {
+        // Fallback: rectángulo verde
+        sf::RectangleShape fallbackExit(sf::Vector2f(40.f, 40.f));
+        fallbackExit.setFillColor(sf::Color(0, 255, 0, 100));
+        fallbackExit.setOutlineThickness(2.f);
+        fallbackExit.setOutlineColor(sf::Color::Green);
+        fallbackExit.setPosition(sf::Vector2f(1041.f, 104.f));
+        window->draw(fallbackExit);
+    }
+
     // Jugador
     m_player.draw(*window);
-    
+
+    // ===== FASE 2: UI (vista por defecto) =====
+    window->setView(window->getDefaultView());
+
+    float winW = static_cast<float>(window->getSize().x);
+    float winH = static_cast<float>(window->getSize().y);
+
+    //F para salir por el conducto
+    if (m_fontLoaded && m_cercaSalida)
+    {
+        sf::Text salidaText(m_font, "Presiona F para salir por el conducto", 18);
+        salidaText.setFillColor(sf::Color::White);
+        salidaText.setOutlineThickness(2.f);
+        salidaText.setOutlineColor(sf::Color::Black);
+        sf::FloatRect bounds = salidaText.getLocalBounds();
+        salidaText.setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
+        salidaText.setPosition(sf::Vector2f(winW / 2.f, winH - 70.f));
+        window->draw(salidaText);
+    }
+
     // Título
-    if (m_tituloText) {
+    if (m_tituloText)
+    {
         sf::FloatRect bounds = m_tituloText->getLocalBounds();
         m_tituloText->setOrigin(sf::Vector2f(bounds.size.x / 2.f, 0.f));
-        m_tituloText->setPosition(sf::Vector2f(640.f, 15.f));
+        m_tituloText->setPosition(sf::Vector2f(winW / 2.f, 15.f));
         window->draw(*m_tituloText);
     }
-    
+
     // Cronómetro
-    if (m_cronometroText) {
+    if (m_cronometroText)
+    {
         m_cronometroText->setPosition(sf::Vector2f(20.f, 15.f));
         window->draw(*m_cronometroText);
     }
-    
-    // Instrucciones
-    if (m_instruccionesText) {
-        m_instruccionesText->setPosition(sf::Vector2f(20.f, 690.f));
-        window->draw(*m_instruccionesText);
+
+    // Efecto de parpadeo
+    if (m_tiempoRestante < 10.f && !m_parpadeoVisible && !m_nivelCompletado)
+    {
+        sf::RectangleShape overlay(sf::Vector2f(winW, winH));
+        overlay.setFillColor(sf::Color(255, 0, 0, 30));
+        window->draw(overlay);
     }
-    
+
     // Mensaje temporal
-    if (m_mensajeText && m_mensajeTimer > 0.f && !m_mensajeText->getString().isEmpty()) {
+    if (m_mensajeText && m_mensajeTimer > 0.f && !m_mensajeText->getString().isEmpty())
+    {
         sf::FloatRect bounds = m_mensajeText->getLocalBounds();
         m_mensajeText->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
-        m_mensajeText->setPosition(sf::Vector2f(640.f, 360.f));
+        m_mensajeText->setPosition(sf::Vector2f(winW / 2.f, winH / 2.f));
         window->draw(*m_mensajeText);
     }
-    
+
     // Pantalla final
-    if (m_nivelCompletado || m_tiempoAgotado) {
-        sf::RectangleShape overlay(sf::Vector2f(1280.f, 720.f));
+    if (m_nivelCompletado || m_tiempoAgotado)
+    {
+        sf::RectangleShape overlay(sf::Vector2f(winW, winH));
         overlay.setFillColor(sf::Color(0, 0, 0, 180));
         window->draw(overlay);
-        
-        if (m_fontLoaded) {
+
+        if (m_fontLoaded)
+        {
             sf::Text resultadoText(m_font, "", 40);
             resultadoText.setStyle(sf::Text::Bold);
-            
-            if (m_nivelCompletado) {
-                resultadoText.setString("¡ESCAPASTE!\nHas encontrado la salida.");
+
+            if (m_nivelCompletado)
+            {
+                resultadoText.setString("ESCAPASTE\nHas encontrado la salida.");
                 resultadoText.setFillColor(sf::Color::Green);
-            } else {
+            }
+            else
+            {
                 resultadoText.setString("SIN OXIGENO...\nNo lograste escapar.");
                 resultadoText.setFillColor(sf::Color::Red);
             }
-            
+
             sf::FloatRect bounds = resultadoText.getLocalBounds();
             resultadoText.setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
-            resultadoText.setPosition(sf::Vector2f(640.f, 360.f));
+            resultadoText.setPosition(sf::Vector2f(winW / 2.f, winH / 2.f));
             window->draw(resultadoText);
         }
     }

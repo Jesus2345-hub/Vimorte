@@ -112,7 +112,7 @@ private:
     
     void mostrarDialogoDecision();
     void handleDecisionInput();
-
+    float m_tiempoBloqueoAscensor;
     bool m_estanteAbierto;
     std::string m_mensajeEstante;
     std::string m_estanteActualNombre;

@@ -29,7 +29,8 @@ Centinela2State::Centinela2State(sf::RenderWindow *window, Game *game)
       m_tiempoFlotante(0.0f),
       m_dialogoDecisionActivo(false),
       m_opcionSeleccionada(0),
-      m_estanteAbierto(false)
+      m_estanteAbierto(false),
+      m_tiempoBloqueoAscensor(0.0f)
 {
     m_msjActual.texto = "";
     m_msjActual.tiempoRestante = 0.0f;
@@ -37,7 +38,7 @@ Centinela2State::Centinela2State(sf::RenderWindow *window, Game *game)
     
     // Configurar jugador
     m_player.loadAssets();
-    m_player.setPosition(254.f, 306.f);
+    m_player.setPosition(296.f, 361.f);
     m_player.setSpeed(300.0f);
     
     // Cargar fondo
@@ -134,9 +135,28 @@ void Centinela2State::configurarColisiones()
     
     m_mapaFisico.emplace_back(30.f, 12.f, m_worldSize.x - 60.f, 30.f);
     m_mapaFisico.emplace_back(30.f, 12.f, 20.f, m_worldSize.y - 40.f);
-    m_mapaFisico.emplace_back(m_worldSize.x - 50.f, 12.f, 20.f, m_worldSize.y - 40.f);
-    m_mapaFisico.emplace_back(30.f, m_worldSize.y - 50.f, m_worldSize.x - 60.f, 30.f);
+    m_mapaFisico.emplace_back(401.f,142.f , 13.f, 866.f);
+    m_mapaFisico.emplace_back(548.f,595.f , 170.f, 294.f);
+    m_mapaFisico.emplace_back(784.f,595.f , 170.f, 294.f);
+    m_mapaFisico.emplace_back(1048.f,595.f , 170.f, 294.f);
+    m_mapaFisico.emplace_back(65.f,818.f , 217.f, 148.f);
+    m_mapaFisico.emplace_back(646.f,185.f , 371.f, 121.f);
+    m_mapaFisico.emplace_back(1198.f, 312.f , 144.f, 253.f);
+    m_mapaFisico.emplace_back(1281.f, 571.f , 80.f, 216.f);
+    m_mapaFisico.emplace_back(48.f, 42.f , 1348.f, 204.f);
+    m_mapaFisico.emplace_back(52.f, 204.f , 190.f, 206.f);
+    m_mapaFisico.emplace_back(237.f, 227.f , 131.f, 78.f);
+    m_mapaFisico.emplace_back(336.f, 322.f , 34.f, 88.f);
+    m_mapaFisico.emplace_back(1295.f, 239.f , 22.f, 58.f);
+    m_mapaFisico.emplace_back(380.f, 652.f , 20.f, 354.f);
+    m_mapaFisico.emplace_back(416.f, 248.f , 10.f, 658.f);
+    m_mapaFisico.emplace_back(30.f, 1066.f , 1412.f, 18.f);
+    m_mapaFisico.emplace_back(1362.f, 788.f , 70.f, 285.f);
+    m_mapaFisico.emplace_back(52.f, 411.f , 14.f, 322.f);
+    m_mapaFisico.emplace_back(603.f, 306.f , 454.f, 141.f);
+    m_mapaFisico.emplace_back(380.f, 482.f , 20.f, 168.f);
 }
+
 
 void Centinela2State::configurarAreasCocina()
 {
@@ -160,7 +180,6 @@ void Centinela2State::configurarBloqueAscensor()
 {
     m_bloquesInteractivos.clear();
     
-    // El ascensor está en la misma posición donde inició el jugador
     m_bloquesInteractivos.push_back({
         sf::FloatRect(sf::Vector2f(254.f, 300.f), sf::Vector2f(100.f, 100.f)),
         "\n\n"
@@ -348,12 +367,12 @@ void Centinela2State::handleDecisionInput()
             m_dialogoDecisionActivo = false;
             
             LevelTree& levelTree = game->getLevelTree();
-            LevelNode* currentNode = levelTree.getCurrentNode(); // centinela2
+            LevelNode* currentNode = levelTree.getCurrentNode(); 
             
             if (m_opcionSeleccionada == 0) {
                 // FINAL BUENO: Ir al hijo izquierdo
                 if (currentNode && currentNode->left) {
-                    levelTree.jumpToNode("final_bueno");
+                    levelTree.jumpToNode("final_bueno_Centinela2");
                     std::unique_ptr<State> newState = levelTree.createCurrentState(window, game);
                     if (newState) {
                         game->changeState(std::move(newState));
@@ -395,7 +414,7 @@ void Centinela2State::handleEvent(const sf::Event& event)
     // ========== ABRIR ESTANTE ==========
     if (!m_estanteCerca.empty() && !m_estanteAbierto && !m_mensajeEmergenteActivo && !m_dialogoDecisionActivo) {
         if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>()) {
-            if (keyPressed->code == sf::Keyboard::Key::R) {
+            if (keyPressed->code == sf::Keyboard::Key::F) {
                 m_estanteActualNombre = m_estanteCerca;
                 m_estanteAbierto = true;
                 m_mensajeEmergenteActivo = true;
@@ -437,7 +456,7 @@ void Centinela2State::handleEvent(const sf::Event& event)
     if (m_estanteAbierto) {
         if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>()) {
             // ESC: Cerrar estante
-            if (keyPressed->code == sf::Keyboard::Key::Escape) {
+            if (keyPressed->code == sf::Keyboard::Key::F) {
                 m_estanteAbierto = false;
                 m_mensajeEmergenteActivo = false;
                 return;
@@ -487,34 +506,41 @@ void Centinela2State::handleEvent(const sf::Event& event)
     // ========== DIÁLOGO DEL ASCENSOR ==========
     if (m_mensajeEmergenteActivo) {
         if (const auto *keyPressed = event.getIf<sf::Event::KeyPressed>()) {
-            if (keyPressed->code == sf::Keyboard::Key::Escape) {
-                m_mensajeEmergenteActivo = false;
-                m_bloqueActualIndex = -1;
-                return;
-            }
             
-            if (keyPressed->code == sf::Keyboard::Key::R) {
-                m_mensajeEmergenteActivo = false;
-                
-                if (m_nivelCompletado) {
-                    mostrarDialogoDecision();
-                } else if (m_gameOver) {
-                    mostrarMensajeFlotante("Regresando al nivel anterior...", 2.0f, sf::Color::Yellow);
-                    game->volverDeCentinela();
-                } else {
-                    mostrarMensajeFlotante("Aun no has completado los 6 platos.\nSigue cocinando!", 2.5f, sf::Color::Yellow);
+            if (m_nivelCompletado || m_gameOver) {
+                // Modo victoria/derrota: F ejecuta la acción
+                if (keyPressed->code == sf::Keyboard::Key::F) {
+                    m_mensajeEmergenteActivo = false;
+                    
+                    if (m_nivelCompletado) {
+                        mostrarDialogoDecision();
+                    } else if (m_gameOver) {
+                        mostrarMensajeFlotante("Regresando al nivel anterior...", 2.0f, sf::Color::Yellow);
+                        game->volverDeCentinela();
+                    }
+                    m_bloqueActualIndex = -1;
+                    return;
                 }
-                m_bloqueActualIndex = -1;
-                return;
+                else if (keyPressed->code == sf::Keyboard::Key::Escape) {
+                    m_mensajeEmergenteActivo = false;
+                    m_bloqueActualIndex = -1;
+                    return;
+                }
+            } else {
+                if (keyPressed->code == sf::Keyboard::Key::F) {
+                    m_mensajeEmergenteActivo = false;
+                    m_bloqueActualIndex = -1;
+                    m_tiempoBloqueoAscensor = 0.3f;
+                    return;
+                }
             }
         }
-        return;
+        return; 
     }
-    
     // ========== MENU/RECETARIO ==========
     if (m_cercaMenu && !m_nivelCompletado && !m_gameOver) {
         if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>()) {
-            if (keyPressed->code == sf::Keyboard::Key::R) {
+            if (keyPressed->code == sf::Keyboard::Key::F) {
                 if (m_cocinaMinigame && m_cocinaMinigame->getMiniGame()) {
                     auto* miniGame = m_cocinaMinigame->getMiniGame();
                     std::string platoReq = miniGame->getPlatoRequeridoNombre();
@@ -582,11 +608,15 @@ void Centinela2State::update(float dt)
     }
     
     // Actualizar mensaje de interacción contextual (se dibuja en draw)
-    
-    // Interacción con ascensor (abrir diálogo emergente)
-    static bool rPresionado = false;
-    if (m_cercaBloqueInteractivo && bloqueIndex != -1 && !m_mensajeEmergenteActivo && !m_dialogoDecisionActivo) {
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R)) {
+   static bool rPresionado = false;
+
+    // Decrementar temporizador de bloqueo
+    if (m_tiempoBloqueoAscensor > 0.0f) {
+        m_tiempoBloqueoAscensor -= dt;
+    }
+
+    if (m_cercaBloqueInteractivo && bloqueIndex != -1 && !m_mensajeEmergenteActivo && !m_dialogoDecisionActivo && m_tiempoBloqueoAscensor <= 0.0f) {
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F)) {
             if (!rPresionado) {
                 rPresionado = true;
                 m_mensajeEmergenteActivo = true;
@@ -636,7 +666,7 @@ void Centinela2State::update(float dt)
         // Interacción con centinela (recordar plato)
         static bool rCentinelaPresionado = false;
         if (m_cercaCentinela && !m_nivelCompletado && !m_gameOver) {
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R)) {
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F)) {
                 if (!rCentinelaPresionado) {
                     rCentinelaPresionado = true;
                     if (m_cocinaMinigame) {
@@ -693,7 +723,7 @@ void Centinela2State::draw()
     m_player.draw(*window);
     
     // Áreas interactivas (solo debug)
-    // if (m_debugMode) {
+    if (m_debugMode) {
 
         sf::RectangleShape estanteCarnes(sf::Vector2f(m_areaEstanteCarnes.size.x, m_areaEstanteCarnes.size.y));
         estanteCarnes.setPosition(m_areaEstanteCarnes.position);
@@ -755,7 +785,7 @@ void Centinela2State::draw()
             colision.setOutlineColor(sf::Color::Red);
             window->draw(colision);
         }
-    // }
+    }
     
     if (m_cocinaMinigame) m_cocinaMinigame->draw(*window);
     
@@ -796,12 +826,12 @@ void Centinela2State::draw()
     // Texto de interacción contextual 
     if (m_fontLoaded && m_textoInteraccion && m_juegoActivo && !m_nivelCompletado && !m_gameOver) {
         std::string textoActual;
-        if (m_cercaCocina) textoActual = "COCINA - R para cocinar";
-        else if (m_cercaEntrega) textoActual = "ENTREGA - R para entregar el plato";
-        else if (m_cercaMenu) textoActual = "RECETARIO - R para ver plato requerido";
-        else if (!m_estanteCerca.empty()) textoActual = m_estanteCerca + " - R para tomar";
-        else if (m_cercaCentinela) textoActual = "CENTINELA - R para recordar el plato";
-        else if (m_cercaBloqueInteractivo) textoActual = "ASCENSOR - R para interactuar";
+        if (m_cercaCocina) textoActual = "COCINA - F para cocinar";
+        else if (m_cercaEntrega) textoActual = "ENTREGA - F para entregar el plato";
+        else if (m_cercaMenu) textoActual = "RECETARIO - F para ver plato requerido";
+        else if (!m_estanteCerca.empty()) textoActual = m_estanteCerca + " - F para tomar";
+        else if (m_cercaCentinela) textoActual = "CENTINELA - F para recordar el plato";
+        else if (m_cercaBloqueInteractivo) textoActual = "ASCENSOR - F para interactuar";
         
         if (!textoActual.empty()) {
             m_textoInteraccion->setString(textoActual);
@@ -812,14 +842,14 @@ void Centinela2State::draw()
         }
     } else if (m_fontLoaded && m_textoInteraccion && (m_nivelCompletado || m_gameOver) && m_cercaBloqueInteractivo) {
         std::string textoActual;
-        if (m_nivelCompletado) textoActual = "ASCENSOR - R para tomar tu decision";
-        else if (m_gameOver) textoActual = "ASCENSOR - R para regresar al nivel anterior";
+        if (m_nivelCompletado) textoActual = "ASCENSOR - F para tomar tu decision";
+        else if (m_gameOver) textoActual = "ASCENSOR - E para regresar al nivel anterior";
         
         if (!textoActual.empty()) {
             m_textoInteraccion->setString(textoActual);
             sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
             m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
-            m_textoInteraccion->setPosition(sf::Vector2f(winW / 2.f, winH - 60.f));
+            m_textoInteraccion->setPosition(sf::Vector2f(winW / 2.f, winH - 80.f));
             window->draw(*m_textoInteraccion);
         }
     }
@@ -951,13 +981,13 @@ void Centinela2State::draw()
         instruccionText.setOutlineThickness(0.5f);
         instruccionText.setOutlineColor(sf::Color::Black);
         
-        if (m_nivelCompletado)
-            instruccionText.setString("[ R ] Tomar decision final     |     [ ESC ] Cerrar");
+       if (m_nivelCompletado)
+            instruccionText.setString("[ F ] Tomar decision final     |     [ ESC ] Cerrar");
         else if (m_gameOver)
-            instruccionText.setString("[ R ] Regresar al nivel anterior     |     [ ESC ] Cerrar");
+            instruccionText.setString("[ F ] Regresar al nivel anterior     |     [ ESC ] Cerrar");
         else
-            instruccionText.setString("[ ESC ] Cerrar     |     Sigue cocinando para completar la mision");
-            
+            instruccionText.setString("[ F ] Cerrar     |     Sigue cocinando para completar la mision");
+                    
         instruccionText.setFillColor(sf::Color(200, 200, 100, 255));
         sf::FloatRect instrBounds = instruccionText.getLocalBounds();
         instruccionText.setOrigin(sf::Vector2f(instrBounds.size.x / 2.f, instrBounds.size.y / 2.f));
@@ -1046,7 +1076,7 @@ void Centinela2State::draw()
         
         // Instrucciones
         sf::Text instruccionText(m_font);
-        instruccionText.setString("Presionar [1-9] para tomar ingrediente |     [ ESC ] Cerrar");
+        instruccionText.setString("Presionar [1-9] para tomar ingrediente |     [ F ] Cerrar");
         instruccionText.setCharacterSize(16);
         instruccionText.setFillColor(sf::Color(200, 200, 100, 255));
         sf::FloatRect instrBounds = instruccionText.getLocalBounds();
