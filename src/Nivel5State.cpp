@@ -123,7 +123,7 @@ Nivel5State::Nivel5State(sf::RenderWindow *window, Game *game)
         m_textoMensaje = nullptr;
     }
 
-    // Guardado automático
+    // Guardado automatico
     if (game->tienePartidaActiva())
     {
         game->getSaveManager().setNivelActual(5, 1);
@@ -133,7 +133,7 @@ Nivel5State::Nivel5State(sf::RenderWindow *window, Game *game)
 
     std::cout << "Nivel5State inicializado correctamente" << std::endl;
     game->setIsInLevel(true);
-    CoordenadasDebug::getInstance().setVisible(true);
+    CoordenadasDebug::getInstance().setVisible(false);
     
     m_criminalMinigame.setOnCompleteCallback([this](bool exito) {
     if (exito && !m_criminalGameCompleted) 
@@ -222,7 +222,7 @@ void Nivel5State::handleEvent(const sf::Event &event)
     if (m_mensajeEmergenteActivo) {
         if (const auto *keyPressed = event.getIf<sf::Event::KeyPressed>()) {
             
-            // F: Cerrar mensaje 
+            // F Cerrar mensaje 
             if (keyPressed->code == sf::Keyboard::Key::F) {
                 m_mensajeEmergenteActivo = false;
                 m_bloqueActualIndex = -1;
@@ -231,7 +231,7 @@ void Nivel5State::handleEvent(const sf::Event &event)
             
             //  BLOQUE ESTRELLA  - saltar al centinela 2
             if (m_bloqueActualIndex == 1 && !m_estrellaUsada) {
-                // Con F ya cerramos, con R teletransportamos
+                // Con F  cerramos, con R teletransportamos
                 if (keyPressed->code == sf::Keyboard::Key::R) {  
                     m_estrellaUsada = true;
                     m_mensajeEmergenteActivo = false;
@@ -342,7 +342,8 @@ void Nivel5State::handleEvent(const sf::Event &event)
     // Teclas globales (solo si NO hay mensaje activo)
     if (const auto *keyPressed = event.getIf<sf::Event::KeyPressed>())
     {
-        // TECLA M: Abrir/Cerrar tutorial
+
+        // M Abrir/Cerrar tutorial
         if (keyPressed->code == sf::Keyboard::Key::M)
         {
             if (m_mostrarTutorial || m_mostrarTutorialPorTecla) {
@@ -371,7 +372,7 @@ void Nivel5State::handleEvent(const sf::Event &event)
             return;
         }
         
-        // TECLA ESCAPE: Solo para pausa (NO cierra tutorial)
+        // ESCAPE Solo para pausa 
         if (keyPressed->code == sf::Keyboard::Key::Escape)
         {
             if (!m_mostrarTutorial && !m_mostrarTutorialPorTecla && !m_mensajeEmergenteActivo)
@@ -392,8 +393,9 @@ void Nivel5State::handleEvent(const sf::Event &event)
     if (m_criminalMinigame.isActive()) {
         m_criminalMinigame.handleEvent(event, *window);
         if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>()) {
-            if (keyPressed->code == sf::Keyboard::Key::Escape) {
+            if (keyPressed->code == sf::Keyboard::Key::F) {
                 m_criminalMinigame.deactivate();
+                inv->clear();
                 return;
             }
         }
@@ -617,16 +619,6 @@ void Nivel5State::reajustarMinijuegoCriminal()
 }
 
 
-// VERIFICAR ENTRADA CENTINELA
-void Nivel5State::verificarEntradaCentinela()
-{
-    LevelNode *currentNode = game->getLevelTree().getCurrentNode();
-    if (currentNode && currentNode->hasCentinela())
-    {
-        // Lógica para centinela
-    }
-}
-
 
 // VERIFICAR SALIDA DEL NIVEL
 
@@ -642,7 +634,7 @@ void Nivel5State::verificarSalidaNivel() {
                 std::cout << "Saliendo del nivel 5..." << std::endl;
                 game->avanzarNivel();
             } else {
-                mostrarMensajeFlotante("Debes resolver el caso criminal y\nentregar los objetos a Andrea primero.\nHabla con Andrea presionando R", 4.0f, sf::Color::Yellow);
+                mostrarMensajeFlotante("Debes resolver el caso criminal y\nentregar los objetos a Andrea primero.\nHabla con Andrea presionando F", 4.0f, sf::Color::Yellow);
             }
         }
     } else {
@@ -699,7 +691,7 @@ void Nivel5State::update(float dt)
 
     sf::Vector2f posAnterior = m_player.getPosition();
 
-    /// Detección de bloques interactivos
+    /// Deteccion de bloques interactivos
     m_cercaBloqueInteractivo = false;
     int bloqueIndex = -1;
 
@@ -719,7 +711,7 @@ void Nivel5State::update(float dt)
     static bool cCriminalPresionado = false;
     if (m_cercaCriminalArea && !m_criminalGameCompleted && !m_criminalMinigame.isActive() 
     && !m_mensajeEmergenteActivo) {
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R)) {
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F)) {
             if (!cCriminalPresionado) {
                 cCriminalPresionado = true;
                 
@@ -762,7 +754,7 @@ void Nivel5State::update(float dt)
         return;
     }
     
-    // Interacción con bloques (abrir mensaje con F)
+    // Interaccion con bloques (abrir mensaje con F)
     static bool fPresionado = false;
     if (m_cercaBloqueInteractivo && bloqueIndex != -1 && !m_mensajeEmergenteActivo && !m_nivelCompletado) {
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F)) { 
@@ -770,7 +762,6 @@ void Nivel5State::update(float dt)
                 fPresionado = true;
                 m_mensajeEmergenteActivo = true;
                 m_bloqueActualIndex = bloqueIndex;
-                std::cout << "Abriendo diálogo - Bloque index: " << bloqueIndex << std::endl;
             }
         } else {
             fPresionado = false;
@@ -854,7 +845,6 @@ void Nivel5State::update(float dt)
     m_camera.setCenter(cameraPos);
 
     verificarSalidaNivel();
-    verificarEntradaCentinela();
 
     // Pausa
     if (!m_mostrarTutorial && !m_mostrarTutorialPorTecla && !m_mensajeEmergenteActivo)
@@ -932,7 +922,7 @@ void Nivel5State::draw()
         colision.setFillColor(sf::Color(255, 0, 0, 100));
         colision.setOutlineThickness(2.f);
         colision.setOutlineColor(sf::Color::Red);
-        // window->draw(colision);
+        
     }
     
     // Dibujar bloques interactivos (modo debug)
@@ -943,7 +933,7 @@ void Nivel5State::draw()
         bloqueDebug.setFillColor(sf::Color(0, 255, 255, 100));
         bloqueDebug.setOutlineThickness(2.f);
         bloqueDebug.setOutlineColor(sf::Color::Cyan);
-        // window->draw(bloqueDebug);
+    
     }
     
     if (m_mostrarPuertaSalida && m_nivelCompletado)
@@ -953,14 +943,13 @@ void Nivel5State::draw()
         salidaDebug.setFillColor(sf::Color(0, 255, 0, 50));
         salidaDebug.setOutlineThickness(3.f);
         salidaDebug.setOutlineColor(sf::Color::Green);
-        window->draw(salidaDebug);
     }
 
     window->setView(window->getDefaultView());
 
     CoordenadasDebug::getInstance().dibujar(*window);
 
-    // Mensaje emergente (diálogo de Andrea)
+    // Mensaje emergente (dialogo de Andrea)
     if (m_mensajeEmergenteActivo && m_bloqueActualIndex >= 0 && m_bloqueActualIndex < (int)m_bloquesInteractivos.size())
     {
         sf::Vector2u winSize = window->getSize();
@@ -1021,15 +1010,28 @@ void Nivel5State::draw()
             accentLine.setPosition(sf::Vector2f(dialogX + 20.f, dialogY + 48.f));
             window->draw(accentLine);
             
+            // Dentro del daálogo emergente
+
             sf::Text tituloText(m_font);
-            
-            if (m_nivelCompletado)
+
+            //verificar indice
+            if (m_bloqueActualIndex == 1 && !m_estrellaUsada) {
+                tituloText.setString("ESTRELLA MISTERIOSA ");
+                tituloText.setFillColor(sf::Color(255, 215, 0, 255));  // Dorado
+            } 
+            else if (m_nivelCompletado) {
                 tituloText.setString("o ANDREA o");
-            else if (m_criminalGameCompleted)
+                tituloText.setFillColor(sf::Color(100, 255, 100, 255));
+            }
+            else if (m_criminalGameCompleted) {
                 tituloText.setString("+ ANDREA +");
-            else
+                tituloText.setFillColor(sf::Color(255, 215, 0, 255));
+            }
+            else {
                 tituloText.setString("- ANDREA -");
-                
+                tituloText.setFillColor(sf::Color(255, 220, 150, 255));
+            }
+                            
             tituloText.setCharacterSize(24);
             tituloText.setStyle(sf::Text::Bold);
             
@@ -1082,19 +1084,21 @@ void Nivel5State::draw()
             instruccionText.setCharacterSize(16);
             instruccionText.setOutlineThickness(0.5f);
             instruccionText.setOutlineColor(sf::Color::Black);
-            
-            if (m_nivelCompletado)
-            {
-                instruccionText.setString("[ ESC ] Cerrar    ->    Ve al ascensor y presiona [ E ]");
-                instruccionText.setFillColor(sf::Color(100, 255, 100, 255));
-            }
-            else if (m_criminalGameCompleted)
-            {
-                instruccionText.setString("[ F ] Entregar objetos a Andrea     |     [ F ] Cerrar");
+
+            // Verificar si es el bloque estrella
+            if (m_bloqueActualIndex == 1 && !m_estrellaUsada) {
+                instruccionText.setString("[ R ] Ir al Centinela      |     [ F ] Cerrar");
                 instruccionText.setFillColor(sf::Color(255, 215, 0, 255));
             }
-            else
-            {
+            else if (m_nivelCompletado) {
+                instruccionText.setString("[ F ] Cerrar    ->    Ve al ascensor y presiona [ E ]");
+                instruccionText.setFillColor(sf::Color(100, 255, 100, 255));
+            }
+            else if (m_criminalGameCompleted) {
+                instruccionText.setString("[ R ] Entregar objetos a Andrea     |     [ F ] Cerrar");
+                instruccionText.setFillColor(sf::Color(255, 215, 0, 255));
+            }
+            else {
                 instruccionText.setString("[ F ] Cerrar     |     Resuelve el caso criminal primero");
                 instruccionText.setFillColor(sf::Color(200, 150, 100, 255));
             }
@@ -1129,6 +1133,15 @@ void Nivel5State::draw()
    // Textos de interacción
     if (m_fontLoaded && m_textoInteraccion)
     {
+        if (m_cercaCriminalArea && !m_criminalGameCompleted && !m_criminalMinigame.isActive()) {
+            m_textoInteraccion->setString("Presiona F para investigar el crimen");
+            m_textoInteraccion->setOutlineColor(sf::Color::Black);      
+            m_textoInteraccion->setOutlineThickness(2.0f);
+            sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
+            m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
+            m_textoInteraccion->setPosition(sf::Vector2f(winW / 2.f, winH - 90.f));
+            window->draw(*m_textoInteraccion);
+        }
         if (m_cercaPuertaSalida && m_nivelCompletado)
         {
             m_textoInteraccion->setString("Presiona E para avanzar al siguiente nivel");
@@ -1142,7 +1155,7 @@ void Nivel5State::draw()
         
         if (m_cercaBloqueInteractivo && !m_mensajeEmergenteActivo)
         {
-            // CAMBIA EL TEXTO SEGÚN EL BLOQUE
+            
             if (m_bloqueActualIndex == 0) {
                 m_textoInteraccion->setString("Presiona F. Andrea quiere decirte algo");
             } 
@@ -1160,7 +1173,6 @@ void Nivel5State::draw()
         
     }
 
-    // Mensaje temporal flotante (el que estaba antes)
     if (m_textoMensaje && m_msjActual.tiempoRestante > 0.0f && !m_textoMensaje->getString().isEmpty() && !m_mensajeEmergenteActivo)
     {
         sf::Vector2u winSize = window->getSize();
@@ -1178,7 +1190,7 @@ void Nivel5State::draw()
     }
 
     
-    // MENSAJE FLOTANTE CENTRADO (PARA ERRORES Y AVISOS)
+    // MENSAJE FLOTANTE CENTRADO 
     
     if (m_tiempoFlotante > 0.0f && !m_mensajeFlotante->getString().isEmpty() && !m_mensajeEmergenteActivo)
     {
@@ -1272,7 +1284,12 @@ void Nivel5State::configurarColisiones()
     m_mapaFisico.emplace_back(1134.f,729.f, 72.f,121.f);
     m_mapaFisico.emplace_back(1048.f,814.f, 97.f,102.f);
     m_mapaFisico.emplace_back(963.f,873.f, 88.f,104.f);
+    //estrella
+    m_mapaFisico.emplace_back(1123.f, 1096.f, 10.f,10.f);
 
+    //ajustes
+    m_mapaFisico.emplace_back(1135.f,1125.f, 98.f, 20.f);
+    
 
     m_mapaFisico.emplace_back(424.f,250.f, 600.f,61.f);
     std::cout << "Colisiones configuradas" << std::endl;

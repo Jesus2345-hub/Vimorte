@@ -476,6 +476,24 @@ void MinigameRuleta::handleEvent(const sf::Event& event, const sf::RenderWindow&
         for (size_t i = 0; i < m_hoverCeldas.size(); i++) {
             m_hoverCeldas[i] = m_celdasTapete[i].getGlobalBounds().contains(mousePos);
         }
+        
+        // Hovers de columnas
+        m_hoverColumna1 = m_btnColumna1.getGlobalBounds().contains(mousePos);
+        m_hoverColumna2 = m_btnColumna2.getGlobalBounds().contains(mousePos);
+        m_hoverColumna3 = m_btnColumna3.getGlobalBounds().contains(mousePos);
+        
+        // Hovers de docenas
+        m_hoverDocena1 = m_btnDocena1.getGlobalBounds().contains(mousePos);
+        m_hoverDocena2 = m_btnDocena2.getGlobalBounds().contains(mousePos);
+        m_hoverDocena3 = m_btnDocena3.getGlobalBounds().contains(mousePos);
+        
+        // Hovers de externas
+        m_hoverMitadBaja = m_btnMitadBaja.getGlobalBounds().contains(mousePos);
+        m_hoverPar = m_btnPar.getGlobalBounds().contains(mousePos);
+        m_hoverRojo = m_btnRojo.getGlobalBounds().contains(mousePos);
+        m_hoverNegro = m_btnNegro.getGlobalBounds().contains(mousePos);
+        m_hoverImpar = m_btnImpar.getGlobalBounds().contains(mousePos);
+        m_hoverMitadAlta = m_btnMitadAlta.getGlobalBounds().contains(mousePos);
     }
 
     // Eventos de click
@@ -515,55 +533,55 @@ void MinigameRuleta::handleEvent(const sf::Event& event, const sf::RenderWindow&
                 }
                 
                 // Clic en columnas
-                if (m_btnColumna1.getGlobalBounds().contains(mousePos)) {
+                if (m_hoverColumna1) {
                     m_tipoApuesta = TipoApuesta::COLUMNA;
                     m_columnaElegida = 0;
                 }
-                if (m_btnColumna2.getGlobalBounds().contains(mousePos)) {
+                if (m_hoverColumna2) {
                     m_tipoApuesta = TipoApuesta::COLUMNA;
                     m_columnaElegida = 1;
                 }
-                if (m_btnColumna3.getGlobalBounds().contains(mousePos)) {
+                if (m_hoverColumna3) {
                     m_tipoApuesta = TipoApuesta::COLUMNA;
                     m_columnaElegida = 2;
                 }
                 
                 // Clic en docenas
-                if (m_btnDocena1.getGlobalBounds().contains(mousePos)) {
+                if (m_hoverDocena1) {
                     m_tipoApuesta = TipoApuesta::CUARTO;
                     m_cuartoElegido = 0;
                 }
-                if (m_btnDocena2.getGlobalBounds().contains(mousePos)) {
+                if (m_hoverDocena2) {
                     m_tipoApuesta = TipoApuesta::CUARTO;
                     m_cuartoElegido = 1;
                 }
-                if (m_btnDocena3.getGlobalBounds().contains(mousePos)) {
+                if (m_hoverDocena3) {
                     m_tipoApuesta = TipoApuesta::CUARTO;
                     m_cuartoElegido = 2;
                 }
                 
                 // Clic en externas
-                if (m_btnMitadBaja.getGlobalBounds().contains(mousePos)) {
+                if (m_hoverMitadBaja) {
                     m_tipoApuesta = TipoApuesta::MANQUE_PASSE;
                     m_mitadElegida = 0;
                 }
-                if (m_btnMitadAlta.getGlobalBounds().contains(mousePos)) {
+                if (m_hoverMitadAlta) {
                     m_tipoApuesta = TipoApuesta::MANQUE_PASSE;
                     m_mitadElegida = 1;
                 }
-                if (m_btnPar.getGlobalBounds().contains(mousePos)) {
+                if (m_hoverPar) {
                     m_tipoApuesta = TipoApuesta::PAR_IMPAR;
                     m_parImparElegido = 0;
                 }
-                if (m_btnImpar.getGlobalBounds().contains(mousePos)) {
+                if (m_hoverImpar) {
                     m_tipoApuesta = TipoApuesta::PAR_IMPAR;
                     m_parImparElegido = 1;
                 }
-                if (m_btnRojo.getGlobalBounds().contains(mousePos)) {
+                if (m_hoverRojo) {
                     m_tipoApuesta = TipoApuesta::COLOR;
                     m_colorElegido = ColorElegido::ROJO;
                 }
-                if (m_btnNegro.getGlobalBounds().contains(mousePos)) {
+                if (m_hoverNegro) {
                     m_tipoApuesta = TipoApuesta::COLOR;
                     m_colorElegido = ColorElegido::NEGRO;
                 }
@@ -579,6 +597,8 @@ void MinigameRuleta::handleEvent(const sf::Event& event, const sf::RenderWindow&
         }
     }
 }
+    
+
 
 void MinigameRuleta::update(float dt) {
     if (!m_isActive) return;
@@ -846,7 +866,7 @@ void MinigameRuleta::draw(sf::RenderWindow& window) {
         window.draw(*m_instruccionesText);
     }
     
-    // ===== TAPETE INTERACTIVO =====
+        // ===== TAPETE INTERACTIVO =====
     if (m_mostrandoTapete) {
         // Resolución base de referencia: 1280x720
         float refWidth = 1280.f;
@@ -878,7 +898,7 @@ void MinigameRuleta::draw(sf::RenderWindow& window) {
         float ceroY = m_tapeteY;
         m_celdasTapete[0].setSize(sf::Vector2f(m_celdaWidth, m_celdaHeight * 3.f));
         m_celdasTapete[0].setPosition(sf::Vector2f(ceroX, ceroY));
-        m_celdasTapete[0].setFillColor(sf::Color::Transparent);  // ✅ INVISIBLE
+        m_celdasTapete[0].setFillColor(sf::Color::Transparent);
         
         if (m_hoverCeldas[0]) {
             m_celdasTapete[0].setOutlineColor(sf::Color::White);
@@ -887,12 +907,9 @@ void MinigameRuleta::draw(sf::RenderWindow& window) {
             m_celdasTapete[0].setOutlineColor(sf::Color::Yellow);
             m_celdasTapete[0].setOutlineThickness(3.f);
         } else {
-            m_celdasTapete[0].setOutlineColor(sf::Color(100, 100, 100));
-            m_celdasTapete[0].setOutlineThickness(1.5f);
+            m_celdasTapete[0].setOutlineThickness(0.f);
         }
         window.draw(m_celdasTapete[0]);
-        
-        
         
         // Números 1-36
         for (int fila = 0; fila < 3; fila++) {
@@ -909,7 +926,7 @@ void MinigameRuleta::draw(sf::RenderWindow& window) {
                 
                 m_celdasTapete[idx].setSize(sf::Vector2f(m_celdaWidth, m_celdaHeight));
                 m_celdasTapete[idx].setPosition(sf::Vector2f(x, y));
-                m_celdasTapete[idx].setFillColor(sf::Color::Transparent);  // ✅ INVISIBLE
+                m_celdasTapete[idx].setFillColor(sf::Color::Transparent);
                 
                 if (m_hoverCeldas[idx]) {
                     m_celdasTapete[idx].setOutlineColor(sf::Color::White);
@@ -918,13 +935,10 @@ void MinigameRuleta::draw(sf::RenderWindow& window) {
                     m_celdasTapete[idx].setOutlineColor(sf::Color::Yellow);
                     m_celdasTapete[idx].setOutlineThickness(3.f);
                 } else {
-                    m_celdasTapete[idx].setOutlineColor(sf::Color(100, 100, 100));
-                    m_celdasTapete[idx].setOutlineThickness(1.5f);
+                    m_celdasTapete[idx].setOutlineThickness(0.f);
                 }
                 
                 window.draw(m_celdasTapete[idx]);
-                
-                
             }
         }
         
@@ -942,18 +956,20 @@ void MinigameRuleta::draw(sf::RenderWindow& window) {
             
             btnColumna->setSize(sf::Vector2f(m_celdaWidth, m_celdaHeight));
             btnColumna->setPosition(sf::Vector2f(xBtn, yBtn));
-            btnColumna->setFillColor(sf::Color::Transparent);  // ✅ INVISIBLE
+            btnColumna->setFillColor(sf::Color::Transparent);
             
+            bool hoverColumna = (fila == 0) ? m_hoverColumna3 : (fila == 1) ? m_hoverColumna2 : m_hoverColumna1;
             if (m_columnaElegida == (2 - fila) && m_tipoApuesta == TipoApuesta::COLUMNA) {
                 btnColumna->setOutlineColor(sf::Color::Yellow);
                 btnColumna->setOutlineThickness(3.f);
+            } else if (hoverColumna) {
+                btnColumna->setOutlineColor(sf::Color::White);
+                btnColumna->setOutlineThickness(2.5f);
             } else {
-                btnColumna->setOutlineColor(sf::Color(100, 100, 100));
-                btnColumna->setOutlineThickness(1.5f);
+                btnColumna->setOutlineThickness(0.f);
             }
             
             window.draw(*btnColumna);
-            
         }
         
         // Docenas
@@ -972,18 +988,20 @@ void MinigameRuleta::draw(sf::RenderWindow& window) {
             
             btnDocena->setSize(sf::Vector2f(docenaWidth, m_celdaHeight));
             btnDocena->setPosition(sf::Vector2f(x, docenaY));
-            btnDocena->setFillColor(sf::Color::Transparent);  // ✅ INVISIBLE
+            btnDocena->setFillColor(sf::Color::Transparent);
             
+            bool hoverDocena = (d == 0) ? m_hoverDocena1 : (d == 1) ? m_hoverDocena2 : m_hoverDocena3;
             if (m_cuartoElegido == d && m_tipoApuesta == TipoApuesta::CUARTO) {
                 btnDocena->setOutlineColor(sf::Color::Yellow);
                 btnDocena->setOutlineThickness(3.f);
+            } else if (hoverDocena) {
+                btnDocena->setOutlineColor(sf::Color::White);
+                btnDocena->setOutlineThickness(2.5f);
             } else {
-                btnDocena->setOutlineColor(sf::Color(180, 160, 120));
-                btnDocena->setOutlineThickness(1.5f);
+                btnDocena->setOutlineThickness(0.f);
             }
             
             window.draw(*btnDocena);
-            
         }
         
         // Apuestas externas
@@ -996,42 +1014,50 @@ void MinigameRuleta::draw(sf::RenderWindow& window) {
             sf::RectangleShape* btnExterno = nullptr;
             std::unique_ptr<sf::Text>* textoExterno = nullptr;
             bool seleccionado = false;
+            bool hoverExterno = false;
             
             switch (e) {
                 case 0: btnExterno = &m_btnMitadBaja; textoExterno = &m_textoMitadBaja; 
                         seleccionado = (m_mitadElegida == 0 && m_tipoApuesta == TipoApuesta::MANQUE_PASSE);
+                        hoverExterno = m_hoverMitadBaja;
                         break;
                 case 1: btnExterno = &m_btnPar; textoExterno = &m_textoPar;
                         seleccionado = (m_parImparElegido == 0 && m_tipoApuesta == TipoApuesta::PAR_IMPAR);
+                        hoverExterno = m_hoverPar;
                         break;
                 case 2: btnExterno = &m_btnRojo; textoExterno = &m_textoRojo;
                         seleccionado = (m_colorElegido == ColorElegido::ROJO && m_tipoApuesta == TipoApuesta::COLOR);
+                        hoverExterno = m_hoverRojo;
                         break;
                 case 3: btnExterno = &m_btnNegro; textoExterno = &m_textoNegro;
                         seleccionado = (m_colorElegido == ColorElegido::NEGRO && m_tipoApuesta == TipoApuesta::COLOR);
+                        hoverExterno = m_hoverNegro;
                         break;
                 case 4: btnExterno = &m_btnImpar; textoExterno = &m_textoImpar;
                         seleccionado = (m_parImparElegido == 1 && m_tipoApuesta == TipoApuesta::PAR_IMPAR);
+                        hoverExterno = m_hoverImpar;
                         break;
                 case 5: btnExterno = &m_btnMitadAlta; textoExterno = &m_textoMitadAlta;
                         seleccionado = (m_mitadElegida == 1 && m_tipoApuesta == TipoApuesta::MANQUE_PASSE);
+                        hoverExterno = m_hoverMitadAlta;
                         break;
             }
             
             btnExterno->setSize(sf::Vector2f(externaWidth, m_celdaHeight));
             btnExterno->setPosition(sf::Vector2f(x, externaY));
-            btnExterno->setFillColor(sf::Color::Transparent);  // ✅ INVISIBLE
+            btnExterno->setFillColor(sf::Color::Transparent);
             
             if (seleccionado) {
                 btnExterno->setOutlineColor(sf::Color::Yellow);
                 btnExterno->setOutlineThickness(3.f);
+            } else if (hoverExterno) {
+                btnExterno->setOutlineColor(sf::Color::White);
+                btnExterno->setOutlineThickness(2.5f);
             } else {
-                btnExterno->setOutlineColor(sf::Color(150, 150, 150));
-                btnExterno->setOutlineThickness(1.5f);
+                btnExterno->setOutlineThickness(0.f);
             }
             
             window.draw(*btnExterno);
-            
         }
     }
     

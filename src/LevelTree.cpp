@@ -1,10 +1,10 @@
 #include "LevelTree.hpp"
 #include "State.hpp"
 #include "Game.hpp"
-#include "Nivel1State.hpp"
 #include "Centinela2.hpp"
 #include "MenuState.hpp"
 #include "CentinelaConductosState.hpp"
+#include "Centinela3State.hpp"
 #include "Nivel2State.hpp"  
 #include "Nivel4State.hpp"
 #include "VideoFinalState.hpp"
@@ -21,109 +21,177 @@ LevelTree::LevelTree() : currentNode(nullptr), inCentinelaPath(false)
 {
 }
 
-void LevelTree::buildTree()
+// Función helper para crear un nodo centinela 1 con sus finales
+std::unique_ptr<LevelNode> crearCentinela1()
 {
-    auto nivel1 = std::make_unique<LevelNode>("nivel1", "Despertar", LevelType::NORMAL, 1);
-    nivel1->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
+    auto centinela = std::make_unique<LevelNode>("centinela1", "Centinela 1", LevelType::CENTINELA, 0);
+    centinela->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
     {
-        return std::make_unique<Nivel1State>(w, g);
+        return std::make_unique<CentinelaConductosState>(w, g);  
     };
+    centinela->permiteRetrocesoDesdeCentinela = true;
 
-    auto nivel2 = std::make_unique<LevelNode>("nivel2", "Casino Vimorte", LevelType::NORMAL, 2);
-    nivel2->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
+    auto finalBueno = std::make_unique<LevelNode>("final_bueno_centinela1", "Final Bueno Centinela 1", LevelType::NORMAL, 0);
+    finalBueno->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
     {
-        return std::make_unique<Nivel2State>(w, g); 
+        return std::make_unique<VideoFinalState>(w, g, "assets/videos/Centinela1_BuenFinal", true);
     };
 
-    auto nivel3 = std::make_unique<LevelNode>("nivel3", "Bomba", LevelType::NORMAL, 3);
-    nivel3->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
+    auto finalMalo = std::make_unique<LevelNode>("final_malo_centinela1", "Final Malo Centinela 1", LevelType::NORMAL, 0);
+    finalMalo->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
     {
-        return std::make_unique<Nivel3State>(w, g);
+        return std::make_unique<VideoFinalState>(w, g, "assets/videos/Centinela1_FinalMalo", false);
     };
 
-    auto nivel4 = std::make_unique<LevelNode>("nivel4", "Estabilizar Signos Vitales", LevelType::NORMAL, 4);
-    nivel4->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
-    {
-        return std::make_unique<Nivel4State>(w, g);
-    };
+    centinela->left = std::move(finalBueno);
+    centinela->right = std::move(finalMalo);
+    
+    return centinela;
+}
 
-    auto nivel5 = std::make_unique<LevelNode>("nivel5", "Criminal Case", LevelType::NORMAL, 5);
-    nivel5->stateFactory = [](sf::RenderWindow* w, Game* g) -> std::unique_ptr<State> {
-        return std::make_unique<Nivel5State>(w, g);
-    };
-
-    auto nivel6 = std::make_unique<LevelNode>("nivel6", "La Busqueda de los Dientes", LevelType::NORMAL, 6);
-    nivel6->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
-    {
-        return std::make_unique<Nivel6State>(w, g);
-    };
-
-    auto nivel7 = std::make_unique<LevelNode>("nivel7", "Cancha de Vimorte", LevelType::NORMAL, 7);
-    nivel7->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
-    {
-        return std::make_unique<Nivel7State>(w, g);
-    };
-
-   
-
-    auto centinela1 = std::make_unique<LevelNode>("centinela1", "Centinela 1", LevelType::CENTINELA, 0);
-    centinela1->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
-    {
-        return std::make_unique<Nivel1State>(w, g);
-    };
-    centinela1->permiteRetrocesoDesdeCentinela = true;
-
-    auto centinela2 = std::make_unique<LevelNode>("centinela2", "Centinela 2", LevelType::CENTINELA, 0);
-    centinela2->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
+// Función helper para crear un nodo centinela 2 con sus finales
+std::unique_ptr<LevelNode> crearCentinela2()
+{
+    auto centinela = std::make_unique<LevelNode>("centinela2", "Centinela 2 - Cocina", LevelType::CENTINELA, 0);
+    centinela->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
     {
         return std::make_unique<Centinela2State>(w, g);
     };
-    centinela2->permiteRetrocesoDesdeCentinela = true;
+    centinela->permiteRetrocesoDesdeCentinela = true;
 
-    // Final bueno - ESCAPAR (hijo izquierdo)
     auto finalBueno = std::make_unique<LevelNode>("final_bueno_Centinela2", "Final Bueno Centinela 2", LevelType::NORMAL, 0);
     finalBueno->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
     {
         return std::make_unique<VideoFinalState>(w, g, "assets/videos/Centinela2_BuenFinal", true);
     };
 
-    // Final malo - UNIRSE (hijo derecho)
     auto finalMalo = std::make_unique<LevelNode>("final_malo_Centinela2", "Final Malo Centinela 2", LevelType::NORMAL, 0);
     finalMalo->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
     {
         return std::make_unique<VideoFinalState>(w, g, "assets/videos/Centinela2_FinalMalo", false);
     };
 
-    // Hijos del centinela2
-    centinela2->left = std::move(finalBueno);    
-    centinela2->right = std::move(finalMalo);  
+    centinela->left = std::move(finalBueno);
+    centinela->right = std::move(finalMalo);
+    
+    return centinela;
+}
 
-
-    auto centinela3 = std::make_unique<LevelNode>("centinela3", "Conductos", LevelType::CENTINELA, 0);
-    centinela3->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
+// Función helper para crear un nodo centinela 3 (Cámaras) con sus finales
+std::unique_ptr<LevelNode> crearCentinela3Camaras()
+{
+    auto centinela = std::make_unique<LevelNode>("centinela3Camaras", "Centinela 3 - Camaras", LevelType::CENTINELA, 0);
+    centinela->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
     {
-        return std::make_unique<CentinelaConductosState>(w, g);
+        return std::make_unique<Centinela3State>(w, g);
     };
-    centinela3->permiteRetrocesoDesdeCentinela = true;
+    centinela->permiteRetrocesoDesdeCentinela = true;
 
+    auto finalBueno = std::make_unique<LevelNode>("final_bueno_centinela3", "Final Bueno Centinela 3", LevelType::NORMAL, 0);
+    finalBueno->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
+    {
+        return std::make_unique<VideoFinalState>(w, g, "assets/videos/Centinela3_BuenFinal", true);
+    };
+
+    auto finalMalo = std::make_unique<LevelNode>("final_malo_centinela3", "Final Malo Centinela 3", LevelType::NORMAL, 0);
+    finalMalo->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
+    {
+        return std::make_unique<VideoFinalState>(w, g, "assets/videos/Centinela3_FinalMalo", false);
+    };
+
+    centinela->left = std::move(finalBueno);
+    centinela->right = std::move(finalMalo);
+    
+    return centinela;
+}
+
+// Final feliz para nivel 6
+std::unique_ptr<LevelNode> crearFinalFelizNivel6()
+{
+    auto finalFeliz = std::make_unique<LevelNode>("final_feliz_nivel6", "Final Feliz - Escape", LevelType::NORMAL, 0);
+    finalFeliz->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
+    {
+        return std::make_unique<VideoFinalState>(w, g, "assets/videos/FinalFeliz_Nivel6", true);
+    };
+    return finalFeliz;
+}
+
+void LevelTree::buildTree()
+{
+    // ============ NIVEL 1 (viejo nivel6) - ROOT ============
+    auto nivel1 = std::make_unique<LevelNode>("nivel1", "La Busqueda de los Dientes", LevelType::NORMAL, 1);
+    nivel1->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
+    {
+        return std::make_unique<Nivel6State>(w, g);
+    };
+
+    // ============ NIVEL 2 ============
+    auto nivel2 = std::make_unique<LevelNode>("nivel2", "Casino Vimorte", LevelType::NORMAL, 2);
+    nivel2->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
+    {
+        return std::make_unique<Nivel2State>(w, g); 
+    };
+
+    // ============ NIVEL 3 ============
+    auto nivel3 = std::make_unique<LevelNode>("nivel3", "Bomba", LevelType::NORMAL, 3);
+    nivel3->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
+    {
+        return std::make_unique<Nivel3State>(w, g);
+    };
+
+    // ============ NIVEL 4 ============
+    auto nivel4 = std::make_unique<LevelNode>("nivel4", "Estabilizar Signos Vitales", LevelType::NORMAL, 4);
+    nivel4->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
+    {
+        return std::make_unique<Nivel4State>(w, g);
+    };
+
+    // ============ NIVEL 5 ============
+    auto nivel5 = std::make_unique<LevelNode>("nivel5", "Nivel 5", LevelType::NORMAL, 5);
+    nivel5->stateFactory = [](sf::RenderWindow* w, Game* g) -> std::unique_ptr<State> {
+        return std::make_unique<Nivel5State>(w, g);
+    };
+
+    // ============ NIVEL 6 ============
+    auto nivel6 = std::make_unique<LevelNode>("nivel6", "Cancha de Vimorte", LevelType::NORMAL, 6);
+    nivel6->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
+    {
+        return std::make_unique<Nivel7State>(w, g);
+    };
+
+    // ==================== CONSTRUCCIÓN DEL ÁRBOL ====================
+    // nivel1: izquierda = nivel2, derecha = centinela1
     root = std::move(nivel1);
     root->left = std::move(nivel2);
-    root->left->left = std::move(nivel3);
-    root->left->left->right = std::move(centinela1);
-    root->left->left->left = std::move(nivel4);
-    root->left->left->left->left = std::move(nivel5);
-    root->left->left->left->left->left = std::move(nivel6);
-    root->left->left->left->left->left->right = std::move(centinela2);
-    root->left->left->left->left->left->left = std::move(nivel7);
-   
-    root->left->left->left->left->left->left->right = std::move(centinela3);
+    root->right = crearCentinela1();
     
+    // nivel2: izquierda = nivel3, derecha = centinela3Camaras
+    root->left->left = std::move(nivel3);
+    root->left->right = crearCentinela3Camaras();
+    
+    // nivel3: izquierda = nivel4, derecha = centinela3Camaras
+    root->left->left->left = std::move(nivel4);
+    root->left->left->right = crearCentinela3Camaras();
+    
+    // nivel4: izquierda = nivel5, derecha = centinela2
+    root->left->left->left->left = std::move(nivel5);
+    root->left->left->left->right = crearCentinela2();
+    
+    // nivel5: izquierda = nivel6, derecha = centinela2
+    root->left->left->left->left->left = std::move(nivel6);
+    root->left->left->left->left->right = crearCentinela2();
+    
+    // nivel6: izquierda = final feliz, derecha = nada
+    root->left->left->left->left->left->left = crearFinalFelizNivel6();
+    root->left->left->left->left->left->right = nullptr;  // sin centinela
 
     currentNode = root.get();
     visitedNodes.push_back(currentNode->id);
 
     std::cout << "Arbol de niveles construido. Raiz: " << root->displayName << std::endl;
+    std::cout << "Centinelas: C1(nivel1), C2(nivel4,nivel5), C3Camaras(nivel2,nivel3)" << std::endl;
 }
+
 
 bool LevelTree::goToNextLevel()
 {

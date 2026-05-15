@@ -74,7 +74,6 @@ private:
     sf::FloatRect m_puertaSalidaArea;
     
     void verificarSalidaNivel();
-    void verificarEntradaCentinela();
     void jugadorHaMuerto();
     sf::Vector2u m_lastWindowSize;
     

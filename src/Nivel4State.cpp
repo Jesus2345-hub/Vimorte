@@ -52,7 +52,24 @@ Nivel4State::Nivel4State(sf::RenderWindow* window, Game* game)
         m_background = nullptr;
     }
 
-    // Configurar cámara
+    // Configurar herramienta recogible
+    m_herramientaRecogida = false;
+    m_herramientaArea = sf::FloatRect(sf::Vector2f(500.f, 1000.f), sf::Vector2f(40.f, 40.f)); 
+    m_cercaHerramienta = false;
+
+    // Cargar sprite de la herramienta en el mapa
+    if (m_herramientaMapTexture.loadFromFile("assets/images/niveles/nivel4/herramienta.png")) {
+        m_herramientaMapSprite = std::make_unique<sf::Sprite>(m_herramientaMapTexture);
+        m_herramientaMapSprite->setScale(sf::Vector2f(0.15f, 0.15f)); 
+        sf::FloatRect bounds = m_herramientaMapSprite->getLocalBounds();
+        m_herramientaMapSprite->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
+        m_herramientaMapSprite->setPosition(sf::Vector2f(
+            m_herramientaArea.position.x + m_herramientaArea.size.x / 2.f,
+            m_herramientaArea.position.y + m_herramientaArea.size.y / 2.f
+        ));
+    }
+
+    // Configurar camara
     sf::Vector2u windowSize = window->getSize();
     m_camera = sf::View(
         sf::Vector2f(m_worldSize.x / 2.f, m_worldSize.y / 2.f),
@@ -62,7 +79,7 @@ Nivel4State::Nivel4State(sf::RenderWindow* window, Game* game)
 
     configurarColisiones();
 
-    // Configurar área de dardos
+    // Configurar area de dardos
     m_dartsArea = sf::FloatRect(sf::Vector2f(30.f, 40.f), sf::Vector2f(150.f, 150.f));
 
     // Configurar minijuego de dardos
@@ -85,7 +102,7 @@ Nivel4State::Nivel4State(sf::RenderWindow* window, Game* game)
     ));
     m_tetris.setVitalSigns(&m_vitalSignsAndrea);
 
-    // Configurar área de Tetris
+    // Configurar area de Tetris
     m_tetrisArea = sf::FloatRect(sf::Vector2f(1400.f, 120.f), sf::Vector2f(45.f, 45.f));
 
     // Configurar signos de Andrea
@@ -98,7 +115,7 @@ Nivel4State::Nivel4State(sf::RenderWindow* window, Game* game)
     m_vitalSignsAndrea.setTitle("      SIGNOS VITALES\n         -ANDREA-");
     m_vitalSignsAndrea.setTitleOffsetX(-50.f);
 
-    // Configurar área del ascensor (SALIDA)
+    // Configurar area del ascensor (SALIDA)
     m_ascensorArea = sf::FloatRect(sf::Vector2f(1212.f, 753.f), sf::Vector2f(80.f, 120.f));
 
     // Zonas de teletransporte
@@ -133,14 +150,14 @@ Nivel4State::Nivel4State(sf::RenderWindow* window, Game* game)
     m_msjActual.texto = "";
     m_msjActual.tiempoRestante = 0.f;
 
-    // Guardado automático
+    // Guardado automatico
     if (game->tienePartidaActiva()) {
         game->getSaveManager().setNivelActual(4, 4);
         game->getSaveManager().guardarProgresoActual();  
         std::cout << "Partida guardada en Nivel4" << std::endl;
     }
 
-    // =====  Asegurar que el árbol apunte al nivel actual =====
+    // =====  Asegurar que el arbol apunte al nivel actual =====
     if (game && game->tienePartidaActiva()) {
 
         game->getLevelTree().jumpToNode("nivel4");
@@ -314,7 +331,7 @@ void Nivel4State::update(float dt) {
 
     sf::FloatRect playerBounds = m_player.getHurtbox();
 
-    // ========== INTERACCION CON TETRIS ==========
+    //  INTERACCION CON TETRIS 
     m_cercaTetris = playerBounds.findIntersection(m_tetrisArea).has_value();
 
     static bool fTetrisPresionado = false;  // Cambiar nombre de variable
@@ -341,7 +358,7 @@ void Nivel4State::update(float dt) {
         }
     }
 
-   // ========== INTERACCION CON DARDOS ==========
+   //  INTERACCION CON DARDOS 
     m_cercaDarts = playerBounds.findIntersection(m_dartsArea).has_value();
 
     static bool fDartsPresionado = false;  // Cambiar nombre de variable
@@ -367,7 +384,7 @@ void Nivel4State::update(float dt) {
         }
     }
 
-    // ========== VERIFICAR SI AMBOS ESTAN ESTABILIZADOS ==========
+    //  VERIFICAR SI AMBOS ESTAN ESTABILIZADOS 
     bool andresEstabilizado = m_vitalSignsAndres.isStabilized();
     bool andreaEstabilizada = m_vitalSignsAndrea.isStabilized();
 
@@ -386,7 +403,7 @@ void Nivel4State::update(float dt) {
         }
     }
 
-    // ========== MOVIMIENTO ==========
+    //  MOVIMIENTO 
     sf::Vector2f movimiento(0.f, 0.f);
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up))
         movimiento.y -= 1.f;
@@ -405,6 +422,45 @@ void Nivel4State::update(float dt) {
     m_player.move(movimiento, dt);
     m_player.update(dt);
 
+    // Mostrar coordenadas debug
+    
+    if (m_textoCoordenadas && m_fontLoaded) {
+        // Obtener posición del mouse en pantalla
+        sf::Vector2i mousePixelPos = sf::Mouse::getPosition(*window);
+        
+        // Convertir coordenadas de pantalla a coordenadas del mundo (con la cámara)
+        sf::Vector2f mouseWorldPos = window->mapPixelToCoords(mousePixelPos, m_camera);
+        
+        m_textoCoordenadas->setString(
+            "Mouse - Pantalla: (" + std::to_string(mousePixelPos.x) + ", " + std::to_string(mousePixelPos.y) + ")\n"
+            "Mouse - Mundo: (" + std::to_string((int)mouseWorldPos.x) + ", " + std::to_string((int)mouseWorldPos.y) + ")"
+        );
+    }
+
+    // Verificar recoleccion de herramienta
+    if (!m_herramientaRecogida) {
+        m_cercaHerramienta = m_player.getHurtbox().findIntersection(m_herramientaArea).has_value();
+        
+        static bool rHerramientaPresionado = false;
+        if (m_cercaHerramienta && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R)) {
+            if (!rHerramientaPresionado) {
+                rHerramientaPresionado = true;
+                m_herramientaRecogida = true;
+                
+                // Agregar al inventario
+                Inventory* inv = m_player.getInventory();
+                if (inv) {
+                    Item herramienta("Herramienta", sf::Color(192, 192, 192), "assets/images/niveles/nivel4/herramienta.png");
+                    inv->addItem(herramienta);
+                }
+                
+                mostrarMensaje("Herramienta recogida!", 2.f, sf::Color::Green);
+            }
+        } else {
+            rHerramientaPresionado = false;
+        }
+    }
+
     // Colisiones
     for (const auto& obj : m_mapaFisico) {
         if (m_player.getHurtbox().findIntersection(obj).has_value()) {
@@ -413,7 +469,7 @@ void Nivel4State::update(float dt) {
         }
     }
 
-    // ========== CÁMARA ==========
+    //  CAMARA
     sf::Vector2f playerPos = m_player.getPosition();
     sf::Vector2f cameraPos = playerPos;
 
@@ -436,13 +492,13 @@ void Nivel4State::update(float dt) {
 
     m_camera.setCenter(cameraPos);
 
-    // ========== VERIFICAR SALIDA  ==========
+    //  VERIFICAR SALIDA  
     verificarSalidaNivel();
 
-    // ========== TELETRANSPORTE POST JUEGO ==========
+    //  TELETRANSPORTE POST JUEGO 
     verificarTeletransportePostJuego();
 
-    // ========== PAUSA ==========
+    //  PAUSA 
     if (!m_mostrarTutorial && !m_mostrarTutorialPorTecla && !m_escapeConsumed) {
         static bool escapeProcesado = false;
         if (!m_mostrarTutorial && !m_mostrarTutorialPorTecla) {
@@ -466,7 +522,7 @@ void Nivel4State::update(float dt) {
     }
 }
 void Nivel4State::verificarSalidaNivel() {
-    // Verificar si el jugador está en el área del ascensor
+    // Verificar si el jugador esta en el area del ascensor
     m_cercaAscensor = m_player.getHurtbox().findIntersection(m_ascensorArea).has_value();
     
     static bool ePresionado = false;
@@ -475,7 +531,7 @@ void Nivel4State::verificarSalidaNivel() {
         if (!ePresionado) {
             ePresionado = true;
             
-            // Verificar si ambos pacientes están estabilizados
+            // Verificar si ambos pacientes estan estabilizados
             if (m_ambosEstabilizados) {
                 std::cout << "Saliendo del nivel 4 - Ambos pacientes estabilizados..." << std::endl;
                 
@@ -502,7 +558,7 @@ void Nivel4State::verificarSalidaNivel() {
                     std::cerr << "ERROR: game es nullptr en verificarSalidaNivel" << std::endl;
                 }
             } else {
-                // Mostrar mensaje si no están ambos estabilizados
+                // Mostrar mensaje si no estan ambos estabilizados
                 if (!m_vitalSignsAndres.isStabilized() && !m_vitalSignsAndrea.isStabilized()) {
                     mostrarMensaje("Debes estabilizar a Andres y Andrea para salir", 2.0f, sf::Color::Yellow);
                 } else if (!m_vitalSignsAndres.isStabilized()) {
@@ -552,6 +608,10 @@ void Nivel4State::draw() {
 
     m_player.draw(*window);
 
+    // Dibujar herramienta en el mapa
+    if (!m_herramientaRecogida && m_herramientaMapSprite) {
+        window->draw(*m_herramientaMapSprite);
+    }
     // Minijuegos
     if (m_dartsMinigame.isActive()) {
         window->setView(window->getDefaultView());
@@ -566,7 +626,7 @@ void Nivel4State::draw() {
        // UI EN VISTA POR DEFECTO
     window->setView(window->getDefaultView());
 
-    // Texto de interacción de Tetris
+    // Texto de interaccion de Tetris
     if (m_cercaTetris && !m_tetris.isActive() && !m_dartsMinigame.isActive() && m_textoInteraccion && m_fontLoaded) {
          if (m_vitalSignsAndrea.isStabilized()) {
             m_textoInteraccion->setString("Andrea estable. Continua tu camino");
@@ -576,18 +636,27 @@ void Nivel4State::draw() {
             m_textoInteraccion->setString("Presiona F para salvar a Andrea");
         }
         
-        // Configurar borde y posición
+        // Configurar borde y posicion
         m_textoInteraccion->setOutlineThickness(1.5f);
         m_textoInteraccion->setOutlineColor(sf::Color::Black);
-        m_textoInteraccion->setCharacterSize(22);  // Un poco más grande
+        m_textoInteraccion->setCharacterSize(22);  // Un poco mas grande
         
         sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
         m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
-        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 100.f)); // Más arriba
+        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 100.f)); // Mas arriba
         window->draw(*m_textoInteraccion);
     }
 
-    // Texto de interacción para DARDOS
+    // Texto de interaccion para la herramienta
+    if (!m_herramientaRecogida && m_cercaHerramienta && m_textoInteraccion && m_fontLoaded) {
+        m_textoInteraccion->setString("Presiona R para recoger la herramienta");
+        sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
+        m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
+        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
+        window->draw(*m_textoInteraccion);
+    }
+
+    // Texto de interaccion para DARDOS
     if (m_cercaDarts && !m_dartsMinigame.isActive() && m_textoInteraccion && m_fontLoaded) {
         if (m_vitalSignsAndres.isStabilized()) {
             m_textoInteraccion->setString("Paciente estable. Ve a ayudar a Andrea | Presiona E");
@@ -597,7 +666,7 @@ void Nivel4State::draw() {
             m_textoInteraccion->setString("Presiona F para salvar a Andres");
         }
         
-        // Configurar borde y posición
+        // Configurar borde y posicion
         m_textoInteraccion->setOutlineThickness(1.5f);
         m_textoInteraccion->setOutlineColor(sf::Color::Black);
         m_textoInteraccion->setCharacterSize(22);
@@ -608,7 +677,7 @@ void Nivel4State::draw() {
         window->draw(*m_textoInteraccion);
     }
 
-    // Texto de interacción para el ASCENSOR (SALIDA)
+    // Texto de interaccion para el ASCENSOR (SALIDA)
     if (m_cercaAscensor && m_textoInteraccion && m_fontLoaded) {
         if (m_ambosEstabilizados) {
             m_textoInteraccion->setString("Presiona E para subir al siguiente nivel");
@@ -622,7 +691,7 @@ void Nivel4State::draw() {
             }
         }
         
-        // Configurar de posición
+        // Configurar de posicion
         m_textoInteraccion->setOutlineThickness(1.5f);
         m_textoInteraccion->setOutlineColor(sf::Color::Black);
         m_textoInteraccion->setCharacterSize(22);
