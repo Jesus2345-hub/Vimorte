@@ -13,6 +13,45 @@ private:
     sf::View m_camera;
     sf::Vector2f m_worldSize;
 
+    // Sistema de humo tóxico
+    struct HumoToxico
+    {
+        sf::Vector2f posicion;
+        float cicloTimer = 0.f;
+        bool activo = false;
+        float duracionActivo = 3.0f;
+        float duracionApagado = 2.5f;
+        sf::FloatRect areaColision;
+        float anchoColision = 213.f;
+        float altoColision = 443.f;
+        float escalaBase = 1.0f;
+        float escalas[5] = {0.5f, 0.5f, 0.5f, 0.5f, 0.5f};
+        float rotacion = 0.f;
+        // Visual
+        std::vector<sf::Texture> texturas; // 0=aparece, 1=crece, 2/3=activo alterna, 4=desaparece
+        std::unique_ptr<sf::Sprite> sprite;
+        int frameActual = -1; // -1 = sin imagen
+        float frameTimer = 0.f;
+        float frameDuration = 0.15f;
+
+        // Fases del humo
+        enum class Fase
+        {
+            APAGADO,
+            APARECIENDO,
+            ACTIVO,
+            DESAPARECIENDO
+        };
+        Fase fase = Fase::APAGADO;
+        float faseTimer = 0.f;
+    };
+
+    std::vector<HumoToxico> m_humos;
+    void inicializarHumos();
+    void actualizarHumos(float dt);
+    void dibujarHumos(sf::RenderWindow &window);
+    bool verificarColisionHumos();
+
     // Salida con rejilla
     sf::Texture m_rejillaSalidaTexture;
     std::unique_ptr<sf::Sprite> m_rejillaSalidaSprite;

@@ -11,7 +11,7 @@
 // CONSTRUCTOR
 // ============================================================
 CentinelaConductosState::CentinelaConductosState(sf::RenderWindow *window, Game *game)
-    : State(window, game), m_tiempoRestante(60.0f), m_tiempoAgotado(false), m_nivelCompletado(false), m_fontLoaded(false), m_mensajeTimer(0.f), m_parpadeoTimer(0.f), m_parpadeoVisible(true)
+    : State(window, game), m_tiempoRestante(45.0f), m_tiempoAgotado(false), m_nivelCompletado(false), m_fontLoaded(false), m_mensajeTimer(0.f), m_parpadeoTimer(0.f), m_parpadeoVisible(true)
 {
     // ============================================================
     // FONDO
@@ -43,6 +43,7 @@ CentinelaConductosState::CentinelaConductosState(sf::RenderWindow *window, Game 
     // CONFIGURAR LABERINTO
     // ============================================================
     configurarLaberinto();
+    inicializarHumos();
 
     // ============================================================
     // SALIDA - Rejilla en esquina superior derecha
@@ -160,6 +161,102 @@ void CentinelaConductosState::configurarLaberinto()
 }
 
 // ============================================================
+// INICIALIZAR HUMOS
+// ============================================================
+void CentinelaConductosState::inicializarHumos()
+{
+    m_humos.clear();
+
+    // Posiciones y rotaciones para cada humo
+    struct InfoHumo
+    {
+        sf::Vector2f posicion;
+        float rotacion;
+    };
+
+    std::vector<InfoHumo> infoHumos = {
+        {{503.f, 687.f}, 180.f},        // Hacia abajo
+        {{547.f, 687.f}, 180.f},        // Hacia abajo
+        {{1069.f, 687.f}, 180.f},       // Hacia abajo
+        {{1113.f, 687.f}, 180.f},       // Hacia abajo
+        {{1319.f, 687.f}, 180.f},       // Hacia abajo
+        {{1363.f, 687.f}, 180.f},       // Hacia abajo
+        {{900.f, 591.f}, 90.f},         // Hacia la derecha
+        {{900.f, 547.f}, 90.f},         // Hacia la derecha
+        {{900.f, 389.f}, 90.f},         // Hacia la derecha
+        {{900.f, 345.f}, 90.f},         // Hacia la derecha
+        {{1461.f, 515.f + 10.f}, 90.f}, // Hacia la derecha
+        {{1461.f, 471.f + 10.f}, 90.f}, // Hacia la derecha
+        {{1461.f, 427.f + 10.f}, 90.f}, // Hacia la derecha
+        {{1461.f, 383.f + 10.f}, 90.f}, // Hacia la derecha
+        {{1186, 257 - 40}, 0.f},
+        {{1230, 257 - 40}, 0.f},
+    };
+
+    // Tamaño real de las imágenes
+    float anchoImagen = 213.f;
+    float altoImagen = 443.f;
+
+    // Escala para que el alto sea 86 y el ancho proporcional
+    float escala = 86.f / altoImagen;           // 86/443 = 0.194
+    float anchoEscalado = anchoImagen * escala; // ~41.3
+    float altoEscalado = 86.f;
+
+    for (size_t i = 0; i < infoHumos.size(); i++)
+    {
+        HumoToxico humo;
+        humo.posicion = infoHumos[i].posicion;
+        humo.anchoColision = anchoEscalado;
+        humo.altoColision = altoEscalado;
+        humo.rotacion = infoHumos[i].rotacion;
+
+        for (int f = 0; f < 5; f++)
+        {
+            sf::Texture tex;
+            std::string ruta = "assets/images/niveles/nivel7/humo_" + std::to_string(f) + ".png";
+            if (tex.loadFromFile(ruta))
+            {
+                humo.texturas.push_back(std::move(tex));
+            }
+        }
+
+        if (!humo.texturas.empty())
+        {
+            humo.sprite = std::make_unique<sf::Sprite>(humo.texturas[0]);
+
+            for (int j = 0; j < 5; j++)
+                humo.escalas[j] = escala;
+
+            humo.sprite->setOrigin(sf::Vector2f(anchoImagen / 2.f, altoImagen / 2.f));
+            humo.sprite->setPosition(humo.posicion);
+            humo.sprite->setScale(sf::Vector2f(escala, escala));
+            humo.sprite->setRotation(sf::degrees(humo.rotacion));
+        }
+
+        // Intercambiar ancho/alto si está en horizontal (90° o 270°)
+        float anchoHitbox = humo.anchoColision;
+        float altoHitbox = humo.altoColision;
+
+        if (humo.rotacion == 90.f || humo.rotacion == 270.f)
+        {
+            anchoHitbox = humo.altoColision; // Intercambiados
+            altoHitbox = humo.anchoColision; // Intercambiados
+        }
+
+        humo.areaColision = sf::FloatRect(
+            sf::Vector2f(humo.posicion.x - anchoHitbox / 2.f,
+                         humo.posicion.y - altoHitbox / 2.f),
+            sf::Vector2f(anchoHitbox, altoHitbox));
+
+        humo.cicloTimer = static_cast<float>(i) * 1.2f;
+
+        m_humos.push_back(std::move(humo));
+    }
+
+    std::cout << "✅ " << m_humos.size() << " humos inicializados" << std::endl;
+}
+
+// ============================================================
 // MANEJAR EVENTOS
 // ============================================================
 void CentinelaConductosState::handleEvent(const sf::Event &event)
@@ -175,6 +272,132 @@ void CentinelaConductosState::handleEvent(const sf::Event &event)
             m_debugMode = !m_debugMode;
         }
     }
+}
+
+// ============================================================
+// ACTUALIZAR HUMOS
+// ============================================================
+void CentinelaConductosState::actualizarHumos(float dt)
+{
+    float anchoImagen = 213.f;
+    float altoImagen = 443.f;
+
+    for (auto &humo : m_humos)
+    {
+        humo.cicloTimer += dt;
+
+        switch (humo.fase)
+        {
+        case HumoToxico::Fase::APAGADO:
+            humo.frameActual = -1;
+            if (humo.cicloTimer >= humo.duracionApagado)
+            {
+                humo.fase = HumoToxico::Fase::APARECIENDO;
+                humo.faseTimer = 0.f;
+                humo.frameActual = 0;
+                humo.activo = true;
+                humo.cicloTimer = 0.f;
+            }
+            break;
+
+        case HumoToxico::Fase::APARECIENDO:
+            humo.faseTimer += dt;
+            humo.frameTimer += dt;
+            if (humo.frameTimer >= humo.frameDuration)
+            {
+                humo.frameTimer = 0.f;
+                humo.frameActual++;
+                if (humo.frameActual > 1)
+                {
+                    humo.fase = HumoToxico::Fase::ACTIVO;
+                    humo.faseTimer = 0.f;
+                    humo.frameActual = 2;
+                }
+            }
+            break;
+
+        case HumoToxico::Fase::ACTIVO:
+            humo.faseTimer += dt;
+            humo.frameTimer += dt;
+            if (humo.frameTimer >= humo.frameDuration)
+            {
+                humo.frameTimer = 0.f;
+                if (humo.frameActual == 2)
+                    humo.frameActual = 3;
+                else
+                    humo.frameActual = 2;
+            }
+            if (humo.faseTimer >= humo.duracionActivo)
+            {
+                humo.fase = HumoToxico::Fase::DESAPARECIENDO;
+                humo.faseTimer = 0.f;
+                humo.frameActual = 4;
+            }
+            break;
+
+        case HumoToxico::Fase::DESAPARECIENDO:
+            humo.faseTimer += dt;
+            humo.frameTimer += dt;
+            if (humo.frameTimer >= humo.frameDuration)
+            {
+                humo.frameTimer = 0.f;
+                if (humo.frameActual == 4)
+                {
+                    humo.frameActual = 0;
+                }
+                else if (humo.frameActual == 0)
+                {
+                    humo.fase = HumoToxico::Fase::APAGADO;
+                    humo.activo = false;
+                    humo.frameActual = -1;
+                    humo.cicloTimer = 0.f;
+                }
+            }
+            break;
+        }
+
+        if (humo.frameActual >= 0 && humo.frameActual < static_cast<int>(humo.texturas.size()) && humo.sprite)
+        {
+            int f = humo.frameActual;
+            humo.sprite->setTexture(humo.texturas[f]);
+            humo.sprite->setOrigin(sf::Vector2f(anchoImagen / 2.f, altoImagen / 2.f));
+            humo.sprite->setScale(sf::Vector2f(humo.escalas[f], humo.escalas[f]));
+            humo.sprite->setPosition(humo.posicion);
+            humo.sprite->setRotation(sf::degrees(humo.rotacion));
+        }
+    }
+}
+
+// ============================================================
+// VERIFICAR COLISIÓN CON HUMOS
+// ============================================================
+bool CentinelaConductosState::verificarColisionHumos()
+{
+    for (auto &humo : m_humos)
+    {
+        if (humo.activo)
+        {
+            float anchoHitbox = humo.anchoColision;
+            float altoHitbox = humo.altoColision;
+
+            if (humo.rotacion == 90.f || humo.rotacion == 270.f)
+            {
+                anchoHitbox = humo.altoColision;
+                altoHitbox = humo.anchoColision;
+            }
+
+            humo.areaColision = sf::FloatRect(
+                sf::Vector2f(humo.posicion.x - anchoHitbox / 2.f,
+                             humo.posicion.y - altoHitbox / 2.f),
+                sf::Vector2f(anchoHitbox, altoHitbox));
+
+            if (m_player.getHurtbox().findIntersection(humo.areaColision).has_value())
+            {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 // ============================================================
@@ -289,6 +512,13 @@ void CentinelaConductosState::update(float dt)
     }
 
     actualizarCronometro(dt);
+    actualizarHumos(dt);
+
+    if (verificarColisionHumos())
+    {
+        m_tiempoAgotado = true;
+        mostrarMensaje("¡HUMO TOXICO! Has muerto...", 3.0f);
+    }
 
     if (m_mensajeTimer > 0.f)
     {
@@ -393,7 +623,6 @@ void CentinelaConductosState::draw()
     // ===== FASE 1: MUNDO CON CÁMARA =====
     window->setView(m_camera);
 
-
     if (m_backgroundSprite)
     {
         window->draw(*m_backgroundSprite);
@@ -416,6 +645,29 @@ void CentinelaConductosState::draw()
             debugWall.setOutlineColor(sf::Color::Red);
             window->draw(debugWall);
         }
+
+        // Colisiones de humo (naranja)
+        for (auto &humo : m_humos)
+        {
+            if (humo.activo)
+            {
+                float anchoDebug = humo.anchoColision;
+                float altoDebug = humo.altoColision;
+
+                if (humo.rotacion == 90.f || humo.rotacion == 270.f)
+                {
+                    anchoDebug = humo.altoColision;
+                    altoDebug = humo.anchoColision;
+                }
+
+                sf::RectangleShape debugHumo(sf::Vector2f(anchoDebug, altoDebug));
+                debugHumo.setPosition(sf::Vector2f(humo.posicion.x - anchoDebug / 2.f, humo.posicion.y - altoDebug / 2.f));
+                debugHumo.setFillColor(sf::Color(255, 165, 0, 80));
+                debugHumo.setOutlineThickness(2.f);
+                debugHumo.setOutlineColor(sf::Color(255, 165, 0));
+                window->draw(debugHumo);
+            }
+        }
     }
 
     // Salida (rejilla)
@@ -425,7 +677,6 @@ void CentinelaConductosState::draw()
     }
     else
     {
-        // Fallback: rectángulo verde
         sf::RectangleShape fallbackExit(sf::Vector2f(40.f, 40.f));
         fallbackExit.setFillColor(sf::Color(0, 255, 0, 100));
         fallbackExit.setOutlineThickness(2.f);
@@ -434,7 +685,16 @@ void CentinelaConductosState::draw()
         window->draw(fallbackExit);
     }
 
-    // Jugador
+    // Humos tóxicos (debajo del jugador)
+    for (auto &humo : m_humos)
+    {
+        if (humo.frameActual >= 0 && humo.activo && humo.sprite)
+        {
+            window->draw(*humo.sprite);
+        }
+    }
+
+    // Jugador (encima de los humos)
     m_player.draw(*window);
 
     // ===== FASE 2: UI (vista por defecto) =====
@@ -443,7 +703,7 @@ void CentinelaConductosState::draw()
     float winW = static_cast<float>(window->getSize().x);
     float winH = static_cast<float>(window->getSize().y);
 
-    //F para salir por el conducto
+    // F para salir por el conducto
     if (m_fontLoaded && m_cercaSalida)
     {
         sf::Text salidaText(m_font, "Presiona F para salir por el conducto", 18);
