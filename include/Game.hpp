@@ -35,6 +35,7 @@ private:
     void guardarConfiguracionAudio();
     bool m_isInLevel = false;
 
+    bool m_adminMode = false;
 public:
     Game();
     ~Game();
@@ -81,10 +82,14 @@ public:
     void setPantallaCompleta(bool fullscreen);
     void aplicarConfiguracionPantalla();
     void applyCurrentView();
-    // En la sección pública de Game.hpp, añadir:
-std::stack<std::unique_ptr<State>>& getStates() { return states; }
-void setIsInLevel(bool inLevel) { m_isInLevel = inLevel; }
-bool isInLevel() const { return m_isInLevel; }
+    std::stack<std::unique_ptr<State>>& getStates() { return states; }
+    void setIsInLevel(bool inLevel) { m_isInLevel = inLevel; }
+    bool isInLevel() const { return m_isInLevel; }
+
+    //set para modo admin
+    void adminVolverAlNivelAnterior();
+    void setAdminMode(bool enabled) { m_adminMode = enabled; }
+    bool isAdminMode() const { return m_adminMode; }
 };
 
 #endif

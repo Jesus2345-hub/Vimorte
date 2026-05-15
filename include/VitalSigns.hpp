@@ -64,8 +64,8 @@ private:
     void updateScale();
     bool m_anchorRight;
 
-sf::Vector2f m_position;      // Posición absoluta
-    bool m_useAbsolutePosition;   // Si usa posición absoluta o márgenes
+    sf::Vector2f m_position;      
+    bool m_useAbsolutePosition;   
 
 public:
 

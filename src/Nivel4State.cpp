@@ -1,4 +1,4 @@
-#include "NivelSara1State.hpp"
+#include "Nivel4State.hpp"
 #include "PauseState.hpp"
 #include "MiniGameTetris.hpp"
 #include "Game.hpp"
@@ -6,7 +6,7 @@
 #include <cmath>
 #include <algorithm>
 
-NivelSara1State::NivelSara1State(sf::RenderWindow* window, Game* game)
+Nivel4State::Nivel4State(sf::RenderWindow* window, Game* game)
     : State(window, game),
     m_cercaDarts(false),
     m_cercaTetris(false),
@@ -40,14 +40,14 @@ NivelSara1State::NivelSara1State(sf::RenderWindow* window, Game* game)
     m_player.setSpeed(300.0f);
 
     // Cargar fondo
-    if (m_backgroundTexture.loadFromFile("assets/images/niveles/nivel_sara/background.png")) {
+    if (m_backgroundTexture.loadFromFile("assets/images/niveles/nivel4/background.png")) {
         m_background = std::make_unique<sf::Sprite>(m_backgroundTexture);
         sf::Vector2u textureSize = m_backgroundTexture.getSize();
         m_worldSize = sf::Vector2f(static_cast<float>(textureSize.x),
                                    static_cast<float>(textureSize.y));
-        std::cout << "NivelSara1 cargado. Tamanio: " << m_worldSize.x << "x" << m_worldSize.y << std::endl;
+        std::cout << "Nivel4 cargado. Tamanio: " << m_worldSize.x << "x" << m_worldSize.y << std::endl;
     } else {
-        std::cerr << "Error: No se pudo cargar el fondo del nivel Sara" << std::endl;
+        std::cerr << "Error: No se pudo cargar el fondo del nivel 4" << std::endl;
         m_worldSize = sf::Vector2f(1920.f, 1080.f);
         m_background = nullptr;
     }
@@ -114,10 +114,14 @@ NivelSara1State::NivelSara1State(sf::RenderWindow* window, Game* game)
         m_textoInteraccion = std::make_unique<sf::Text>(m_font);
         m_textoInteraccion->setCharacterSize(20);
         m_textoInteraccion->setFillColor(sf::Color::White);
+        m_textoInteraccion->setOutlineThickness(1.5f);      
+        m_textoInteraccion->setOutlineColor(sf::Color::Black);
 
         m_textoMensaje = std::make_unique<sf::Text>(m_font);
         m_textoMensaje->setCharacterSize(24);
         m_textoMensaje->setFillColor(sf::Color::Yellow);
+        m_textoMensaje->setOutlineThickness(1.5f);     
+        m_textoMensaje->setOutlineColor(sf::Color::Black);
 
         m_textoCoordenadas = std::make_unique<sf::Text>(m_font);
         m_textoCoordenadas->setCharacterSize(18);
@@ -133,21 +137,21 @@ NivelSara1State::NivelSara1State(sf::RenderWindow* window, Game* game)
     if (game->tienePartidaActiva()) {
         game->getSaveManager().setNivelActual(4, 4);
         game->getSaveManager().guardarProgresoActual();  
-        std::cout << "Partida guardada en NivelSara1" << std::endl;
+        std::cout << "Partida guardada en Nivel4" << std::endl;
     }
 
-    // ===== IMPORTANTE: Asegurar que el árbol apunte al nivel actual =====
+    // =====  Asegurar que el árbol apunte al nivel actual =====
     if (game && game->tienePartidaActiva()) {
-        // Forzar que el árbol sepa que estamos en nivel4
+
         game->getLevelTree().jumpToNode("nivel4");
         std::cout << "LevelTree actualizado a nivel4" << std::endl;
     }
     actualizarUIPosiciones();
-    std::cout << "NivelSara1State inicializado correctamente" << std::endl;
+    std::cout << "Nivel4State inicializado correctamente" << std::endl;
     game->setIsInLevel(true);
 }
 
-void NivelSara1State::configurarColisiones() {
+void Nivel4State::configurarColisiones() {
     m_mapaFisico.clear();
 
     // Paredes exteriores
@@ -208,64 +212,62 @@ void NivelSara1State::configurarColisiones() {
     m_mapaFisico.emplace_back(sf::Vector2f(39.f, 142.f), sf::Vector2f(75.f, 114.f));
 }
 
-void NivelSara1State::handleEvent(const sf::Event& event) {
-    // Manejar teclas globales
+void Nivel4State::handleEvent(const sf::Event& event) {
+    // Manejar tecla M para tutorial (abrir/cerrar)
     if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>()) {
-        if (keyPressed->code == sf::Keyboard::Key::Escape) {
+        if (keyPressed->code == sf::Keyboard::Key::M) {
             if (m_mostrarTutorial || m_mostrarTutorialPorTecla) {
+                // Cerrar tutorial
                 m_mostrarTutorial = false;
                 m_mostrarTutorialPorTecla = false;
-                m_escapeConsumed = true;
-                return;
-            }
-        }
-
-        if (keyPressed->code == sf::Keyboard::Key::M) {
-            std::cout << "M presionada - Activando tutorial" << std::endl;
-            if (game->tienePartidaActiva()) {
-                const auto& items = game->getSaveManager().getCurrentProgress().itemsRecolectados;
-                auto it = std::find(items.begin(), items.end(), "TutorialVisto");
-                if (it != items.end()) {
-                    m_mostrarTutorialPorTecla = true;
-                } else {
-                    m_mostrarTutorial = true;
-                }
             } else {
-                m_mostrarTutorialPorTecla = true;
+                // Abrir tutorial
+                if (game->tienePartidaActiva()) {
+                    const auto& items = game->getSaveManager().getCurrentProgress().itemsRecolectados;
+                    auto it = std::find(items.begin(), items.end(), "TutorialVisto");
+                    if (it != items.end()) {
+                        m_mostrarTutorialPorTecla = true;
+                    } else {
+                        m_mostrarTutorial = true;
+                    }
+                } else {
+                    m_mostrarTutorialPorTecla = true;
+                }
             }
+            return;
         }
     }
 
-    // Prioridad: Minijuego de Dardos
+    // Prioridad: Minijuego de Dardos activo
     if (m_dartsMinigame.isActive()) {
         m_dartsMinigame.handleEvent(event, *window);
-        if (event.is<sf::Event::KeyPressed>()) {
-            const auto& keyEvent = event.getIf<sf::Event::KeyPressed>();
-            if (keyEvent->code == sf::Keyboard::Key::Escape) {
+        // Cerrar con F 
+        if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>()) {
+            if (keyPressed->code == sf::Keyboard::Key::F) {
                 m_dartsMinigame.deactivate();
                 m_skipPauseThisFrame = true;
-                std::cout << "Minijuego de dardos cerrado" << std::endl;
+                std::cout << "Minijuego de dardos cerrado con F" << std::endl;
             }
         }
         return;
     }
 
-    // Prioridad: Minijuego de Tetris
+    // Prioridad: Minijuego de Tetris activo
     if (m_tetris.isActive()) {
         m_tetris.handleEvent(event, *window);
-        if (event.is<sf::Event::KeyPressed>()) {
-            const auto& keyEvent = event.getIf<sf::Event::KeyPressed>();
-            if (keyEvent->code == sf::Keyboard::Key::Escape) {
+        // Cerrar con F 
+        if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>()) {
+            if (keyPressed->code == sf::Keyboard::Key::F) {
                 m_tetris.deactivate();
                 m_skipPauseThisFrame = true;
-                std::cout << "Minijuego de Tetris cerrado" << std::endl;
+                std::cout << "Minijuego de Tetris cerrado con F" << std::endl;
             }
         }
         return;
     }
 }
 
-void NivelSara1State::update(float dt) {
+void Nivel4State::update(float dt) {
     // Actualizar tamaÃ±o de ventana
     sf::Vector2u currentSize = window->getSize();
     if (currentSize != m_lastWindowSize) {
@@ -312,15 +314,15 @@ void NivelSara1State::update(float dt) {
 
     sf::FloatRect playerBounds = m_player.getHurtbox();
 
-    // ========== INTERACCIÃ“N CON TETRIS ==========
+    // ========== INTERACCION CON TETRIS ==========
     m_cercaTetris = playerBounds.findIntersection(m_tetrisArea).has_value();
 
-    static bool tPresionado = false;
+    static bool fTetrisPresionado = false;  // Cambiar nombre de variable
 
     if (m_cercaTetris && !m_tetris.isActive() && !m_dartsMinigame.isActive()) {
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R)) {
-            if (!tPresionado) {
-                tPresionado = true;
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F)) {  // Cambiar de R a F
+            if (!fTetrisPresionado) {
+                fTetrisPresionado = true;
 
                 if (m_vitalSignsAndrea.isStabilized()) {
                     mostrarMensaje("Andrea ya esta estabilizada. Puedes continuar", 2.f, sf::Color::Yellow);
@@ -335,25 +337,19 @@ void NivelSara1State::update(float dt) {
                 }
             }
         } else {
-            tPresionado = false;
+            fTetrisPresionado = false;
         }
     }
 
-    if (m_tetris.isWon() && !m_vitalSignsAndrea.isStabilized()) {
-        m_vitalSignsAndrea.applyEffect(15);
-        m_tetris.deactivate();
-        mostrarMensaje("Patron completado. Andrea esta mas estable", 2.f, sf::Color::Green);
-    }
-
-    // ========== INTERACCIÃ“N CON DARDOS ==========
+   // ========== INTERACCION CON DARDOS ==========
     m_cercaDarts = playerBounds.findIntersection(m_dartsArea).has_value();
 
-    static bool rPresionado = false;
+    static bool fDartsPresionado = false;  // Cambiar nombre de variable
 
     if (m_cercaDarts && !m_dartsMinigame.isActive()) {
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R)) {
-            if (!rPresionado) {
-                rPresionado = true;
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F)) {  // Cambiar de R a F
+            if (!fDartsPresionado) {
+                fDartsPresionado = true;
 
                 if (m_vitalSignsAndres.isGameOver()) {
                     m_vitalSignsAndres.reset();
@@ -367,11 +363,11 @@ void NivelSara1State::update(float dt) {
                 }
             }
         } else {
-            rPresionado = false;
+            fDartsPresionado = false;
         }
     }
 
-    // ========== VERIFICAR SI AMBOS ESTÃN ESTABILIZADOS ==========
+    // ========== VERIFICAR SI AMBOS ESTAN ESTABILIZADOS ==========
     bool andresEstabilizado = m_vitalSignsAndres.isStabilized();
     bool andreaEstabilizada = m_vitalSignsAndrea.isStabilized();
 
@@ -380,7 +376,6 @@ void NivelSara1State::update(float dt) {
         m_mostrandoMensajeVictoria = true;
         m_mensajeVictoriaTimer = 3.0f;
         std::cout << "AMBOS PACIENTES ESTABILIZADOS Ve al ascensor" << std::endl;
-        // mostrarMensaje("Ambos pacientes estabilizados Ve al ascensor", 3.0f, sf::Color::Green);
     }
 
     // Actualizar timer del mensaje de victoria
@@ -418,7 +413,7 @@ void NivelSara1State::update(float dt) {
         }
     }
 
-    // ========== CáMARA ==========
+    // ========== CÁMARA ==========
     sf::Vector2f playerPos = m_player.getPosition();
     sf::Vector2f cameraPos = playerPos;
 
@@ -441,7 +436,7 @@ void NivelSara1State::update(float dt) {
 
     m_camera.setCenter(cameraPos);
 
-    // ========== VERIFICAR SALIDA (similar a Nivel2State) ==========
+    // ========== VERIFICAR SALIDA  ==========
     verificarSalidaNivel();
 
     // ========== TELETRANSPORTE POST JUEGO ==========
@@ -450,13 +445,15 @@ void NivelSara1State::update(float dt) {
     // ========== PAUSA ==========
     if (!m_mostrarTutorial && !m_mostrarTutorialPorTecla && !m_escapeConsumed) {
         static bool escapeProcesado = false;
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape)) {
-            if (!escapeProcesado) {
-                escapeProcesado = true;
-                game->pushState(std::make_unique<PauseState>(window, game));
+        if (!m_mostrarTutorial && !m_mostrarTutorialPorTecla) {
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape)) {
+                if (!escapeProcesado) {
+                    escapeProcesado = true;
+                    game->pushState(std::make_unique<PauseState>(window, game));
+                }
+            } else {
+                escapeProcesado = false;
             }
-        } else {
-            escapeProcesado = false;
         }
     }
 
@@ -467,28 +464,8 @@ void NivelSara1State::update(float dt) {
     if (m_skipPauseThisFrame) {
         m_skipPauseThisFrame = false;
     }
-
-    // ========== COORDENADAS DEBUG ==========
-    sf::Vector2i mousePosPantalla = sf::Mouse::getPosition(*window);
-    sf::Vector2f mousePosMundo = window->mapPixelToCoords(mousePosPantalla, m_camera);
-
-    std::string coordsText = "Mouse (Mundo): X=" + std::to_string((int)mousePosMundo.x) +
-                             " Y=" + std::to_string((int)mousePosMundo.y);
-    coordsText += "\nJugador: X=" + std::to_string((int)m_player.getPosition().x) +
-                  " Y=" + std::to_string((int)m_player.getPosition().y);
-
-    if (m_textoCoordenadas) {
-        m_textoCoordenadas->setString(coordsText);
-    }
 }
-
-// ============================================================
-// VERIFICAR SALIDA DEL NIVEL - Similar a Nivel2State
-// ============================================================
-// ============================================================
-// VERIFICAR SALIDA DEL NIVEL - IGUAL QUE Nivel2State
-// ============================================================
-void NivelSara1State::verificarSalidaNivel() {
+void Nivel4State::verificarSalidaNivel() {
     // Verificar si el jugador está en el área del ascensor
     m_cercaAscensor = m_player.getHurtbox().findIntersection(m_ascensorArea).has_value();
     
@@ -500,7 +477,7 @@ void NivelSara1State::verificarSalidaNivel() {
             
             // Verificar si ambos pacientes están estabilizados
             if (m_ambosEstabilizados) {
-                std::cout << "Saliendo del nivel Sara - Ambos pacientes estabilizados..." << std::endl;
+                std::cout << "Saliendo del nivel 4 - Ambos pacientes estabilizados..." << std::endl;
                 
                 // Cerrar cualquier minijuego activo ANTES de guardar
                 if (m_tetris.isActive()) {
@@ -510,9 +487,8 @@ void NivelSara1State::verificarSalidaNivel() {
                     m_dartsMinigame.deactivate();
                 }
                 
-                // ===== SOLUCIÓN: Forzar que el árbol apunte a nivel4 =====
-                if (game) {
-                    // Asegurar que el LevelTree sepa que estamos en nivel4
+                if (game) 
+                {
                     game->getLevelTree().jumpToNode("nivel4");
                     std::cout << "LevelTree actualizado a nivel4" << std::endl;
                     
@@ -521,8 +497,6 @@ void NivelSara1State::verificarSalidaNivel() {
                         game->getSaveManager().setNivelActual(5, 5);
                         game->guardarPartidaActual();
                     }
-                    
-                    // Ahora sí, avanzar al siguiente nivel
                     game->avanzarNivel();
                 } else {
                     std::cerr << "ERROR: game es nullptr en verificarSalidaNivel" << std::endl;
@@ -542,7 +516,7 @@ void NivelSara1State::verificarSalidaNivel() {
         ePresionado = false;
     }
 }
-void NivelSara1State::verificarTeletransportePostJuego() {
+void Nivel4State::verificarTeletransportePostJuego() {
     if (!m_vitalSignsAndres.isStabilized()) return;
 
     bool cercaDartsTeletransporte = m_player.getHurtbox().findIntersection(m_dartsArea).has_value();
@@ -562,7 +536,7 @@ void NivelSara1State::verificarTeletransportePostJuego() {
     }
 }
 
-void NivelSara1State::draw() {
+void Nivel4State::draw() {
     if (!window) return;
 
     // Vista del mundo
@@ -592,33 +566,45 @@ void NivelSara1State::draw() {
        // UI EN VISTA POR DEFECTO
     window->setView(window->getDefaultView());
 
-    // Texto de interacción para TETRIS
+    // Texto de interacción de Tetris
     if (m_cercaTetris && !m_tetris.isActive() && !m_dartsMinigame.isActive() && m_textoInteraccion && m_fontLoaded) {
-        if (m_vitalSignsAndrea.isStabilized()) {
+         if (m_vitalSignsAndrea.isStabilized()) {
             m_textoInteraccion->setString("Andrea estable. Continua tu camino");
         } else if (m_vitalSignsAndrea.isGameOver()) {
-            m_textoInteraccion->setString("Andrea en peligro. Presiona R para reintentar");
+            m_textoInteraccion->setString("Andrea en peligro. Presiona F para reintentar");
         } else {
-            m_textoInteraccion->setString("Presiona R para salvar a Andrea");
+            m_textoInteraccion->setString("Presiona F para salvar a Andrea");
         }
+        
+        // Configurar borde y posición
+        m_textoInteraccion->setOutlineThickness(1.5f);
+        m_textoInteraccion->setOutlineColor(sf::Color::Black);
+        m_textoInteraccion->setCharacterSize(22);  // Un poco más grande
+        
         sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
         m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
-        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
+        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 100.f)); // Más arriba
         window->draw(*m_textoInteraccion);
     }
 
     // Texto de interacción para DARDOS
     if (m_cercaDarts && !m_dartsMinigame.isActive() && m_textoInteraccion && m_fontLoaded) {
         if (m_vitalSignsAndres.isStabilized()) {
-            m_textoInteraccion->setString("Paciente estable. Ve a ayudar a Andrea");
+            m_textoInteraccion->setString("Paciente estable. Ve a ayudar a Andrea | Presiona E");
         } else if (m_vitalSignsAndres.isGameOver()) {
-            m_textoInteraccion->setString("Paciente muerto. Presiona R para reintentar");
+            m_textoInteraccion->setString("Paciente muerto. Presiona F para reintentar");
         } else {
-            m_textoInteraccion->setString("Presiona R para salvar a Andres");
+            m_textoInteraccion->setString("Presiona F para salvar a Andres");
         }
+        
+        // Configurar borde y posición
+        m_textoInteraccion->setOutlineThickness(1.5f);
+        m_textoInteraccion->setOutlineColor(sf::Color::Black);
+        m_textoInteraccion->setCharacterSize(22);
+        
         sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
         m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
-        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
+        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 100.f));
         window->draw(*m_textoInteraccion);
     }
 
@@ -635,12 +621,17 @@ void NivelSara1State::draw() {
                 m_textoInteraccion->setString("Necesitas estabilizar a Andrea (Zona de Patrones)");
             }
         }
+        
+        // Configurar de posición
+        m_textoInteraccion->setOutlineThickness(1.5f);
+        m_textoInteraccion->setOutlineColor(sf::Color::Black);
+        m_textoInteraccion->setCharacterSize(22);
+        
         sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
         m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
-        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
+        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 100.f));
         window->draw(*m_textoInteraccion);
     }
-
     // Mensaje temporal
     if (m_textoMensaje && m_msjActual.tiempoRestante > 0.0f && !m_textoMensaje->getString().isEmpty()) {
         sf::Vector2u winSize = window->getSize();
@@ -699,7 +690,7 @@ void NivelSara1State::draw() {
         if (m_fontLoaded) {
             sf::Text tutorialText(m_font);
             tutorialText.setString(
-                "BIENVENIDO AL NIVEL 4 - ESTABILIZACION DE PACIENTES\n\n"
+                "Estabilizar Signos Vitales\n"
                 "Debes estabilizar a Andres y Andrea para poder salir.\n\n"
                 "ZONA DE ANDRES (DARDOS):\n"
                 "- Acercate a la zona de dardos y presiona R\n"
@@ -708,7 +699,7 @@ void NivelSara1State::draw() {
                 "- Acercate a la zona de patrones y presiona R\n"
                 "- Completa los patrones para estabilizar a Andrea\n\n"
                 "Una vez ambos estabilizados, ve al ASCENSOR y presiona E\n\n"
-                "[ESC] Cerrar | [M] ayuda"
+                "[M] Abrir/Cerrar"
             );
             tutorialText.setCharacterSize(18);
             tutorialText.setFillColor(sf::Color::White);
@@ -720,7 +711,7 @@ void NivelSara1State::draw() {
     }
 }
 
-void NivelSara1State::mostrarMensaje(const std::string& texto, float duracion, sf::Color color) {
+void Nivel4State::mostrarMensaje(const std::string& texto, float duracion, sf::Color color) {
     if (!m_textoMensaje) return;
     m_msjActual.texto = texto;
     m_msjActual.tiempoRestante = duracion;
@@ -732,7 +723,7 @@ void NivelSara1State::mostrarMensaje(const std::string& texto, float duracion, s
     std::cout << "MENSAJE: " << texto << std::endl;
 }
 
-void NivelSara1State::actualizarUIPosiciones() {
+void Nivel4State::actualizarUIPosiciones() {
     if (!window) return;
 
     sf::Vector2u winSize = window->getSize();

@@ -6,7 +6,7 @@
 #include "MenuState.hpp"
 #include "CentinelaConductosState.hpp"
 #include "Nivel2State.hpp"  
-#include "NivelSara1State.hpp"
+#include "Nivel4State.hpp"
 #include "VideoFinalState.hpp"
 #include "NivelSara2State.hpp"
 #include "Nivel2State.hpp"
@@ -41,10 +41,10 @@ void LevelTree::buildTree()
         return std::make_unique<Nivel3State>(w, g);
     };
 
-    auto nivel4 = std::make_unique<LevelNode>("nivel4", "Nivel 4", LevelType::NORMAL, 4);
+    auto nivel4 = std::make_unique<LevelNode>("nivel4", "Estabilizar Signos Vitales", LevelType::NORMAL, 4);
     nivel4->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
     {
-        return std::make_unique<NivelSara1State>(w, g);
+        return std::make_unique<Nivel4State>(w, g);
     };
 
     auto nivel5 = std::make_unique<LevelNode>("nivel5", "Nivel 5", LevelType::NORMAL, 5);

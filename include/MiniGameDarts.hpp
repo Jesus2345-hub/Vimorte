@@ -2,7 +2,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
 #include <vector>
-#include "VitalSigns_sara.hpp"
+#include "VitalSigns.hpp"
 #include <cmath>
 #include <memory>
 #include <random>
@@ -28,6 +28,7 @@ private:
 
     float m_noiseOffsetX;
     float m_noiseOffsetY;
+
     // Radio actual en píxeles
     float m_currentDartboardRadius;
 
@@ -75,12 +76,10 @@ private:
 };
     std::vector<RingScore> m_scoringRings;
 
-    // -----  sistema de puntería móvil -----
-    sf::CircleShape m_aimingCircle;   // círculo que se mueve
-    float m_aimAngle;                 // ángulo para el movimiento (radianes)
-    float m_aimSpeed;                 // radianes por segundo
-    float m_aimAmplitude;             // amplitud del movimiento (píxeles)
-    // -------------------------------------------
+    sf::CircleShape m_aimingCircle;   
+    float m_aimAngle;                 
+    float m_aimSpeed;                 
+    float m_aimAmplitude;             
 
     // Aleatoriedad para desviación al lanzar
     std::random_device m_rd;

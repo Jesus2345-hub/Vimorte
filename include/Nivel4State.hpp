@@ -1,16 +1,16 @@
 #pragma once
 #include "State.hpp"
 #include "entities/Player.hpp"
-#include "MiniGameDarts_sara.hpp"
+#include "MiniGameDarts.hpp"
 #include "MiniGameTetris.hpp"
-#include "VitalSigns_sara.hpp"
+#include "VitalSigns.hpp"
 #include <memory>
 #include <vector>
 
-class NivelSara1State : public State {
+class Nivel4State : public State {
 public:
-    NivelSara1State(sf::RenderWindow* window, Game* game);
-    ~NivelSara1State() = default;
+    Nivel4State(sf::RenderWindow* window, Game* game);
+    ~Nivel4State() = default;
 
     void handleEvent(const sf::Event& event) override;
     void update(float dt) override;
@@ -37,7 +37,7 @@ private:
     // Áreas de interacción
     sf::FloatRect m_dartsArea;
     sf::FloatRect m_tetrisArea;
-    sf::FloatRect m_ascensorArea;      // Área para salir del nivel
+    sf::FloatRect m_ascensorArea;      
     sf::FloatRect m_teleportZone;
     sf::Vector2f m_teleportDestination;
     sf::FloatRect m_teleportZone2;

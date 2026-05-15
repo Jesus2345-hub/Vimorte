@@ -263,13 +263,13 @@ void Centinela2State::verificarEntregaPlato()
                     "VICTORIA\n\n"
                     "Has preparado los 6 platos!\n"
                     "Los alienigenas estan impresionados.\n\n"
-                    "Ahora tienes una decision que tomara:\n"
-                    "¿Escaparas del laboratorio?\n"
-                    "¿O te uniras a sus experimentos humanos?\n\n"
-                    "Presiona R para tomar tu decision.";
+                    "Ahora tienes una decision que tomar:\n"
+                    "Escaparas del laboratorio?\n"
+                    "O te uniras a sus experimentos humanos?\n\n"
+                    "Presiona F para tomar tu decision.";
             }
             
-            mostrarMensajeFlotante("MISION COMPLETADA! Ve al ascensor y presiona R", 3.0f, sf::Color::Green);
+            mostrarMensajeFlotante("MISION COMPLETADA! Ve al ascensor y presiona F", 3.0f, sf::Color::Green);
             return;
         }
         
@@ -311,26 +311,26 @@ void Centinela2State::mostrarDialogoDecision()
     
     m_textoDialogoDecision = std::make_unique<sf::Text>(m_font);
     m_textoDialogoDecision->setString(
-        "=== DECISION FINAL ===\n\n"
+        "         === DECISION FINAL ===\n\n"
         "Has demostrado tu valia ante los alienigenas.\n\n"
         "Ahora tienes una decision crucial que tomar:"
     );
-    m_textoDialogoDecision->setCharacterSize(24);
+    m_textoDialogoDecision->setCharacterSize(20);
     m_textoDialogoDecision->setFillColor(sf::Color::White);
     m_textoDialogoDecision->setOutlineThickness(1.5f);
     m_textoDialogoDecision->setOutlineColor(sf::Color::Black);
     m_textoDialogoDecision->setStyle(sf::Text::Bold);
     
     m_textoOpcion1 = std::make_unique<sf::Text>(m_font);
-    m_textoOpcion1->setString("> ESCAPAR DEL LABORATORIO <");
-    m_textoOpcion1->setCharacterSize(28);
+    m_textoOpcion1->setString("    > ESCAPAR DEL LABORATORIO <");
+    m_textoOpcion1->setCharacterSize(24);
     m_textoOpcion1->setFillColor(sf::Color::Yellow);
     m_textoOpcion1->setOutlineThickness(1.5f);
     m_textoOpcion1->setOutlineColor(sf::Color::Black);
     
     m_textoOpcion2 = std::make_unique<sf::Text>(m_font);
-    m_textoOpcion2->setString("UNIRSE A EXPERIMENTOS HUMANOS");
-    m_textoOpcion2->setCharacterSize(28);
+    m_textoOpcion2->setString("    > UNIRSE A EXPERIMENTOS HUMANOS < ");
+    m_textoOpcion2->setCharacterSize(24);
     m_textoOpcion2->setFillColor(sf::Color(150, 150, 150));
     m_textoOpcion2->setOutlineThickness(1.5f);
     m_textoOpcion2->setOutlineColor(sf::Color::Black);
@@ -342,7 +342,6 @@ void Centinela2State::handleDecisionInput()
     static bool downPressed = false;
     static bool enterPressed = false;
     
-    // SFML 3.0.2 usa Scancode en lugar de Key::Up/Down
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Scancode::Up)) {
         if (!upPressed) {
             upPressed = true;
@@ -402,7 +401,16 @@ void Centinela2State::handleEvent(const sf::Event& event)
             CoordenadasDebug::getInstance().setVisible(m_debugMode);
         }
     }
-    
+    // ========== ADMIN MODE: TECLA E PARA VOLVER ==========
+    if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>()) {
+        if (keyPressed->code == sf::Keyboard::Key::E) {
+            if (game->isAdminMode() && !m_estanteAbierto && !m_mensajeEmergenteActivo && !m_dialogoDecisionActivo) {
+                mostrarMensajeFlotante(" Regresando al nivel anterior...", 2.0f, sf::Color::Cyan);
+                game->adminVolverAlNivelAnterior();
+                return;
+            }
+        }
+    }
     if (!m_activo) return;
     
     // Diálogo de decisión final
@@ -455,7 +463,8 @@ void Centinela2State::handleEvent(const sf::Event& event)
     // ========== ESTANTE ABIERTO (prioridad) ==========
     if (m_estanteAbierto) {
         if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>()) {
-            // ESC: Cerrar estante
+            
+            // F Cerrar estante
             if (keyPressed->code == sf::Keyboard::Key::F) {
                 m_estanteAbierto = false;
                 m_mensajeEmergenteActivo = false;
@@ -1142,4 +1151,32 @@ void Centinela2State::draw()
     if (inv) inv->draw(*window);
     
     if (m_debugMode) CoordenadasDebug::getInstance().dibujar(*window);
+}
+void Game::adminVolverAlNivelAnterior()
+{
+    LevelNode* currentNode = levelTree.getCurrentNode();
+    if (!currentNode) return;
+    
+    std::string nivelAnteriorId;
+    
+    // Mapeo manual de centinelas a sus niveles anteriores
+    if (currentNode->id == "centinela2") {
+        nivelAnteriorId = "nivel6";
+    } else if (currentNode->id == "centinela1") {
+        nivelAnteriorId = "nivel3";
+    } else if (currentNode->id == "centinela3") {
+        nivelAnteriorId = "nivel7";
+    } else {
+        // Si no está mapeado, no hacer nada
+        std::cout << "[ADMIN] No hay mapeo para: " << currentNode->id << std::endl;
+        return;
+    }
+    
+    if (levelTree.jumpToNode(nivelAnteriorId)) {
+        auto newState = levelTree.createCurrentState(window.get(), this);
+        if (newState) {
+            changeState(std::move(newState));
+            std::cout << "[ADMIN] Saltado a nivel anterior: " << nivelAnteriorId << std::endl;
+        }
+    }
 }

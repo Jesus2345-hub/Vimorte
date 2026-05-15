@@ -4,8 +4,8 @@
 
 MinigameMemoria::MinigameMemoria() 
     : m_gen(std::random_device{}())
-    , m_intervaloBotones(0.9f)      // Más lento: 0.9s entre botones (antes 0.6)
-    , m_duracionIluminado(0.6f)     // Más tiempo brillando: 0.6s (antes 0.4)
+    , m_intervaloBotones(0.9f)  
+    , m_duracionIluminado(0.6f)     
 {
     m_fontLoaded = m_font.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf");
     
@@ -13,15 +13,21 @@ MinigameMemoria::MinigameMemoria()
         m_textoInstrucciones = std::make_unique<sf::Text>(m_font);
         m_textoInstrucciones->setCharacterSize(22);
         m_textoInstrucciones->setFillColor(sf::Color::White);
+        m_textoInstrucciones->setOutlineThickness(1.5f);   
+        m_textoInstrucciones->setOutlineColor(sf::Color::Black);
         m_textoInstrucciones->setString("MEMORIZA LA SECUENCIA");
         
         m_textoEstado = std::make_unique<sf::Text>(m_font);
         m_textoEstado->setCharacterSize(18);
         m_textoEstado->setFillColor(sf::Color::Yellow);
+        m_textoEstado->setOutlineThickness(1.5f);          
+        m_textoEstado->setOutlineColor(sf::Color::Black);
         
         m_textoRonda = std::make_unique<sf::Text>(m_font);
         m_textoRonda->setCharacterSize(16);
         m_textoRonda->setFillColor(sf::Color(200, 200, 200));
+        m_textoRonda->setOutlineThickness(1.5f);           
+        m_textoRonda->setOutlineColor(sf::Color::Black);
     }
     
     if (m_texturaFondo.loadFromFile("assets/images/niveles/nivel3/fondo_memoria.png")) {

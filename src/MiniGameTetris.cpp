@@ -30,7 +30,7 @@ MiniGameTetris::MiniGameTetris()
     };
     
     // Cargar textura de fondo
-    if (m_backgroundTexture.loadFromFile("assets/images/niveles/nivel_sara/colores.jpg")) {
+    if (m_backgroundTexture.loadFromFile("assets/images/niveles/nivel4/colores.jpg")) {
         m_backgroundSprite = std::make_unique<sf::Sprite>(m_backgroundTexture);
         m_hasBackgroundTexture = true;
         std::cout << "Fondo de Tetris cargado correctamente" << std::endl;
@@ -173,24 +173,37 @@ void MiniGameTetris::initUI() {
     m_titleText->setString("MEMORIA DE PATRONES");
     m_titleText->setFillColor(sf::Color::Yellow);
     m_titleText->setStyle(sf::Text::Bold);
+    m_titleText->setOutlineThickness(1.5f);      
+    m_titleText->setOutlineColor(sf::Color::Black);
     
     m_instructionText = std::make_unique<sf::Text>(m_font);
     m_instructionText->setString("Memoriza el patron de colores y replicado");
     m_instructionText->setFillColor(sf::Color(200, 200, 200));
+    m_instructionText->setOutlineThickness(1.5f); 
+    m_instructionText->setOutlineColor(sf::Color::Black);
     
     m_hintText = std::make_unique<sf::Text>(m_font);
     m_hintText->setFillColor(sf::Color::Yellow);
+    m_hintText->setOutlineThickness(1.5f);       
+    m_hintText->setOutlineColor(sf::Color::Black);
     
     m_patternCounterText = std::make_unique<sf::Text>(m_font);
     m_patternCounterText->setFillColor(sf::Color::White);
     m_patternCounterText->setStyle(sf::Text::Bold);
+    m_patternCounterText->setOutlineThickness(1.5f); 
+    m_patternCounterText->setOutlineColor(sf::Color::Black);
     
     m_closeText = std::make_unique<sf::Text>(m_font);
-    m_closeText->setString("ESC para salir");
-    m_closeText->setFillColor(sf::Color(150, 150, 150));
+    m_closeText->setString("F para salir");          
+    m_closeText->setCharacterSize(16);               
+    m_closeText->setFillColor(sf::Color::White);  
+    m_closeText->setOutlineThickness(1.5f);      
+    m_closeText->setOutlineColor(sf::Color::Black);
     
     m_messageText = std::make_unique<sf::Text>(m_font);
     m_messageText->setStyle(sf::Text::Bold);
+    m_messageText->setOutlineThickness(1.5f);   
+    m_messageText->setOutlineColor(sf::Color::Black);
     
     m_verifyButtonText = std::make_unique<sf::Text>(m_font);
     m_verifyButtonText->setString("VERIFICAR");
@@ -211,10 +224,6 @@ void MiniGameTetris::setSize(const sf::Vector2f& size) {
     m_size = size;
 }
 
-void MiniGameTetris::updateLayout() {
-}
-
-// Recalcular disposición de la UI
 void MiniGameTetris::recalculateLayout(float screenW, float screenH) {
     float baseHeight = 720.f;
     float scale = screenH / baseHeight;
@@ -230,17 +239,21 @@ void MiniGameTetris::recalculateLayout(float screenW, float screenH) {
     float topMargin = screenH * 0.22f;
     
     float totalWidth = gridSize * 2 + spacingBetweenGrids;
-    float startX = (screenW - totalWidth) / 2;
+    float startX = (screenW - totalWidth) / 2.f;
     float startY = topMargin;
     
-    // Configurar cuadrícula del patrón objetivo
+    
+    // 1. CONFIGURAR CUADRÍCULAS
+    
+    
+    // Cuadrícula del patrón objetivo (izquierda)
     m_targetGridBackground.setSize(sf::Vector2f(gridSize, gridSize));
     m_targetGridBackground.setPosition(sf::Vector2f(startX, startY));
     m_targetGridBackground.setFillColor(sf::Color(40, 40, 50, 200));
     m_targetGridBackground.setOutlineThickness(2.f);
     m_targetGridBackground.setOutlineColor(sf::Color(150, 150, 150));
     
-    // Configurar cuadrícula del jugador
+    // Cuadrícula del jugador (derecha)
     float playerStartX = startX + gridSize + spacingBetweenGrids;
     m_playerGridBackground.setSize(sf::Vector2f(gridSize, gridSize));
     m_playerGridBackground.setPosition(sf::Vector2f(playerStartX, startY));
@@ -248,70 +261,105 @@ void MiniGameTetris::recalculateLayout(float screenW, float screenH) {
     m_playerGridBackground.setOutlineThickness(2.f);
     m_playerGridBackground.setOutlineColor(sf::Color(150, 150, 150));
     
-    // Configurar botón de verificación
+    
+    // 2. CONFIGURAR BOTÓN DE VERIFICACIÓN
+    
+    
     float btnW = 160.f * scale;
     float btnH = 48.f * scale;
     float btnY = startY + gridSize + 30.f * scale;
     m_verifyButton.setSize(sf::Vector2f(btnW, btnH));
-    m_verifyButton.setPosition(sf::Vector2f(screenW / 2 - btnW / 2, btnY));
+    m_verifyButton.setPosition(sf::Vector2f(screenW / 2.f - btnW / 2.f, btnY));
     
     if (m_verifyButtonText) {
         m_verifyButtonText->setCharacterSize(static_cast<unsigned int>(22 * scale));
         sf::FloatRect bounds = m_verifyButtonText->getLocalBounds();
-        m_verifyButtonText->setOrigin(sf::Vector2f(bounds.size.x / 2, bounds.size.y / 2));
+        m_verifyButtonText->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
         m_verifyButtonText->setPosition(sf::Vector2f(
-            m_verifyButton.getPosition().x + btnW / 2,
-            m_verifyButton.getPosition().y + btnH / 2
+            m_verifyButton.getPosition().x + btnW / 2.f,
+            m_verifyButton.getPosition().y + btnH / 2.f
         ));
     }
     
-    // Configurar etiquetas de las cuadrículas
-    m_cachedTargetLabel = std::make_unique<sf::Text>(m_font, "PATRON ORIGINAL", static_cast<unsigned int>(16 * scale));
+    
+    // 3. CONFIGURAR ETIQUETAS DE CUADRÍCULAS (con outline)
+    
+    
+    if (!m_cachedTargetLabel) {
+        m_cachedTargetLabel = std::make_unique<sf::Text>(m_font);
+    }
+    m_cachedTargetLabel->setString("PATRON ORIGINAL");
+    m_cachedTargetLabel->setCharacterSize(static_cast<unsigned int>(16 * scale));
     m_cachedTargetLabel->setFillColor(sf::Color(200, 200, 200));
+    m_cachedTargetLabel->setOutlineThickness(1.5f);
+    m_cachedTargetLabel->setOutlineColor(sf::Color::Black);
     sf::FloatRect targetBounds = m_cachedTargetLabel->getLocalBounds();
-    m_cachedTargetLabel->setPosition(sf::Vector2f(startX + gridSize / 2 - targetBounds.size.x / 2, startY - 25 * scale));
+    m_cachedTargetLabel->setPosition(sf::Vector2f(
+        startX + gridSize / 2.f - targetBounds.size.x / 2.f,
+        startY - 25.f * scale
+    ));
     
-    m_cachedPlayerLabel = std::make_unique<sf::Text>(m_font, "TU REPLICA", static_cast<unsigned int>(16 * scale));
+    if (!m_cachedPlayerLabel) {
+        m_cachedPlayerLabel = std::make_unique<sf::Text>(m_font);
+    }
+    m_cachedPlayerLabel->setString("TU REPLICA");
+    m_cachedPlayerLabel->setCharacterSize(static_cast<unsigned int>(16 * scale));
     m_cachedPlayerLabel->setFillColor(sf::Color(200, 200, 200));
+    m_cachedPlayerLabel->setOutlineThickness(1.5f);
+    m_cachedPlayerLabel->setOutlineColor(sf::Color::Black);
     sf::FloatRect playerBounds = m_cachedPlayerLabel->getLocalBounds();
-    m_cachedPlayerLabel->setPosition(sf::Vector2f(playerStartX + gridSize / 2 - playerBounds.size.x / 2, startY - 25 * scale));
+    m_cachedPlayerLabel->setPosition(sf::Vector2f(
+        playerStartX + gridSize / 2.f - playerBounds.size.x / 2.f,
+        startY - 25.f * scale
+    ));
     
-    // Crear celdas del patrón objetivo
+    
+    // 4. CREAR O ACTUALIZAR CELDAS DEL PATRÓN OBJETIVO
+    
+    
     m_targetCells.clear();
+    m_targetCells.reserve(GRID_SIZE * GRID_SIZE);
+    
     for (int i = 0; i < GRID_SIZE; i++) {
         for (int j = 0; j < GRID_SIZE; j++) {
-            sf::RectangleShape cell(sf::Vector2f(blockSize - 4, blockSize - 4));
+            sf::RectangleShape cell(sf::Vector2f(blockSize - 4.f, blockSize - 4.f));
             cell.setPosition(sf::Vector2f(
-                startX + 12 + j * blockSize + 2,
-                startY + 12 + i * blockSize + 2
+                startX + 12.f + j * blockSize + 2.f,
+                startY + 12.f + i * blockSize + 2.f
             ));
+            
             if (i < (int)m_currentTargetPattern.size() && 
                 j < (int)m_currentTargetPattern[i].size()) {
                 cell.setFillColor(m_currentTargetPattern[i][j]);
             } else {
                 cell.setFillColor(sf::Color(80, 80, 80));
             }
-            cell.setOutlineThickness(1);
+            cell.setOutlineThickness(1.f);
             cell.setOutlineColor(sf::Color::Black);
             m_targetCells.push_back(cell);
         }
     }
     
-    // Crear o actualizar celdas del jugador
+    
+    // 5. CREAR O ACTUALIZAR CELDAS DEL JUGADOR
+    
+    
     if (m_playerCells.empty()) {
+        m_playerCells.reserve(GRID_SIZE * GRID_SIZE);
         for (int i = 0; i < GRID_SIZE; i++) {
             for (int j = 0; j < GRID_SIZE; j++) {
-                sf::RectangleShape cell(sf::Vector2f(blockSize - 4, blockSize - 4));
+                sf::RectangleShape cell(sf::Vector2f(blockSize - 4.f, blockSize - 4.f));
                 cell.setPosition(sf::Vector2f(
-                    playerStartX + 12 + j * blockSize + 2,
-                    startY + 12 + i * blockSize + 2
+                    playerStartX + 12.f + j * blockSize + 2.f,
+                    startY + 12.f + i * blockSize + 2.f
                 ));
+                
                 if (m_playerPattern[i][j] != sf::Color::Transparent) {
                     cell.setFillColor(m_playerPattern[i][j]);
                 } else {
                     cell.setFillColor(sf::Color(50, 50, 55, 255));
                 }
-                cell.setOutlineThickness(2);
+                cell.setOutlineThickness(2.f);
                 cell.setOutlineColor(sf::Color::White);
                 m_playerCells.push_back(cell);
             }
@@ -321,34 +369,38 @@ void MiniGameTetris::recalculateLayout(float screenW, float screenH) {
         for (int i = 0; i < GRID_SIZE; i++) {
             for (int j = 0; j < GRID_SIZE; j++) {
                 if (idx < (int)m_playerCells.size()) {
+                    m_playerCells[idx].setSize(sf::Vector2f(blockSize - 4.f, blockSize - 4.f));
                     m_playerCells[idx].setPosition(sf::Vector2f(
-                        playerStartX + 12 + j * blockSize + 2,
-                        startY + 12 + i * blockSize + 2
+                        playerStartX + 12.f + j * blockSize + 2.f,
+                        startY + 12.f + i * blockSize + 2.f
                     ));
-                    m_playerCells[idx].setSize(sf::Vector2f(blockSize - 4, blockSize - 4));
                 }
                 idx++;
             }
         }
     }
     
-    // Configurar bloques del inventario
+    
+    // 6. CONFIGURAR BLOQUES DEL INVENTARIO
+    
+    
     float invStartY = btnY + btnH + 25.f * scale;
     int cols = 6;
     float invWidth = totalWidth;
-    float cellWidth = invWidth / cols;
+    float cellWidth = invWidth / (float)cols;
     float invCellSize = blockSize * 0.85f;
     
     if (m_inventoryBlocks.empty()) {
+        m_inventoryBlocks.reserve(m_availableBlocks.size());
         for (size_t idx = 0; idx < m_availableBlocks.size(); idx++) {
-            int row = idx / cols;
-            int col = idx % cols;
+            int row = (int)idx / cols;
+            int col = (int)idx % cols;
             
-            float centerX = startX + col * cellWidth + cellWidth / 2;
-            float centerY = invStartY + row * (invCellSize + 10) + invCellSize / 2;
+            float centerX = startX + (float)col * cellWidth + cellWidth / 2.f;
+            float centerY = invStartY + (float)row * (invCellSize + 10.f) + invCellSize / 2.f;
             
             sf::RectangleShape block(sf::Vector2f(invCellSize, invCellSize));
-            block.setPosition(sf::Vector2f(centerX - invCellSize / 2, centerY - invCellSize / 2));
+            block.setPosition(sf::Vector2f(centerX - invCellSize / 2.f, centerY - invCellSize / 2.f));
             
             if (m_availableBlocks[idx].isPlaced) {
                 block.setFillColor(sf::Color(80, 80, 80, 100));
@@ -357,28 +409,34 @@ void MiniGameTetris::recalculateLayout(float screenW, float screenH) {
                 block.setFillColor(m_availableBlocks[idx].color);
                 block.setOutlineColor(sf::Color::White);
             }
-            block.setOutlineThickness(2);
+            block.setOutlineThickness(2.f);
             m_inventoryBlocks.push_back(block);
             m_availableBlocks[idx].worldRect = block.getGlobalBounds();
         }
     } else {
         for (size_t idx = 0; idx < m_availableBlocks.size() && idx < m_inventoryBlocks.size(); idx++) {
-            int row = idx / cols;
-            int col = idx % cols;
+            int row = (int)idx / cols;
+            int col = (int)idx % cols;
             
-            float centerX = startX + col * cellWidth + cellWidth / 2;
-            float centerY = invStartY + row * (invCellSize + 10) + invCellSize / 2;
+            float centerX = startX + (float)col * cellWidth + cellWidth / 2.f;
+            float centerY = invStartY + (float)row * (invCellSize + 10.f) + invCellSize / 2.f;
             
             m_inventoryBlocks[idx].setSize(sf::Vector2f(invCellSize, invCellSize));
-            m_inventoryBlocks[idx].setPosition(sf::Vector2f(centerX - invCellSize / 2, centerY - invCellSize / 2));
+            m_inventoryBlocks[idx].setPosition(sf::Vector2f(centerX - invCellSize / 2.f, centerY - invCellSize / 2.f));
             m_availableBlocks[idx].worldRect = m_inventoryBlocks[idx].getGlobalBounds();
         }
     }
+    
+    
+    // 7. GUARDAR VALORES CACHEADOS
+    
     
     m_cachedScale = scale;
     m_cachedPlayerStartX = playerStartX;
     m_cachedGridSize = gridSize;
     m_cachedStartY = startY;
+    m_cachedScreenW = screenW;
+    m_cachedScreenH = screenH;
 }
 
 // Mostrar patrón temporalmente
@@ -431,7 +489,6 @@ void MiniGameTetris::reset() {
 void MiniGameTetris::handleEvent(const sf::Event& event, const sf::RenderWindow& window) {
     if (!m_isActive || m_gameWon) return;
     
-    // Manejar clic del mouse
     if (const auto* mousePressed = event.getIf<sf::Event::MouseButtonPressed>()) {
         if (mousePressed->button == sf::Mouse::Button::Left) {
             sf::Vector2f mousePos = sf::Vector2f(mousePressed->position);
@@ -495,28 +552,28 @@ void MiniGameTetris::handleEvent(const sf::Event& event, const sf::RenderWindow&
     
     // Manejar liberación del mouse (soltar bloque)
     if (const auto* mouseReleased = event.getIf<sf::Event::MouseButtonReleased>()) {
-        if (mouseReleased->button == sf::Mouse::Button::Left && m_isDragging && !m_waitingForVerification && !m_roundCompleted) {
-            sf::Vector2f mousePos = sf::Vector2f(mouseReleased->position);
-            sf::FloatRect playerGridBounds = m_playerGridBackground.getGlobalBounds();
-            
-            if (playerGridBounds.contains(mousePos) && m_selectedBlockIndex >= 0) {
-                sf::Vector2i gridCell = getGridCellFromPosition(mousePos);
-                if (gridCell.x >= 0 && gridCell.x < GRID_SIZE && 
-                    gridCell.y >= 0 && gridCell.y < GRID_SIZE) {
-                    
-                    if (m_playerPattern[gridCell.y][gridCell.x] == sf::Color::Transparent) {
-                        placeBlock(m_selectedBlockIndex, gridCell.y, gridCell.x);
-                        showTemporaryMessage("Bloque colocado", sf::Color::Green, 0.5f);
-                    } else {
-                        showTemporaryMessage("Casilla ocupada", Colors::Orange, 0.8f);
+            if (mouseReleased->button == sf::Mouse::Button::Left && m_isDragging && !m_waitingForVerification && !m_roundCompleted) {
+                sf::Vector2f mousePos = sf::Vector2f(mouseReleased->position);
+                sf::FloatRect playerGridBounds = m_playerGridBackground.getGlobalBounds();
+                
+                if (playerGridBounds.contains(mousePos) && m_selectedBlockIndex >= 0) {
+                    sf::Vector2i gridCell = getGridCellFromPosition(mousePos);
+                    if (gridCell.x >= 0 && gridCell.x < GRID_SIZE && 
+                        gridCell.y >= 0 && gridCell.y < GRID_SIZE) {
+                        
+                        if (m_playerPattern[gridCell.y][gridCell.x] == sf::Color::Transparent) {
+                            placeBlock(m_selectedBlockIndex, gridCell.y, gridCell.x);
+                            showTemporaryMessage("Bloque colocado", sf::Color::Green, 0.5f);
+                        } else {
+                            showTemporaryMessage("Casilla ocupada", Colors::Orange, 0.8f);
+                        }
                     }
                 }
+                m_isDragging = false;
+                m_selectedBlockIndex = -1;
             }
-            m_isDragging = false;
-            m_selectedBlockIndex = -1;
         }
     }
-}
 
 // Obtener celda de la cuadrícula desde posición del mouse
 sf::Vector2i MiniGameTetris::getGridCellFromPosition(const sf::Vector2f& pos) {
@@ -780,35 +837,55 @@ void MiniGameTetris::draw(sf::RenderWindow& window) {
     
     // Dibujar textos de título e instrucciones
     if (m_titleText) {
-        m_titleText->setCharacterSize(static_cast<unsigned int>(32 * scale));
+        m_titleText->setCharacterSize(static_cast<unsigned int>(28 * scale));
         sf::FloatRect bounds = m_titleText->getLocalBounds();
-        m_titleText->setPosition(sf::Vector2f(screenW / 2 - bounds.size.x / 2, screenH * 0.03f));
+        m_titleText->setPosition(sf::Vector2f(
+            screenW / 2.f - bounds.size.x / 2.f, 
+            screenH * 0.03f
+        ));
         window.draw(*m_titleText);
     }
     
     if (m_instructionText) {
-        m_instructionText->setCharacterSize(static_cast<unsigned int>(18 * scale));
+        m_instructionText->setCharacterSize(static_cast<unsigned int>(16 * scale));
         sf::FloatRect bounds = m_instructionText->getLocalBounds();
-        m_instructionText->setPosition(sf::Vector2f(screenW / 2 - bounds.size.x / 2, screenH * 0.08f));
+        m_instructionText->setPosition(sf::Vector2f(
+            screenW / 2.f - bounds.size.x / 2.f, 
+            screenH * 0.08f
+        ));
         window.draw(*m_instructionText);
     }
     
     if (m_hintText) {
-        m_hintText->setCharacterSize(static_cast<unsigned int>(18 * scale));
+        m_hintText->setCharacterSize(static_cast<unsigned int>(16 * scale));
         sf::FloatRect bounds = m_hintText->getLocalBounds();
-        m_hintText->setPosition(sf::Vector2f(screenW / 2 - bounds.size.x / 2, screenH * 0.115f));
+        m_hintText->setPosition(sf::Vector2f(
+            screenW / 2.f - bounds.size.x / 2.f, 
+            screenH * 0.115f
+        ));
         window.draw(*m_hintText);
     }
     
     if (m_patternCounterText) {
-        m_patternCounterText->setCharacterSize(static_cast<unsigned int>(24 * scale));
-        m_patternCounterText->setPosition(sf::Vector2f(screenW - 1220, screenH * 0.03f + 20.f));
+        m_patternCounterText->setCharacterSize(static_cast<unsigned int>(18 * scale));
+        
+        float marginX = 50.f;
+        float marginY = 50.f;
+        
+        sf::FloatRect bounds = m_patternCounterText->getLocalBounds();
+        m_patternCounterText->setPosition(sf::Vector2f(
+            screenW - bounds.size.x - marginX,
+            marginY
+        ));
         window.draw(*m_patternCounterText);
     }
     
     if (m_closeText) {
-        m_closeText->setCharacterSize(static_cast<unsigned int>(16 * scale));
-        m_closeText->setPosition(sf::Vector2f(screenW - 150, screenH - 40));
+        float marginX = 50.f;
+        float marginY = 50.f;
+        m_closeText->setCharacterSize(16);           
+        m_closeText->setPosition(sf::Vector2f(marginX, marginY));
+        m_closeText->setOrigin(sf::Vector2f(0.f, 0.f));
         window.draw(*m_closeText);
     }
     

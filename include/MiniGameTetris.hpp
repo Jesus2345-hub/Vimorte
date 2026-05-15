@@ -4,7 +4,7 @@
 #include <vector>
 #include <memory>
 #include <map>
-#include "VitalSigns_sara.hpp"
+#include "VitalSigns.hpp"
 
 // Estructura para un bloque de color
 struct ColorBlock {
@@ -87,7 +87,7 @@ private:
     std::unique_ptr<sf::Text> m_messageText;
     std::unique_ptr<sf::Text> m_closeText;
     std::unique_ptr<sf::Text> m_verifyButtonText;
-    std::unique_ptr<sf::Text> m_hintText;  // Texto que dice "Memoriza el patrón!"
+    std::unique_ptr<sf::Text> m_hintText; 
     
     // Fondos
     sf::RectangleShape m_targetGridBackground;
@@ -100,8 +100,8 @@ private:
     std::vector<sf::RectangleShape> m_inventoryBlocks;
     
     // Para almacenar los bordes de verificación
-    std::vector<int> m_wrongCells;  // Índices de celdas incorrectas
-    std::vector<int> m_correctCells; // Índices de celdas correctas
+    std::vector<int> m_wrongCells;  
+    std::vector<int> m_correctCells; 
     bool m_showVerification;
     float m_verificationTimer;
     
@@ -116,29 +116,29 @@ private:
     // Temporizador para mostrar el patrón
     float m_patternVisibleTimer;
     bool m_isPatternVisible;
-    bool m_waitingForVerification;  // Esperando que el jugador verifique después de colocar
-    bool m_roundCompleted;  // Ronda completada (para esperar antes de siguiente patrón)
+    bool m_waitingForVerification;  
+    bool m_roundCompleted;  
     float m_roundCompleteTimer;
     
     VitalSigns* m_vitalSigns = nullptr;
     
     void initUI();
     void updateLayout();
-    void checkPatternComplete();  // Verifica si el patrón actual es correcto
+    void checkPatternComplete();  
     void showTemporaryMessage(const std::string& msg, const sf::Color& color, float duration);
     void updateMessage(float dt);
     void resetPatterns();
     void generateBlocksFromPattern();
-    void generateAllPatterns();  // Genera los 3 patrones diferentes
-    void loadNextPattern();  // Carga el siguiente patrón
-    void verifyPattern();  // Verifica el patrón actual contra el objetivo
-    void showVerificationResult();  // Muestra el resultado de la verificación
+    void generateAllPatterns();  
+    void loadNextPattern();  
+    void verifyPattern();  
+    void showVerificationResult();  
     void markCellAsCorrect(int index);
     void markCellAsWrong(int index);
     void clearVerificationMarks();
-    void nextRound();  // Avanza a la siguiente ronda
+    void nextRound();  
     sf::Vector2i getGridCellFromPosition(const sf::Vector2f& pos);
     bool isValidPlacement(int row, int col, const sf::Color& color);
     void placeBlock(int blockIndex, int row, int col);
-    bool isGridComplete();  // Verifica si todas las celdas tienen bloques
+    bool isGridComplete();  
 };

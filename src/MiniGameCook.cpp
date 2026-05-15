@@ -314,7 +314,7 @@ void MiniGameCook::draw(sf::RenderWindow& window)
         }
         
         if (m_textoInstrucciones) {
-            m_textoInstrucciones->setString("Presiona el numero del ingrediente para obtenerlo | ESC para salir");
+            m_textoInstrucciones->setString("Presiona el numero del ingrediente para obtenerlo | F para salir");
             sf::FloatRect bounds = m_textoInstrucciones->getLocalBounds();
             m_textoInstrucciones->setOrigin(sf::Vector2f(bounds.size.x / 2.f, 0.f));
             m_textoInstrucciones->setPosition(sf::Vector2f(static_cast<float>(windowSize.x) / 2.f, static_cast<float>(windowSize.y) / 2.f + 140.f));
@@ -387,7 +387,7 @@ void MiniGameCook::handleEvent(const sf::Event& event, sf::RenderWindow& window,
             return;
         }
         
-        if (keyPressed->code == sf::Keyboard::Key::R) 
+        if (keyPressed->code == sf::Keyboard::Key::F) 
         {
             
            if (estaCercaMenu(playerPos) && !m_misionCompletada) {

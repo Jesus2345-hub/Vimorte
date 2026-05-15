@@ -1,12 +1,12 @@
-#include "VitalSigns_sara.hpp"
+#include "VitalSigns.hpp"
 #include <random>
 #include <algorithm>
 #include <chrono>
 #include <iostream>
 
-// ============================================================
+
 // Constructor
-// ============================================================
+
 VitalSigns::VitalSigns()
     : m_heartRate(30.f), m_bloodPressure(50.f), m_oxygen(70.f),
       m_opportunitiesLeft(999), m_gameOver(false), m_stabilized(false),
@@ -17,9 +17,9 @@ VitalSigns::VitalSigns()
     m_showBackground = false;
 }
 
-// ============================================================
+
 // Inicialización de la interfaz (textos y barras)
-// ============================================================
+
 void VitalSigns::initUI() {
     if (!m_font.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf")) {
         std::cerr << "ERROR: No se pudo cargar la fuente para VitalSigns" << std::endl;
@@ -68,9 +68,9 @@ void VitalSigns::initUI() {
     m_oxygenBar.setOutlineColor(sf::Color::White);
 }
 
-// ============================================================
+
 // Actualizar los strings de los textos (formato amigable)
-// ============================================================
+
 void VitalSigns::updateTexts() {
     if (m_heartText) {
         m_heartText->setString("Corazon: " + std::to_string((int)m_heartRate) + " bpm");
@@ -93,9 +93,9 @@ void VitalSigns::updateTexts() {
     if (m_opportunitiesText) m_opportunitiesText->setString("");
 }
 
-// ============================================================
+
 // Redimensionar las barras verticales según el valor actual
-// ============================================================
+
 void VitalSigns::updateBars() {
     float heartHeight = (m_heartRate / 150.f) * m_barMaxHeight;
     float bpHeight = (m_bloodPressure / 200.f) * m_barMaxHeight;
@@ -105,16 +105,16 @@ void VitalSigns::updateBars() {
     m_oxygenBar.setSize(sf::Vector2f(m_barWidth, oxygenHeight));
 }
 
-// ============================================================
+
 // Comprobación de rangos normales
-// ============================================================
+
 bool VitalSigns::isHeartNormal() const { return m_heartRate >= 60 && m_heartRate <= 100; }
 bool VitalSigns::isBPNormal() const    { return m_bloodPressure >= 90 && m_bloodPressure <= 120; }
 bool VitalSigns::isOxygenNormal() const { return m_oxygen >= 95 && m_oxygen <= 100; }
 
-// ============================================================
+
 // Mostrar mensaje temporal en la interfaz
-// ============================================================
+
 void VitalSigns::showMessage(const std::string& msg, sf::Color color) {
     m_lastMessage = msg;
     m_messageTimer = 3.0f;
@@ -132,14 +132,14 @@ void VitalSigns::updateMessage(float dt) {
     }
 }
 
-// ============================================================
+
 // Actualización principal (fluctuación periódica)
-// ============================================================
+
 void VitalSigns::update(float dt) {
     if (m_gameOver || m_stabilized) return;
     updateMessage(dt);
     
-    // ACTUALIZAR TEXTOS CADA FRAME (para que respondan rápido a applyEffect)
+    // ACTUALIZAR TEXTOS CADA FRAME 
     updateTexts();
     updateBars();
 
@@ -161,9 +161,9 @@ void VitalSigns::update(float dt) {
         }
     }
 }
-// ============================================================
+
 // Aplicar efecto de un dardo (puntos positivos o negativos)
-// ============================================================
+
 void VitalSigns::applyEffect(int points) {
     if (m_gameOver || m_stabilized) return;
     // No se comprueba m_opportunitiesLeft
@@ -190,9 +190,9 @@ void VitalSigns::applyEffect(int points) {
     }
 }
 
-// ============================================================
-// Dibujar toda la interfaz (siempre visible, esquina inferior izquierda)
-// ============================================================
+
+// Dibujar toda la interfaz (siempre visible)
+
 void VitalSigns::draw(sf::RenderWindow& window) {
     sf::View defaultView = window.getDefaultView();
     window.setView(defaultView);
@@ -247,9 +247,9 @@ void VitalSigns::draw(sf::RenderWindow& window) {
     float panelX = barX - 10.f;
     float panelY = baseY - (25.f * m_scaleFactor) - 5.f;
     
-    // ============================================
+    
     // FONDO DEL PANEL - BIEN VISIBLE
-    // ============================================
+    
     m_backgroundPanel.setPosition(sf::Vector2f(panelX, panelY));
     m_backgroundPanel.setSize(sf::Vector2f(panelWidth, panelHeight));
     m_backgroundPanel.setFillColor(sf::Color(15, 15, 35, 230));  // CASI OPACO
@@ -321,15 +321,15 @@ void VitalSigns::draw(sf::RenderWindow& window) {
     window.draw(m_bpBar);
     window.draw(m_oxygenBar);
 }
-// ============================================================
+
 // Consultas de estado
-// ============================================================
+
 bool VitalSigns::isGameOver() const { return m_gameOver; }
 bool VitalSigns::isStabilized() const { return m_stabilized; }
 
-// ============================================================
+
 // Reiniciar completamente el sistema
-// ============================================================
+
 void VitalSigns::reset() {
     m_heartRate = 30.f;
     m_bloodPressure = 50.f;
