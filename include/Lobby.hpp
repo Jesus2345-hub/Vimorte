@@ -4,6 +4,7 @@
 #include <SFML/Graphics.hpp>
 #include "entities/Player.hpp"
 #include "Obstaculo.hpp"
+#include "CoordenadasDebug.hpp"
 #include <memory>
 #include <vector>
 #include <optional>
@@ -16,6 +17,7 @@ private:
     // Fondo del lobby
     sf::Texture m_backgroundTexture;
     std::unique_ptr<sf::Sprite> m_background;
+    bool m_debugMode = false;
 
     // Lógica de colisiones
     std::vector<Obstaculo> m_mapaFisico;
@@ -39,5 +41,6 @@ public:
     LobbyState(sf::RenderWindow *window, Game *game);
     void update(float dt) override;
     void draw() override;
+    void handleEvent(const sf::Event& event) override;
     ~LobbyState() override = default;
 };

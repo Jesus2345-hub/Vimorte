@@ -12,7 +12,6 @@ LobbyState::LobbyState(sf::RenderWindow *window, Game *game)
     m_player.setPosition(600, 300);
     m_player.setSpeed(300.0f);
 
-    // En el constructor del Lobby:
     m_worldSize = sf::Vector2f(1280.f, 720.f);
     m_camera = sf::View(sf::Vector2f(640.f, 360.f), sf::Vector2f(1280.f, 720.f));
 
@@ -34,15 +33,19 @@ LobbyState::LobbyState(sf::RenderWindow *window, Game *game)
     configurarColisiones();
 
     // 4. CONFIGURAR ÁREA DEL ASCENSOR
-    m_ascensorArea = sf::FloatRect(sf::Vector2f(1050.f, 50.f), sf::Vector2f(100.f, 150.f));
+    m_ascensorArea = sf::FloatRect(
+    sf::Vector2f(1025.f * 1280.f/1377.f, 39.f * 720.f/768.f),
+    sf::Vector2f(204.f * 1280.f/1377.f, 212.f * 720.f/768.f));
 
     // 5. CONFIGURAR TEXTO DE INTERACCIÓN
     if (m_font.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf"))
     {
         m_textoInteraccion = std::make_unique<sf::Text>(m_font);
-        m_textoInteraccion->setString("Presiona R para usar el ascensor");
+        m_textoInteraccion->setString("Presiona F para usar el ascensor");
         m_textoInteraccion->setCharacterSize(20);
         m_textoInteraccion->setFillColor(sf::Color::White);
+         m_textoInteraccion->setOutlineThickness(1.5f);
+        m_textoInteraccion->setOutlineColor(sf::Color::Black);
         m_textoInteraccion->setPosition(sf::Vector2f(640.f, 650.f));
 
         sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
@@ -52,7 +55,7 @@ LobbyState::LobbyState(sf::RenderWindow *window, Game *game)
     // Verificar si hay partida activa
     if (!game->tienePartidaActiva())
     {
-        std::cout << "⚠️ No hay partida activa. Se recomienda crear una nueva partida." << std::endl;
+        std::cout << "No hay partida activa. Se recomienda crear una nueva partida." << std::endl;
     }
     game->setIsInLevel(true);
 }
@@ -101,7 +104,7 @@ void LobbyState::update(float dt)
 
     // INTERACCIÓN CON ASCENSOR
     static bool rProcesado = false;
-    if (m_cercaAscensor && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R))
+    if (m_cercaAscensor && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F))
     {
         if (!rProcesado)
         {
@@ -143,44 +146,121 @@ void LobbyState::update(float dt)
 
 void LobbyState::draw()
 {
-    if (!window) return;
-    
+    if (!window)
+        return;
+
     // ===== FASE 1: MUNDO CON CÁMARA =====
     window->setView(m_camera);
-    
-    if (m_background) {
+
+    if (m_background)
+    {
         window->draw(*m_background);
-    } else {
+    }
+    else
+    {
         sf::RectangleShape fallback(m_worldSize);
         fallback.setFillColor(sf::Color(30, 30, 50));
         window->draw(fallback);
     }
-    
+
+    // DEBUG: Dibujar colisiones (F3)
+    if (m_debugMode)
+    {
+        for (const auto &obj : m_mapaFisico)
+        {
+            sf::RectangleShape colision;
+            colision.setPosition(sf::Vector2f(obj.getBounds().position.x, obj.getBounds().position.y));
+            colision.setSize(sf::Vector2f(obj.getBounds().size.x, obj.getBounds().size.y));
+            colision.setFillColor(sf::Color(255, 0, 0, 80));
+            colision.setOutlineThickness(2.f);
+            colision.setOutlineColor(sf::Color::Red);
+            window->draw(colision);
+        }
+
+        // Área del ascensor
+        sf::RectangleShape ascensorDebug;
+        ascensorDebug.setPosition(sf::Vector2f(m_ascensorArea.position.x, m_ascensorArea.position.y));
+        ascensorDebug.setSize(sf::Vector2f(m_ascensorArea.size.x, m_ascensorArea.size.y));
+        ascensorDebug.setFillColor(sf::Color(0, 255, 0, 80));
+        ascensorDebug.setOutlineThickness(2.f);
+        ascensorDebug.setOutlineColor(sf::Color::Green);
+        window->draw(ascensorDebug);
+    }
+
     // Jugador (se dibuja en el mundo)
     m_player.draw(*window);
-    
+
     // ===== FASE 2: UI (texto de interacción) =====
     window->setView(window->getDefaultView());
-    
-    if (m_cercaAscensor && m_textoInteraccion) {
+
+    if (m_cercaAscensor && m_textoInteraccion)
+    {
         sf::Vector2u winSize = window->getSize();
         m_textoInteraccion->setPosition(sf::Vector2f(winSize.x / 2.f, winSize.y - 70.f));
         window->draw(*m_textoInteraccion);
     }
 }
-
 void LobbyState::configurarColisiones()
 {
     m_mapaFisico.clear();
-    m_mapaFisico.emplace_back(0.f, 0.f, 900.f, 220.f);
-    m_mapaFisico.emplace_back(900.f, 0.f, 1280.f, 5.f);
-    m_mapaFisico.emplace_back(1180.f, 0.f, 100.f, 220.f);
-    m_mapaFisico.emplace_back(0.f, 220.f, 30.f, 410.f);
-    m_mapaFisico.emplace_back(1000.f, 530.f, 630.f, 300.f);
-    m_mapaFisico.emplace_back(820.f, 655.f, 50.f, 50.f);
-    m_mapaFisico.emplace_back(590.f, 410.f, 120.f, 100.f);
-    m_mapaFisico.emplace_back(300.f, 650.f, 150.f, 80.f);
-    m_mapaFisico.emplace_back(-5.f, 0.f, 5.f, 720.f);
-    m_mapaFisico.emplace_back(1280.f, 0.f, 5.f, 720.f);
-    m_mapaFisico.emplace_back(0.f, 715.f, 1280.f, 5.f);
+    
+    // Escala de la imagen original (1377x768) a cámara (1280x720)
+    float escalaX = 1280.f / 1377.f;
+    float escalaY = 720.f / 768.f;
+    
+    auto crear = [&](float x, float y, float w, float h) {
+        m_mapaFisico.emplace_back(
+            x * escalaX, y * escalaY,
+            w * escalaX, h * escalaY);
+    };
+    
+    // Pared superior (0,0) a (1377,211)
+    crear(0.f, 0.f, 1377.f, 211.f);
+    
+    // PC esquina izquierda (1231,211) a (146,76)
+    crear(1231.f, 211.f, 146.f, 76.f);
+    
+    // PC centro (633,421) a (126,128)
+    crear(633.f, 421.f, 126.f, 128.f);
+    
+    // Lavaplatos (341,683) a (140,74)
+    crear(341.f, 683.f, 140.f, 74.f);
+    
+    // Borde izquierdo (0,0) a (19,768)
+    crear(0.f, 0.f, 19.f, 768.f);
+    
+    // Bebedero (19,475) a (66,164)
+    crear(19.f, 475.f, 66.f, 164.f);
+    
+    // Parlante (19,211) a (184,136)
+    crear(19.f, 211.f, 184.f, 136.f);
+    
+    // PC arriba (223,211) a (214,78)
+    crear(223.f, 211.f, 214.f, 78.f);
+    
+    // Cama (1099,597) a (278,171)
+    crear(1099.f, 597.f, 278.f, 171.f);
+
+    // Borde inferior (0,755) a (1377,13)
+    crear(0.f, 755.f, 1377.f, 13.f);
+    
+    // Signos (1278,519) a (94,54)
+    crear(1278.f, 519.f, 94.f, 54.f);
+    
+    // Borde derecho (1360,0) a (17,768)
+    crear(1360.f, 0.f, 17.f, 768.f);
+    
+    // Papelera (905,680) a (45,76)
+    crear(905.f, 680.f, 45.f, 76.f);
+}
+
+void LobbyState::handleEvent(const sf::Event &event)
+{
+    if (const auto *keyPressed = event.getIf<sf::Event::KeyPressed>())
+    {
+        if (keyPressed->code == sf::Keyboard::Key::F3)
+        {
+            m_debugMode = !m_debugMode;
+        }
+    }
 }
