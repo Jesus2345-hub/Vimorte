@@ -24,7 +24,7 @@ Nivel7State::Nivel7State(sf::RenderWindow *window, Game *game)
     m_player.setSpeed(300.0f);
 
     // Tutorial
-    
+
     if (game->tienePartidaActiva())
     {
         const auto &items = game->getSaveManager().getCurrentProgress().itemsRecolectados;
@@ -390,7 +390,7 @@ void Nivel7State::update(float dt)
         m_baloncestoMinigame.update(dt);
         m_player.update(dt);
 
-        if (m_baloncestoMinigame.isGameWon() && !m_llaveObtenida)
+        if (m_baloncestoMinigame.isGameWon() && !m_llaveObtenida && !m_baloncestoMinigame.isGameLost())
         {
             m_llaveObtenida = true;
 

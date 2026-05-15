@@ -19,6 +19,8 @@ private:
     float m_barraAlto;
     float m_barraAnchoGuardado;
     float m_escalaRefGuardada;
+    bool m_cerrando = false;
+    float m_tiempoCierre = 0.f;
 
     // Aro
     sf::Texture m_aroVacioTexture;
@@ -27,6 +29,7 @@ private:
     std::unique_ptr<sf::Sprite> m_aroSprite;
     sf::FloatRect m_zonaTiro;
     sf::Vector2f m_rimCenter;
+    sf::Vector2f m_aimCenter;
     float m_tiempoEnceste;
     int m_faseEnceste;
 
@@ -69,6 +72,7 @@ private:
     // Puntuación
     bool m_isActive;
     bool m_gameWon;
+    bool m_gameLost = false;
     int m_score;
     int m_scoreToWin;
     int m_attempts;
@@ -92,6 +96,7 @@ public:
     void deactivate();
     bool isActive() const { return m_isActive; }
     bool isGameWon() const { return m_gameWon; }
+    bool isGameLost() const { return m_gameLost; }
 
     void handleEvent(const sf::Event &event, const sf::RenderWindow &window);
     void update(float dt);

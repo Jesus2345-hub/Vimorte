@@ -25,11 +25,11 @@ MinigameBaloncesto::MinigameBaloncesto()
     m_barraIndicador.setFillColor(sf::Color::Yellow);
 
     // Crosshair
-    m_crosshair.setRadius(10.f);
+    m_crosshair.setRadius(15.f);
     m_crosshair.setFillColor(sf::Color(255, 0, 0, 150));
     m_crosshair.setOutlineThickness(2.f);
     m_crosshair.setOutlineColor(sf::Color::Red);
-    m_crosshair.setOrigin(sf::Vector2f(10.f, 10.f));
+    m_crosshair.setOrigin(sf::Vector2f(15.f, 15.f));
 }
 
 void MinigameBaloncesto::setPosition(const sf::Vector2f &pos)
@@ -49,18 +49,13 @@ void MinigameBaloncesto::setSize(const sf::Vector2f &size)
     if (escalaRef > 1.5f)
         escalaRef = 1.5f;
 
-    // ============================================================
-    // CENTRO DEL MINIJUEGO
-    // ============================================================
     float centroX = m_position.x + m_size.x / 2.f;
     float centroY = m_position.y + m_size.y / 2.f;
 
-    // ============================================================
-    // TABLERO: Centrado, ocupando 45% del ancho
-    // ============================================================
-    float tableroAncho = m_size.x * 0.34f;
-    float escalaTablero = tableroAncho / 376.f; // 376 = ancho real del bg
-    float tableroAlto = 249.f * escalaTablero;  // 249 = alto real del bg
+    // TABLERO
+    float tableroAncho = m_size.x * 0.50f;
+    float escalaTablero = tableroAncho / 376.f;
+    float tableroAlto = 249.f * escalaTablero;
 
     if (!m_bgSprite)
     {
@@ -75,16 +70,13 @@ void MinigameBaloncesto::setSize(const sf::Vector2f &size)
         m_bgSprite->setScale(sf::Vector2f(escalaTablero, escalaTablero));
         sf::FloatRect bounds = m_bgSprite->getLocalBounds();
         m_bgSprite->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
-        m_bgSprite->setPosition(sf::Vector2f(centroX, centroY));
+        m_bgSprite->setPosition(sf::Vector2f(centroX + m_size.x * 0.10f, centroY));
     }
 
-    // ============================================================
-    // ARO: Centrado en el tablero, pero un poco más abajo
-    // ============================================================
-    // El aro debe estar en el centro del tablero, desplazado hacia abajo
-    float aroOffsetY = tableroAlto * 0.08f;
+    // ARO (abajo)
+    float aroOffsetY = tableroAlto * 0.40f;
     m_rimCenter = sf::Vector2f(
-        centroX,
+        centroX + m_size.x * 0.10f,
         centroY + aroOffsetY);
 
     if (!m_aroSprite)
@@ -99,28 +91,29 @@ void MinigameBaloncesto::setSize(const sf::Vector2f &size)
 
     if (m_aroSprite)
     {
-        float escalaAro = escalaTablero * 0.30f;
+        float escalaAro = escalaTablero * 0.40f;
         m_aroSprite->setScale(sf::Vector2f(escalaAro, escalaAro));
         sf::FloatRect bounds = m_aroSprite->getLocalBounds();
         m_aroSprite->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
-        m_aroSprite->setPosition(sf::Vector2f(centroX, centroY + aroOffsetY));
+        m_aroSprite->setPosition(sf::Vector2f(centroX + m_size.x * 0.10f, centroY + aroOffsetY));
     }
 
-    // ============================================================
-    // ZONA DE TIRO: Rectángulo verde en el centro del tablero
-    // Ocupa el cuadro pequeño central de la imagen del tablero
-    // ============================================================
-    float zonaAncho = tableroAncho * 0.18f;
-    float zonaAlto = tableroAlto * 0.12f;
+    // CENTRO DE APUNTADO (arriba)
+    m_aimCenter = sf::Vector2f(
+        centroX + m_size.x * 0.10f,
+        centroY + tableroAlto * 0.07f);
+
+    // ZONA DE TIRO (en el centro de apuntado)
+    float zonaAncho = tableroAncho * 0.35f;
+    float zonaAlto = tableroAlto * 0.35f;
 
     m_zonaTiro = sf::FloatRect(
         sf::Vector2f(
-            m_rimCenter.x - zonaAncho / 2.f,
-            m_rimCenter.y - zonaAlto / 2.f),
+            m_aimCenter.x - zonaAncho / 2.f,
+            m_aimCenter.y - zonaAlto / 2.f),
         sf::Vector2f(zonaAncho, zonaAlto));
-    // ============================================================
-    // PELOTA: Abajo al centro
-    // ============================================================
+
+    // PELOTA
     if (!m_pelotaSprite)
     {
         if (m_pelotaTexture.loadFromFile("assets/images/niveles/nivel7/pelota_basket.png"))
@@ -131,16 +124,14 @@ void MinigameBaloncesto::setSize(const sf::Vector2f &size)
 
     if (m_pelotaSprite)
     {
-        float escalaPelota = escalaRef * 0.25f;
+        float escalaPelota = escalaRef * 0.40f;
         m_pelotaSprite->setScale(sf::Vector2f(escalaPelota, escalaPelota));
         sf::FloatRect bounds = m_pelotaSprite->getLocalBounds();
         m_pelotaSprite->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
-        m_pelotaSprite->setPosition(sf::Vector2f(centroX, m_position.y + m_size.y * 0.78f));
+        m_pelotaSprite->setPosition(sf::Vector2f(centroX + m_size.x * 0.10f, m_position.y + m_size.y * 0.78f));
     }
 
-    // ============================================================
-    // BARRA DE INTENSIDAD: A la izquierda
-    // ============================================================
+    // BARRA DE INTENSIDAD
     float barraAncho = 35.f * escalaRef;
     float barraAlto = 250.f * escalaRef;
     m_barraX = m_position.x + m_size.x * 0.05f;
@@ -158,28 +149,23 @@ void MinigameBaloncesto::setSize(const sf::Vector2f &size)
     m_barraIndicador.setSize(sf::Vector2f(barraAncho + 10.f, 5.f * escalaRef));
     m_escalaRefGuardada = escalaRef;
 
-    // ============================================================
     // TEXTOS
-    // ============================================================
     if (m_font.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf"))
     {
         int tamTitulo = static_cast<int>(24 * escalaRef);
-        if (tamTitulo < 16)
-            tamTitulo = 16;
+        if (tamTitulo < 16) tamTitulo = 16;
         m_titleText = std::make_unique<sf::Text>(m_font, "TIROS LIBRES", tamTitulo);
         m_titleText->setFillColor(sf::Color::Yellow);
 
         int tamInfo = static_cast<int>(18 * escalaRef);
-        if (tamInfo < 12)
-            tamInfo = 12;
+        if (tamInfo < 12) tamInfo = 12;
         m_scoreText = std::make_unique<sf::Text>(m_font, "", tamInfo);
         m_scoreText->setFillColor(sf::Color::White);
         m_attemptsText = std::make_unique<sf::Text>(m_font, "", tamInfo);
         m_attemptsText->setFillColor(sf::Color(200, 200, 200));
 
         int tamClose = static_cast<int>(12 * escalaRef);
-        if (tamClose < 9)
-            tamClose = 9;
+        if (tamClose < 9) tamClose = 9;
         m_closeText = std::make_unique<sf::Text>(m_font, "ESPACIO: Tiro | ESC: Salir", tamClose);
         m_closeText->setFillColor(sf::Color(150, 150, 150));
 
@@ -210,13 +196,16 @@ void MinigameBaloncesto::reset()
     m_attempts = 0;
     m_gameWon = false;
     m_fase = Fase::INTENSIDAD;
-    m_indicadorPos = 150.f; // Empezar en el centro
+    m_indicadorPos = 150.f;
     m_indicadorSubiendo = true;
     m_intensidadFijada = false;
     m_pelotaVolando = false;
     m_mostrandoEnceste = false;
     m_faseEnceste = 0;
     m_messageTimer = 0.f;
+    m_cerrando = false;
+    m_tiempoCierre = 0.f;
+    m_gameLost = false;
 
     if (m_scoreText)
         m_scoreText->setString("Canastas: 0/" + std::to_string(m_scoreToWin));
@@ -228,7 +217,7 @@ void MinigameBaloncesto::reset()
     if (m_pelotaSprite)
     {
         float centroX = m_position.x + m_size.x / 2.f;
-        m_pelotaSprite->setPosition(sf::Vector2f(centroX, m_position.y + m_size.y * 0.82f));
+        m_pelotaSprite->setPosition(sf::Vector2f(centroX + m_size.x * 0.10f, m_position.y + m_size.y * 0.82f));
     }
 }
 
@@ -241,12 +230,10 @@ void MinigameBaloncesto::handleEvent(const sf::Event &event, const sf::RenderWin
     {
         if (keyPressed->code == sf::Keyboard::Key::Space || keyPressed->code == sf::Keyboard::Key::Enter)
         {
-
             if (m_fase == Fase::INTENSIDAD && !m_intensidadFijada)
             {
                 m_intensidadFijada = true;
 
-                // La zona verde está en el centro de la barra (posición 110-170 aprox)
                 float centroIdeal = m_barraAlto / 2.f;
                 float distancia = std::abs(m_indicadorPos - centroIdeal);
                 float maxDistancia = m_barraAlto / 2.f;
@@ -256,12 +243,7 @@ void MinigameBaloncesto::handleEvent(const sf::Event &event, const sf::RenderWin
                     m_intensidad = 0.1f;
 
                 m_fase = Fase::APUNTAR;
-
-                // Crosshair en la posición del aro
-                sf::Vector2f tableroPos = sf::Vector2f(
-                    m_position.x + m_size.x / 2.f,
-                    m_position.y + m_size.y / 2.f - m_size.y * 0.05f);
-                m_crosshairPos = sf::Vector2f(tableroPos.x, tableroPos.y + m_size.y * 0.04f);
+                m_crosshairPos = m_aimCenter;
             }
             else if (m_fase == Fase::APUNTAR)
             {
@@ -308,24 +290,21 @@ void MinigameBaloncesto::verificarEnceste()
 {
     sf::Vector2f pelotaPos = m_pelotaSprite->getPosition();
 
-    // Verificar si la pelota pasó por la zona de tiro
     if (m_zonaTiro.contains(pelotaPos) && !m_mostrandoEnceste)
     {
         if (m_intensidad > 0.35f)
         {
-            // ¡ENCESTA!
             m_score++;
             m_mostrandoEnceste = true;
             m_tiempoEnceste = 0.4f;
             m_faseEnceste = 1;
+            m_pelotaVolando = false;
 
             if (m_aroSprite)
                 m_aroSprite->setTexture(m_aroEncestandoTexture);
-            showMessage("¡CANASTA!", sf::Color::Green);
+
             if (m_scoreText)
-            {
                 m_scoreText->setString("Canastas: " + std::to_string(m_score) + "/" + std::to_string(m_scoreToWin));
-            }
 
             if (m_score >= m_scoreToWin)
             {
@@ -335,51 +314,9 @@ void MinigameBaloncesto::verificarEnceste()
                     m_titleText->setString("¡VICTORIA!");
                     m_titleText->setFillColor(sf::Color::Green);
                 }
-                showMessage("¡GANASTE! Obtuviste la llave", sf::Color::Green);
+                m_cerrando = true;
+                m_tiempoCierre = 1.5f;
             }
-        }
-        else
-        {
-            // Tocó el aro pero no entró
-            showMessage("¡Casi! Necesitas más precisión", sf::Color(255, 165, 0));
-            m_mostrandoEnceste = true;
-            m_tiempoEnceste = 0.3f;
-            m_faseEnceste = 0;
-        }
-    }
-
-    // Verificar si la pelota salió de la pantalla
-    if (pelotaPos.y < m_position.y - 50.f ||
-        pelotaPos.y > m_position.y + m_size.y + 50.f ||
-        pelotaPos.x < m_position.x - 50.f ||
-        pelotaPos.x > m_position.x + m_size.x + 50.f)
-    {
-
-        m_pelotaVolando = false;
-        m_mostrandoEnceste = false;
-        m_faseEnceste = 0;
-        m_intensidadFijada = false;
-
-        if (m_aroSprite)
-            m_aroSprite->setTexture(m_aroVacioTexture);
-
-        float centroX = m_position.x + m_size.x / 2.f;
-        m_pelotaSprite->setPosition(sf::Vector2f(centroX, m_position.y + m_size.y * 0.82f));
-
-        if (m_attempts >= m_maxAttempts && m_score < m_scoreToWin)
-        {
-            if (m_titleText)
-            {
-                m_titleText->setString("SIN TIROS - ESC para salir");
-                m_titleText->setFillColor(sf::Color::Red);
-            }
-            showMessage("Presiona ESC para salir y reintentar", sf::Color::Red);
-        }
-        else
-        {
-            m_fase = Fase::INTENSIDAD;
-            m_indicadorPos = m_barraAlto / 2.f;
-            m_indicadorSubiendo = true;
         }
     }
 }
@@ -402,6 +339,18 @@ void MinigameBaloncesto::update(float dt)
 {
     if (!m_isActive)
         return;
+
+    // Cierre suave del minijuego
+    if (m_cerrando)
+    {
+        m_tiempoCierre -= dt;
+        if (m_tiempoCierre <= 0.f)
+        {
+            deactivate();
+            m_cerrando = false;
+        }
+        return;
+    }
 
     if (m_messageTimer > 0.f)
     {
@@ -439,17 +388,11 @@ void MinigameBaloncesto::update(float dt)
         static float tiempoCross = 0.f;
         tiempoCross += dt;
 
-        // Movimiento tipo infinito alrededor del aro
-        float amplitudX = 45.f;
-        float amplitudY = 28.f;
+        float amplitudX = 200.f;
+        float amplitudY = 120.f;
 
-        m_crosshairPos.x =
-            m_rimCenter.x +
-            std::sin(tiempoCross * 2.0f) * amplitudX;
-
-        m_crosshairPos.y =
-            m_rimCenter.y +
-            std::sin(tiempoCross * 4.0f) * amplitudY;
+        m_crosshairPos.x = m_aimCenter.x + std::sin(tiempoCross * 2.0f) * amplitudX;
+        m_crosshairPos.y = m_aimCenter.y + std::sin(tiempoCross * 4.0f) * amplitudY;
     }
 
     // FASE VOLANDO
@@ -458,34 +401,46 @@ void MinigameBaloncesto::update(float dt)
         m_ballTime += dt;
 
         float t = m_ballTime / m_ballDuration;
-
-        if (t > 1.f)
-            t = 1.f;
+        if (t > 1.f) t = 1.f;
 
         sf::Vector2f pos;
+        pos.x = m_ballStart.x + (m_ballTarget.x - m_ballStart.x) * t;
+        pos.y = m_ballStart.y + (m_ballTarget.y - m_ballStart.y) * t;
 
-        // Movimiento horizontal
-        pos.x =
-            m_ballStart.x +
-            (m_ballTarget.x - m_ballStart.x) * t;
-
-        // Movimiento vertical
-        pos.y =
-            m_ballStart.y +
-            (m_ballTarget.y - m_ballStart.y) * t;
-
-        // Arco parabólico
-        float arco = 180.f * std::sin(t * 3.141592f);
-
+        float arco = 260.f * std::sin(t * 3.141592f);
         pos.y -= arco;
 
         m_pelotaSprite->setPosition(pos);
 
         verificarEnceste();
 
-        if (t >= 1.f)
+        if (t >= 1.f && !m_mostrandoEnceste)
         {
             m_pelotaVolando = false;
+            m_intensidadFijada = false;
+
+            if (m_aroSprite)
+                m_aroSprite->setTexture(m_aroVacioTexture);
+
+            float centroX = m_position.x + m_size.x / 2.f;
+            m_pelotaSprite->setPosition(sf::Vector2f(centroX + m_size.x * 0.10f, m_position.y + m_size.y * 0.82f));
+
+            if (m_attempts >= m_maxAttempts && m_score < m_scoreToWin)
+            {
+                m_gameLost = true;
+                if (m_titleText)
+                {
+                    m_titleText->setString("SIN TIROS");
+                    m_titleText->setFillColor(sf::Color::Red);
+                }
+                m_cerrando = true;
+                m_tiempoCierre = 1.5f;
+                return;
+            }
+
+            m_fase = Fase::INTENSIDAD;
+            m_indicadorPos = m_barraAlto / 2.f;
+            m_indicadorSubiendo = true;
         }
     }
 
@@ -512,7 +467,7 @@ void MinigameBaloncesto::update(float dt)
                 m_aroSprite->setTexture(m_aroVacioTexture);
 
             float centroX = m_position.x + m_size.x / 2.f;
-            m_pelotaSprite->setPosition(sf::Vector2f(centroX, m_position.y + m_size.y * 0.82f));
+            m_pelotaSprite->setPosition(sf::Vector2f(centroX + m_size.x * 0.10f, m_position.y + m_size.y * 0.82f));
 
             m_fase = Fase::INTENSIDAD;
             m_indicadorPos = m_barraAlto / 2.f;
@@ -559,7 +514,7 @@ void MinigameBaloncesto::draw(sf::RenderWindow &window)
         window.draw(*m_aroSprite);
 
     // Pelota
-    if (m_pelotaSprite)
+    if (m_pelotaSprite && m_pelotaVolando)
         window.draw(*m_pelotaSprite);
 
     // Crosshair
