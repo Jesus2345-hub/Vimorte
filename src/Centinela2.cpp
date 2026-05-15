@@ -346,6 +346,9 @@ void Centinela2State::handleDecisionInput()
         if (!upPressed) {
             upPressed = true;
             m_opcionSeleccionada = 0;
+            // Actualizar colores visuales
+            if (m_textoOpcion1) m_textoOpcion1->setFillColor(sf::Color::Yellow);
+            if (m_textoOpcion2) m_textoOpcion2->setFillColor(sf::Color(150, 150, 150));
         }
     } else {
         upPressed = false;
@@ -355,6 +358,9 @@ void Centinela2State::handleDecisionInput()
         if (!downPressed) {
             downPressed = true;
             m_opcionSeleccionada = 1;
+            // Actualizar colores visuales
+            if (m_textoOpcion1) m_textoOpcion1->setFillColor(sf::Color(150, 150, 150));
+            if (m_textoOpcion2) m_textoOpcion2->setFillColor(sf::Color::Magenta);
         }
     } else {
         downPressed = false;
@@ -366,21 +372,18 @@ void Centinela2State::handleDecisionInput()
             m_dialogoDecisionActivo = false;
             
             LevelTree& levelTree = game->getLevelTree();
-            LevelNode* currentNode = levelTree.getCurrentNode(); 
             
             if (m_opcionSeleccionada == 0) {
-                // FINAL BUENO: Ir al hijo izquierdo
-                if (currentNode && currentNode->left) {
-                    levelTree.jumpToNode("final_bueno_Centinela2");
+                // FINAL BUENO
+                if (levelTree.jumpToNode("final_bueno_Centinela2")) {
                     std::unique_ptr<State> newState = levelTree.createCurrentState(window, game);
                     if (newState) {
                         game->changeState(std::move(newState));
                     }
                 }
             } else {
-                // FINAL MALO: Ir al hijo derecho
-                if (currentNode && currentNode->right) {
-                    levelTree.jumpToNode("final_malo");
+                // FINAL MALO
+                if (levelTree.jumpToNode("final_malo_Centinela2")) {
                     std::unique_ptr<State> newState = levelTree.createCurrentState(window, game);
                     if (newState) {
                         game->changeState(std::move(newState));
@@ -401,7 +404,7 @@ void Centinela2State::handleEvent(const sf::Event& event)
             CoordenadasDebug::getInstance().setVisible(m_debugMode);
         }
     }
-    // ========== ADMIN MODE: TECLA E PARA VOLVER ==========
+    //  ADMIN MODE: TECLA E PARA VOLVER 
     if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>()) {
         if (keyPressed->code == sf::Keyboard::Key::E) {
             if (game->isAdminMode() && !m_estanteAbierto && !m_mensajeEmergenteActivo && !m_dialogoDecisionActivo) {
@@ -419,7 +422,7 @@ void Centinela2State::handleEvent(const sf::Event& event)
         return;
     }
     
-    // ========== ABRIR ESTANTE ==========
+    //  ABRIR ESTANTE 
     if (!m_estanteCerca.empty() && !m_estanteAbierto && !m_mensajeEmergenteActivo && !m_dialogoDecisionActivo) {
         if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>()) {
             if (keyPressed->code == sf::Keyboard::Key::F) {
@@ -460,7 +463,7 @@ void Centinela2State::handleEvent(const sf::Event& event)
         }
     }
     
-    // ========== ESTANTE ABIERTO (prioridad) ==========
+    //  ESTANTE ABIERTO (prioridad) 
     if (m_estanteAbierto) {
         if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>()) {
             
@@ -512,7 +515,7 @@ void Centinela2State::handleEvent(const sf::Event& event)
         return;
     }
     
-    // ========== DIÁLOGO DEL ASCENSOR ==========
+    //  DIÁLOGO DEL ASCENSOR 
     if (m_mensajeEmergenteActivo) {
         if (const auto *keyPressed = event.getIf<sf::Event::KeyPressed>()) {
             
@@ -546,7 +549,7 @@ void Centinela2State::handleEvent(const sf::Event& event)
         }
         return; 
     }
-    // ========== MENU/RECETARIO ==========
+    //  MENU/RECETARIO 
     if (m_cercaMenu && !m_nivelCompletado && !m_gameOver) {
         if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>()) {
             if (keyPressed->code == sf::Keyboard::Key::F) {
@@ -570,11 +573,11 @@ void Centinela2State::handleEvent(const sf::Event& event)
         }
     }
     
-    // ========== INVENTARIO ==========
+    //  INVENTARIO 
     Inventory* inv = m_player.getInventory();
     if (inv) inv->handleEvent(event, *window);
     
-    // ========== MINIJUEGO DE COCINA ==========
+    //  MINIJUEGO DE COCINA 
     if (m_cocinaMinigame && !m_nivelCompletado && !m_gameOver && !m_estanteAbierto) {
         m_cocinaMinigame->handleEvent(event, *window, m_player.getPosition());
     }

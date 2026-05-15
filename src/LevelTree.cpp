@@ -91,7 +91,7 @@ void LevelTree::buildTree()
     auto finalMalo = std::make_unique<LevelNode>("final_malo_Centinela2", "Final Malo Centinela 2", LevelType::NORMAL, 0);
     finalMalo->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
     {
-        return std::make_unique<VideoFinalState>(w, g, "assets/videos/final_malo", false);
+        return std::make_unique<VideoFinalState>(w, g, "assets/videos/Centinela2_FinalMalo", false);
     };
 
     // Hijos del centinela2
