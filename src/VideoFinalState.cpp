@@ -7,7 +7,7 @@ VideoFinalState::VideoFinalState(sf::RenderWindow* window, Game* game,
                                  const std::string& videoFolder, bool isGoodEnding)
     : State(window, game)
     , m_currentFrame(0)
-    , m_frameDuration(2.0f)
+    , m_frameDuration(3.0f)
     , m_isGoodEnding(isGoodEnding)
     , m_videoPath(videoFolder)
 {
