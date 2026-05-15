@@ -8,7 +8,8 @@
 #include "Nivel2State.hpp"  
 #include "Nivel4State.hpp"
 #include "VideoFinalState.hpp"
-#include "NivelSara2State.hpp"
+#include "Nivel5State.hpp"
+#include "Nivel2State.hpp"
 #include "Nivel3State.hpp"  
 #include "Nivel6State.hpp"
 #include "Nivel7State.hpp"
@@ -26,7 +27,7 @@ std::unique_ptr<LevelNode> crearCentinela1()
     auto centinela = std::make_unique<LevelNode>("centinela1", "Centinela 1", LevelType::CENTINELA, 0);
     centinela->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
     {
-        return std::make_unique<CentinelaConductosState>(w, g);  // Ajusta según tu centinela1 real
+        return std::make_unique<CentinelaConductosState>(w, g);  
     };
     centinela->permiteRetrocesoDesdeCentinela = true;
 
@@ -148,7 +149,7 @@ void LevelTree::buildTree()
     // ============ NIVEL 5 ============
     auto nivel5 = std::make_unique<LevelNode>("nivel5", "Nivel 5", LevelType::NORMAL, 5);
     nivel5->stateFactory = [](sf::RenderWindow* w, Game* g) -> std::unique_ptr<State> {
-        return std::make_unique<NivelSara2State>(w, g);
+        return std::make_unique<Nivel5State>(w, g);
     };
 
     // ============ NIVEL 6 ============

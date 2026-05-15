@@ -26,15 +26,15 @@ void VitalSigns::initUI() {
         return;
     }
 
-    // Configurar fondo del panel - MÁS VISIBLE
-    m_backgroundPanel.setFillColor(sf::Color(15, 15, 35, 240));  // Azul oscuro casi opaco
+    // Configurar fondo del panel 
+    m_backgroundPanel.setFillColor(sf::Color(15, 15, 35, 240));  
     m_backgroundPanel.setOutlineThickness(3.f);
-    m_backgroundPanel.setOutlineColor(sf::Color(255, 200, 80));  // Borde dorado
+    m_backgroundPanel.setOutlineColor(sf::Color(255, 200, 80)); 
 
     // Escala inicial (se actualizará en draw)
     m_scaleFactor = 1.0f;
 
-    // Crear textos con tamaños que luego se escalarán
+    // Crear textos con tamaños 
     m_titleText = std::make_unique<sf::Text>(m_font, " SIGNOS VITALES\n    -ANDRES-", 15);
     m_titleText->setOutlineThickness(1.f);
     m_titleText->setOutlineColor(sf::Color::Black);
@@ -69,7 +69,7 @@ void VitalSigns::initUI() {
 }
 
 
-// Actualizar los strings de los textos (formato amigable)
+// Actualizar los strings de los textos 
 
 void VitalSigns::updateTexts() {
     if (m_heartText) {
@@ -157,7 +157,7 @@ void VitalSigns::update(float dt) {
         // Verificar muerte
         if (m_heartRate <= 0 || m_bloodPressure <= 0 || m_oxygen <= 0) {
             m_gameOver = true;
-            showMessage(" GAME OVER - El paciente ha muerto", sf::Color::Red);
+            showMessage("El paciente ha muerto", sf::Color::Red);
         }
     }
 }
@@ -182,7 +182,7 @@ void VitalSigns::applyEffect(int points) {
     // Verificar muerte
     if (m_heartRate <= 0 || m_bloodPressure <= 0 || m_oxygen <= 0) {
         m_gameOver = true;
-        showMessage(" GAME OVER - El paciente ha muerto", sf::Color::Red);
+        showMessage("El paciente ha muerto", sf::Color::Red);
     }
     // Estabilización automática si los tres están en rango
     if (isHeartNormal() && isBPNormal() && isOxygenNormal()) {
@@ -248,14 +248,14 @@ void VitalSigns::draw(sf::RenderWindow& window) {
     float panelY = baseY - (25.f * m_scaleFactor) - 5.f;
     
     
-    // FONDO DEL PANEL - BIEN VISIBLE
+    // Fondo de panel
     
     m_backgroundPanel.setPosition(sf::Vector2f(panelX, panelY));
     m_backgroundPanel.setSize(sf::Vector2f(panelWidth, panelHeight));
     m_backgroundPanel.setFillColor(sf::Color(15, 15, 35, 230));  // CASI OPACO
     window.draw(m_backgroundPanel);
     
-    // Borde dorado para que resalte
+    // Borde dorado para que resalte (Los signos vitales)
     sf::RectangleShape border(sf::Vector2f(panelWidth, panelHeight));
     border.setPosition(sf::Vector2f(panelX, panelY));
     border.setFillColor(sf::Color::Transparent);

@@ -16,10 +16,10 @@ struct BloqueInteractivo {
 };
   
 
-class NivelSara2State : public State 
+class Nivel5State : public State 
 {
 private:
-
+    bool m_estrellaUsada;
     sf::Vector2f m_playerStartPosition = sf::Vector2f(0.f, 0.f);
     std::unique_ptr<sf::Text> m_mensajeFlotante;
     sf::Clock m_clockFlotante;
@@ -74,7 +74,6 @@ private:
     sf::FloatRect m_puertaSalidaArea;
     
     void verificarSalidaNivel();
-    void verificarEntradaCentinela();
     void jugadorHaMuerto();
     sf::Vector2u m_lastWindowSize;
     
@@ -90,11 +89,11 @@ private:
     std::vector<std::vector<Sospechoso>> m_todosLosSospechosos;
     std::vector<std::vector<DialogoNarrativo>> m_todosLosDialogos;
 public:
-    NivelSara2State(sf::RenderWindow* window, Game* game);
+    Nivel5State(sf::RenderWindow* window, Game* game);
     void update(float dt) override;
     void draw() override;
     void handleEvent(const sf::Event& event) override;
     void setPlayerStartPosition(const sf::Vector2f& pos) { m_playerStartPosition = pos; }
     sf::Vector2f getPlayerStartPosition() const { return m_playerStartPosition; }
-    ~NivelSara2State() override = default;
+    ~Nivel5State() override = default;
 };

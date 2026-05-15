@@ -23,7 +23,7 @@ private:
     sf::RectangleShape m_backgroundPanel;
     bool m_showBackground = true;
     float m_titleOffsetX = 0.f;
-    // Valores
+    // VALORES
     float m_heartRate;
     float m_bloodPressure;
     float m_oxygen;
@@ -31,13 +31,13 @@ private:
     bool m_gameOver;
     bool m_stabilized;
 
-    // Temporizadores
+    // TEMPORIZADORES
     float m_fluctuationTimer;
     float m_fluctuationInterval;
     float m_messageTimer;
     std::string m_lastMessage;
 
-    // Fuente y textos
+    // FUENTE Y TEXTO
     sf::Font m_font;
     std::unique_ptr<sf::Text> m_titleText;
     std::unique_ptr<sf::Text> m_heartText;
@@ -46,12 +46,12 @@ private:
     std::unique_ptr<sf::Text> m_opportunitiesText;
     std::unique_ptr<sf::Text> m_messageText;
 
-    // Barras (solo una declaración)
+    // BARRAS
     sf::RectangleShape m_heartBar;
     sf::RectangleShape m_bpBar;
     sf::RectangleShape m_oxygenBar;
 
-    // Constantes para barras verticales
+    // CONSTASTES PARA BARRAS VERTICALES
     const float m_barWidth = 25.f;
     const float m_barMaxHeight = 150.f;
     const float m_barSpacing = 35.f;

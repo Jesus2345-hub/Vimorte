@@ -6,7 +6,7 @@
 #include <map>
 #include "VitalSigns.hpp"
 
-// Estructura para un bloque de color
+// ESTRUCCTURA PARA BLOQUES DE COLORES
 struct ColorBlock {
     sf::Color color;
     sf::Vector2i gridPos;
@@ -55,14 +55,14 @@ private:
     void recalculateLayout(float screenW, float screenH);
     static constexpr int GRID_SIZE = 3;
     static constexpr int BASE_BLOCK_SIZE = 80;
-    static constexpr float PATTERN_VISIBLE_TIME = 3.0f;  // 3 segundos para memorizar
+    static constexpr float PATTERN_VISIBLE_TIME = 3.0f;  
     
     std::vector<sf::Color> m_availableColors;
-    std::vector<std::vector<sf::Color>> m_currentTargetPattern;  // Patrón actual
+    std::vector<std::vector<sf::Color>> m_currentTargetPattern; 
     std::vector<std::vector<sf::Color>> m_playerPattern;
     std::vector<ColorBlock> m_availableBlocks;
     
-    // Para los 3 patrones
+    // PARA LOS TRES PATRONES
     std::vector<std::vector<std::vector<sf::Color>>> m_allPatterns;
     int m_currentPatternIndex;
     int m_patternsCompleted;
@@ -76,7 +76,7 @@ private:
     float m_scaleFactor;
     float m_currentBlockSize;
     
-    // UI Elements
+    // UI 
     sf::RectangleShape m_background;
     sf::Font m_font;
     bool m_fontLoaded;
@@ -89,7 +89,7 @@ private:
     std::unique_ptr<sf::Text> m_verifyButtonText;
     std::unique_ptr<sf::Text> m_hintText; 
     
-    // Fondos
+    // FONDOS
     sf::RectangleShape m_targetGridBackground;
     sf::RectangleShape m_playerGridBackground;
     sf::RectangleShape m_inventoryBackground;
@@ -99,7 +99,7 @@ private:
     std::vector<sf::RectangleShape> m_playerCells;
     std::vector<sf::RectangleShape> m_inventoryBlocks;
     
-    // Para almacenar los bordes de verificación
+    // PARA ALMACENAR LOS BORDES DE VERIFICACION
     std::vector<int> m_wrongCells;  
     std::vector<int> m_correctCells; 
     bool m_showVerification;
@@ -113,7 +113,7 @@ private:
     std::string m_currentMessage;
     sf::Color m_messageColor;
     
-    // Temporizador para mostrar el patrón
+    // TEMPORIZADOR PARA MOSTRAR EL PATRON
     float m_patternVisibleTimer;
     bool m_isPatternVisible;
     bool m_waitingForVerification;  
