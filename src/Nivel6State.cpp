@@ -3,6 +3,7 @@
 #include <iostream>
 #include <cmath>
 #include <algorithm>
+#include <fstream>
 
 Nivel6State::Nivel6State(sf::RenderWindow *window, Game *game)
     : State(window, game),
@@ -130,7 +131,19 @@ Nivel6State::Nivel6State(sf::RenderWindow *window, Game *game)
     }
 
     game->setIsInLevel(true);
-    game->cambiarMusica("assets/sounds/nivel6.ogg");
+
+    // Verificar si el archivo existe antes de cambiarlo
+    std::ifstream file("assets/sounds/nivel6.ogg");
+    if (file.good())
+    {
+        file.close();
+        game->cambiarMusica("assets/sounds/nivel6.ogg");
+    }
+    else
+    {
+        std::cout << "⚠️ Archivo de música no encontrado: assets/sounds/nivel6.ogg" << std::endl;
+    }
+
     std::cout << "Nivel6State inicializado correctamente" << std::endl;
 }
 
@@ -592,7 +605,7 @@ void Nivel6State::draw()
     m_abuelita.draw(*window);
 
     // DEBUG: Dibujar colisiones (F3)
-        // DEBUG: Dibujar colisiones y hitboxes (F3)
+    // DEBUG: Dibujar colisiones y hitboxes (F3)
     if (m_debugMode)
     {
         // Colisiones del mapa (rojo)
@@ -606,7 +619,7 @@ void Nivel6State::draw()
             colision.setOutlineColor(sf::Color::Red);
             window->draw(colision);
         }
-        
+
         // Hitbox gallo (amarillo)
         sf::FloatRect galloBounds = m_gallo.getBounds();
         sf::RectangleShape galloDebug;
@@ -616,7 +629,7 @@ void Nivel6State::draw()
         galloDebug.setOutlineThickness(2.f);
         galloDebug.setOutlineColor(sf::Color::Yellow);
         window->draw(galloDebug);
-        
+
         // Hitbox joven (azul)
         sf::FloatRect jovenBounds = m_joven.getBounds();
         sf::RectangleShape jovenDebug;
@@ -626,7 +639,7 @@ void Nivel6State::draw()
         jovenDebug.setOutlineThickness(2.f);
         jovenDebug.setOutlineColor(sf::Color::Blue);
         window->draw(jovenDebug);
-        
+
         // Hitbox abuelita (magenta)
         sf::FloatRect abuelitaBounds = m_abuelita.getBounds();
         sf::RectangleShape abuelitaDebug;
