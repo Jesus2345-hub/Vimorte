@@ -116,6 +116,8 @@ Nivel6State::Nivel6State(sf::RenderWindow *window, Game *game)
         m_textoInteraccion = std::make_unique<sf::Text>(m_font);
         m_textoInteraccion->setCharacterSize(20);
         m_textoInteraccion->setFillColor(sf::Color::White);
+        m_textoInteraccion->setOutlineThickness(1.5f);
+        m_textoInteraccion->setOutlineColor(sf::Color::Black);
         m_textoMensaje = std::make_unique<sf::Text>(m_font);
         m_textoMensaje->setCharacterSize(24);
         m_textoMensaje->setFillColor(sf::Color::Yellow);
@@ -150,6 +152,10 @@ void Nivel6State::handleEvent(const sf::Event &event)
             // Forzar mostrar el tutorial SIEMPRE al presionar M
             m_mostrarTutorialPorTecla = true;
             std::cout << "M presionada - Mostrando tutorial del Nivel 6" << std::endl;
+        }
+        if (keyPressed->code == sf::Keyboard::Key::F3)
+        {
+            m_debugMode = !m_debugMode;
         }
     }
 
@@ -197,7 +203,7 @@ void Nivel6State::verificarSalidaNivel()
     static bool rPresionadoSalida = false;
     if (m_cercaPuertaSalida)
     {
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R))
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F))
         {
             if (!rPresionadoSalida)
             {
@@ -221,7 +227,7 @@ void Nivel6State::verificarSalidaNivel()
 
                 if (tieneLlave || m_llaveObtenida)
                 {
-                    std::cout << "🚪 Saliendo del Nivel 6 con la llave..." << std::endl;
+                    std::cout << "Saliendo del Nivel 6 con la llave..." << std::endl;
                     game->avanzarNivel();
                 }
                 else
@@ -277,7 +283,7 @@ void Nivel6State::update(float dt)
     {
         m_cercaRifle = m_player.getHurtbox().findIntersection(m_rifleArea).has_value();
         static bool rRiflePresionado = false;
-        if (m_cercaRifle && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R))
+        if (m_cercaRifle && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F))
         {
             if (!rRiflePresionado)
             {
@@ -303,7 +309,7 @@ void Nivel6State::update(float dt)
     if (m_rifleRecogido && m_cercaGallo && !m_roosterHuntMinigame.isActive() && !m_tictactoeMinigame.isActive())
     {
         static bool rGalloPresionado = false;
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R))
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F))
         {
             if (!rGalloPresionado)
             {
@@ -366,7 +372,7 @@ void Nivel6State::update(float dt)
     if (m_gallinaObtenida && m_joven.estaDormido() && m_cercaJoven && !m_tictactoeMinigame.isActive() && !m_roosterHuntMinigame.isActive() && !m_bloquearR)
     {
         static bool rJovenPresionado = false;
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R))
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F))
         {
             if (!rJovenPresionado)
             {
@@ -385,7 +391,7 @@ void Nivel6State::update(float dt)
     if (!m_joven.estaDormido() && m_cercaJoven && !m_tictactoeMinigame.isActive() && !m_roosterHuntMinigame.isActive() && !m_dientesObtenidos && !m_bloquearR)
     {
         static bool rTictactoePresionado = false;
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R))
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F))
         {
             if (!rTictactoePresionado)
             {
@@ -445,7 +451,7 @@ void Nivel6State::update(float dt)
     if (m_dientesObtenidos && m_abuelita.estaNormal() && m_cercaAbuelita && !m_llaveObtenida)
     {
         static bool rAbuelitaPresionado = false;
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R))
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F))
         {
             if (!rAbuelitaPresionado)
             {
@@ -585,6 +591,53 @@ void Nivel6State::draw()
     m_joven.draw(*window);
     m_abuelita.draw(*window);
 
+    // DEBUG: Dibujar colisiones (F3)
+        // DEBUG: Dibujar colisiones y hitboxes (F3)
+    if (m_debugMode)
+    {
+        // Colisiones del mapa (rojo)
+        for (const auto &obj : m_mapaFisico)
+        {
+            sf::RectangleShape colision;
+            colision.setPosition(sf::Vector2f(obj.getBounds().position.x, obj.getBounds().position.y));
+            colision.setSize(sf::Vector2f(obj.getBounds().size.x, obj.getBounds().size.y));
+            colision.setFillColor(sf::Color(255, 0, 0, 80));
+            colision.setOutlineThickness(2.f);
+            colision.setOutlineColor(sf::Color::Red);
+            window->draw(colision);
+        }
+        
+        // Hitbox gallo (amarillo)
+        sf::FloatRect galloBounds = m_gallo.getBounds();
+        sf::RectangleShape galloDebug;
+        galloDebug.setPosition(sf::Vector2f(galloBounds.position.x, galloBounds.position.y));
+        galloDebug.setSize(sf::Vector2f(galloBounds.size.x, galloBounds.size.y));
+        galloDebug.setFillColor(sf::Color(255, 255, 0, 80));
+        galloDebug.setOutlineThickness(2.f);
+        galloDebug.setOutlineColor(sf::Color::Yellow);
+        window->draw(galloDebug);
+        
+        // Hitbox joven (azul)
+        sf::FloatRect jovenBounds = m_joven.getBounds();
+        sf::RectangleShape jovenDebug;
+        jovenDebug.setPosition(sf::Vector2f(jovenBounds.position.x, jovenBounds.position.y));
+        jovenDebug.setSize(sf::Vector2f(jovenBounds.size.x, jovenBounds.size.y));
+        jovenDebug.setFillColor(sf::Color(0, 0, 255, 80));
+        jovenDebug.setOutlineThickness(2.f);
+        jovenDebug.setOutlineColor(sf::Color::Blue);
+        window->draw(jovenDebug);
+        
+        // Hitbox abuelita (magenta)
+        sf::FloatRect abuelitaBounds = m_abuelita.getBounds();
+        sf::RectangleShape abuelitaDebug;
+        abuelitaDebug.setPosition(sf::Vector2f(abuelitaBounds.position.x, abuelitaBounds.position.y));
+        abuelitaDebug.setSize(sf::Vector2f(abuelitaBounds.size.x, abuelitaBounds.size.y));
+        abuelitaDebug.setFillColor(sf::Color(255, 0, 255, 80));
+        abuelitaDebug.setOutlineThickness(2.f);
+        abuelitaDebug.setOutlineColor(sf::Color::Magenta);
+        window->draw(abuelitaDebug);
+    }
+
     // Jugador (adelante)
     m_player.draw(*window);
 
@@ -600,20 +653,20 @@ void Nivel6State::draw()
     // Texto rifle
     if (!m_rifleRecogido && m_cercaRifle && m_textoInteraccion && m_fontLoaded)
     {
-        m_textoInteraccion->setString("Presiona R para recoger el rifle");
+        m_textoInteraccion->setString("Presiona F para recoger el rifle");
         sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
         m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
-        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
+        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 85.f));
         window->draw(*m_textoInteraccion);
     }
 
     // Texto gallo (cazar)
     if (m_rifleRecogido && m_cercaGallo && !m_roosterHuntMinigame.isActive() && !m_tictactoeMinigame.isActive() && m_textoInteraccion && m_fontLoaded)
     {
-        m_textoInteraccion->setString("Presiona R para cazar gallos");
+        m_textoInteraccion->setString("Presiona F para cazar gallos");
         sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
         m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
-        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
+        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 85.f));
         window->draw(*m_textoInteraccion);
     }
 
@@ -622,10 +675,10 @@ void Nivel6State::draw()
         !m_tictactoeMinigame.isActive() && !m_roosterHuntMinigame.isActive() &&
         m_textoInteraccion && m_fontLoaded)
     {
-        m_textoInteraccion->setString("Presiona R para despertar al joven");
+        m_textoInteraccion->setString("Presiona F para despertar al joven");
         sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
         m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
-        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
+        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 85.f));
         window->draw(*m_textoInteraccion);
     }
 
@@ -634,20 +687,20 @@ void Nivel6State::draw()
         !m_roosterHuntMinigame.isActive() && !m_dientesObtenidos &&
         m_textoInteraccion && m_fontLoaded)
     {
-        m_textoInteraccion->setString("Presiona R y jugamos la vieja");
+        m_textoInteraccion->setString("Joven: Presiona F y jugamos la vieja");
         sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
         m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
-        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
+        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 85.f));
         window->draw(*m_textoInteraccion);
     }
 
     // Texto ya tiene dientes
     if (m_dientesObtenidos && m_cercaJoven && m_textoInteraccion && m_fontLoaded)
     {
-        m_textoInteraccion->setString("Ya tienes los dientes, que mas quieres de mi?");
+        m_textoInteraccion->setString("Joven: Ya tienes los dientes, que mas quieres de mi?");
         sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
         m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
-        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
+        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 85.f));
         window->draw(*m_textoInteraccion);
     }
 
@@ -659,7 +712,7 @@ void Nivel6State::draw()
         m_textoInteraccion->setString("La abuelita necesita sus dientes...");
         sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
         m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
-        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
+        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 85.f));
         window->draw(*m_textoInteraccion);
     }
 
@@ -667,20 +720,20 @@ void Nivel6State::draw()
     if (m_dientesObtenidos && m_abuelita.estaNormal() && m_cercaAbuelita && !m_llaveObtenida &&
         m_textoInteraccion && m_fontLoaded)
     {
-        m_textoInteraccion->setString("Presiona R para entregar los dientes");
+        m_textoInteraccion->setString("Presiona F para entregar los dientes");
         sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
         m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
-        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
+        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 85.f));
         window->draw(*m_textoInteraccion);
     }
 
     // Texto llave obtenida
     if (m_llaveObtenida && m_cercaAbuelita && m_textoInteraccion && m_fontLoaded)
     {
-        m_textoInteraccion->setString("¡Gracias! Ya puedes salir del nivel");
+        m_textoInteraccion->setString("Abuelita: Gracias, con esa llave puedes salir de aqui");
         sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
         m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
-        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
+        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 85.f));
         window->draw(*m_textoInteraccion);
     }
 
@@ -689,7 +742,7 @@ void Nivel6State::draw()
     {
         if (m_llaveObtenida)
         {
-            m_textoInteraccion->setString("Presiona R para salir del nivel");
+            m_textoInteraccion->setString("Presiona F para salir del nivel");
         }
         else
         {
@@ -697,7 +750,7 @@ void Nivel6State::draw()
         }
         sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
         m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
-        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
+        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 85.f));
         window->draw(*m_textoInteraccion);
     }
 
@@ -714,8 +767,8 @@ void Nivel6State::draw()
             tutorialText.setString(
                 "NIVEL 6 - LA BUSQUEDA DE LOS DIENTES\n\n"
                 "La abuelita necesita sus dientes.\n\n"
-                "Encuentra el rifle, caza gallinas y despierta\n"
-                "al guardian para conseguir los dientes.\n\n"
+                "Encuentra el rifle, caza galloss y despierta\n"
+                "al joven para conseguir los dientes.\n\n"
                 "[ESC] Cerrar | [M] Ayuda");
             tutorialText.setCharacterSize(20);
             tutorialText.setFillColor(sf::Color::White);

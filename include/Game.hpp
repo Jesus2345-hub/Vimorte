@@ -36,6 +36,10 @@ private:
     bool m_isInLevel = false;
 
     bool m_adminMode = false;
+
+    bool m_pendingMenuReturn = false;
+    bool m_pendingStateChange = false;
+    std::unique_ptr<State> m_pendingState;
 public:
     Game();
     ~Game();

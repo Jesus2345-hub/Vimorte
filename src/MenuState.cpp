@@ -55,6 +55,7 @@ void MenuState::handleEvent(const sf::Event &event)
 void MenuState::update(float dt)
 {
     sf::Vector2i mousePos = sf::Mouse::getPosition(*window);
+    
     miMenu->actualizar(mousePos);
 
     if (m_adminMode)
