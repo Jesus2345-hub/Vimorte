@@ -117,7 +117,7 @@ void Centinela3State::configurarCamaras()
     
     // ===== CÁMARAS BLANCAS (Primer minijuego) =====
     m_camaras.push_back({
-        sf::Vector2f(300.f, 100.f),
+        sf::Vector2f(90.f, 260.f),
         sf::Vector2f(0.f, 1.f),
         250.f,
         60.f,
@@ -126,7 +126,7 @@ void Centinela3State::configurarCamaras()
     });
     
     m_camaras.push_back({
-        sf::Vector2f(500.f, 100.f),
+        sf::Vector2f(790.f, 290.f),
         sf::Vector2f(0.f, 1.f),
         250.f,
         55.f,
@@ -134,28 +134,12 @@ void Centinela3State::configurarCamaras()
         true
     });
     
-    m_camaras.push_back({
-        sf::Vector2f(400.f, 350.f),
-        sf::Vector2f(1.f, 0.f),
-        200.f,
-        50.f,
-        false,
-        true
-    });
-    
-    m_camaras.push_back({
-        sf::Vector2f(700.f, 350.f),
-        sf::Vector2f(-1.f, 0.f),
-        200.f,
-        50.f,
-        false,
-        true
-    });
+
     
     // ===== CÁMARAS ROJAS (Segundo minijuego) =====
     m_camaras.push_back({
-        sf::Vector2f(850.f, 200.f),
-        sf::Vector2f(0.7f, 0.7f),
+        sf::Vector2f(1052.f, 366.f),
+        sf::Vector2f(1.f, 0.f),
         280.f,
         45.f,
         true,
@@ -163,31 +147,14 @@ void Centinela3State::configurarCamaras()
     });
     
     m_camaras.push_back({
-        sf::Vector2f(1050.f, 200.f),
-        sf::Vector2f(-0.7f, 0.7f),
+        sf::Vector2f(600.f, 518.f),
+        sf::Vector2f(-1.f, 0.f),
         280.f,
         45.f,
         true,
         true
     });
     
-    m_camaras.push_back({
-        sf::Vector2f(950.f, 500.f),
-        sf::Vector2f(0.f, -1.f),
-        300.f,
-        70.f,
-        true,
-        true
-    });
-    
-    m_camaras.push_back({
-        sf::Vector2f(1150.f, 500.f),
-        sf::Vector2f(0.f, -1.f),
-        300.f,
-        70.f,
-        true,
-        true
-    });
 }
 
 // ============ CONFIGURACIÓN DE TERMINALES ============
@@ -237,7 +204,7 @@ void Centinela3State::dibujarCamaras()
 {
     for (const auto& camara : m_camaras) {
         if (!camara.activa) continue;
-        if (camara.esTipoRojo && !m_camarasBlancasDesactivadas) continue;
+       
         
         auto triangulo = camara.obtenerTriangulo();
         

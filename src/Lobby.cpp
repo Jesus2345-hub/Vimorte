@@ -1,6 +1,6 @@
 #include "Lobby.hpp"
 #include "PauseState.hpp"
-#include "Nivel2State.hpp"
+#include "Nivel6State.hpp"  
 #include <iostream>
 #include <cmath>
 
@@ -119,7 +119,7 @@ void LobbyState::update(float dt)
             }
 
             std::cout << "Transición al Nivel 1" << std::endl;
-            game->changeState(std::make_unique<Nivel2State>(window, game));
+            game->changeState(std::make_unique<Nivel6State>(window, game));
             return;
         }
     }
