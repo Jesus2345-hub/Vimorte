@@ -54,7 +54,7 @@ Nivel4State::Nivel4State(sf::RenderWindow* window, Game* game)
 
     // Configurar herramienta recogible
     m_herramientaRecogida = false;
-    m_herramientaArea = sf::FloatRect(sf::Vector2f(500.f, 1000.f), sf::Vector2f(40.f, 40.f)); 
+    m_herramientaArea = sf::FloatRect(sf::Vector2f(1540.f, 584.f), sf::Vector2f(40.f, 40.f)); 
     m_cercaHerramienta = false;
 
     // Cargar sprite de la herramienta en el mapa
@@ -254,6 +254,12 @@ void Nivel4State::handleEvent(const sf::Event& event) {
             return;
         }
     }
+    
+     // Manejar inventario 
+    Inventory* inv = m_player.getInventory();
+    if (inv) {
+        inv->handleEvent(event, *window);
+    }
 
     // Prioridad: Minijuego de Dardos activo
     if (m_dartsMinigame.isActive()) {
@@ -442,7 +448,7 @@ void Nivel4State::update(float dt) {
         m_cercaHerramienta = m_player.getHurtbox().findIntersection(m_herramientaArea).has_value();
         
         static bool rHerramientaPresionado = false;
-        if (m_cercaHerramienta && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R)) {
+        if (m_cercaHerramienta && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F)) {
             if (!rHerramientaPresionado) {
                 rHerramientaPresionado = true;
                 m_herramientaRecogida = true;
@@ -527,10 +533,15 @@ void Nivel4State::verificarSalidaNivel() {
     
     static bool ePresionado = false;
     
+    // NO procesar salida si el inventario está abierto
+    Inventory* inv = m_player.getInventory();
+    if (inv && inv->isOpen()) {
+        return;  
+    }
+    
     if (m_cercaAscensor && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::E)) {
         if (!ePresionado) {
             ePresionado = true;
-            
             // Verificar si ambos pacientes estan estabilizados
             if (m_ambosEstabilizados) {
                 std::cout << "Saliendo del nivel 4 - Ambos pacientes estabilizados..." << std::endl;
@@ -575,6 +586,12 @@ void Nivel4State::verificarSalidaNivel() {
 void Nivel4State::verificarTeletransportePostJuego() {
     if (!m_vitalSignsAndres.isStabilized()) return;
 
+    // NO procesar teletransporte si el inventario está abierto
+    Inventory* inv = m_player.getInventory();
+    if (inv && inv->isOpen()) {
+        return;
+    }
+
     bool cercaDartsTeletransporte = m_player.getHurtbox().findIntersection(m_dartsArea).has_value();
 
     static bool eTeletransportePresionado = false;
@@ -585,7 +602,6 @@ void Nivel4State::verificarTeletransportePostJuego() {
             sf::Vector2f destinoTeletransporte(100.f, 400.f);
             m_player.setPosition(destinoTeletransporte.x, destinoTeletransporte.y);
             mostrarMensaje("Teletransportado... Ahora ve a ayudar a Andrea", 2.f, sf::Color::Green);
-            std::cout << "Jugador teletransportado a: " << destinoTeletransporte.x << ", " << destinoTeletransporte.y << std::endl;
         }
     } else {
         eTeletransportePresionado = false;
@@ -649,10 +665,10 @@ void Nivel4State::draw() {
 
     // Texto de interaccion para la herramienta
     if (!m_herramientaRecogida && m_cercaHerramienta && m_textoInteraccion && m_fontLoaded) {
-        m_textoInteraccion->setString("Presiona R para recoger la herramienta");
+        m_textoInteraccion->setString("Presiona F para recoger la herramienta");
         sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
         m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
-        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
+        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 90.f));
         window->draw(*m_textoInteraccion);
     }
 
