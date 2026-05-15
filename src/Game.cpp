@@ -338,12 +338,22 @@ void Game::run()
                 states.top()->handleEvent(*event);
             }
         }
-
+        
+        // Update
         if (!states.empty())
         {
             states.top()->update(deltaTime);
         }
+        // Procesar cambio de estado pendiente (fuera del update)
+        if (m_pendingStateChange)
+        {
+            while (!states.empty())
+                states.pop();
+            states.push(std::move(m_pendingState));
+            m_pendingStateChange = false;
+        }
 
+        // Draw
         window->clear(sf::Color::Black);
 
         if (!states.empty())
@@ -375,11 +385,9 @@ void Game::run()
 
 void Game::changeState(std::unique_ptr<State> state)
 {
-    while (!states.empty())
-    {
-        states.pop();
-    }
-    states.push(std::move(state));
+    // En lugar de cambiar inmediatamente, guardar para el siguiente frame
+    m_pendingState = std::move(state);
+    m_pendingStateChange = true;
 }
 
 void Game::pushState(std::unique_ptr<State> state)
@@ -397,24 +405,15 @@ void Game::popState()
 
 void Game::returnToMenu()
 {
-    std::cout << "🏠 Volviendo al menú principal..." << std::endl;
-
     detenerMusica();
-
-    while (!states.empty())
-    {
-        states.pop();
-    }
-
     levelTree.resetToRoot();
+    m_isInLevel = false;
 
-    m_isInLevel = false; // ← ESTA LÍNEA ES NUEVA
-
-    auto menuState = std::make_unique<MenuState>(window.get(), this);
-    states.push(std::move(menuState));
-
-    std::cout << "✅ Menú principal cargado correctamente" << std::endl;
+    // Programar cambio de estado para el siguiente frame
+    m_pendingState = std::make_unique<MenuState>(window.get(), this);
+    m_pendingStateChange = true;
 }
+
 void Game::setPantallaCompleta(bool fullscreen)
 {
     Config::setPantallaCompleta(fullscreen);
