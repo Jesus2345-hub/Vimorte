@@ -13,20 +13,19 @@
 #include <cmath>
 #include <random>
 
-// Estructura para las cámaras de vigilancia
+// Estructura que guarda los datos de una camara de vigilancia
 struct CamaraVigilancia {
     sf::Vector2f posicion;
     sf::Vector2f direccion;
     float alcance;
-    float anguloApertura;         // Ángulo total de visión en grados
-    bool esTipoRojo;              // true = roja, false = blanca
+    float anguloApertura;
+    bool esTipoRojo;
     bool activa;
     
-    // Obtener los 3 vértices del triángulo de visión
+    // Calcula los 3 puntos del triangulo de vision de la camara
     std::array<sf::Vector2f, 3> obtenerTriangulo() const {
         float mitadAngulo = anguloApertura / 2.0f;
         float rad = mitadAngulo * 3.14159f / 180.0f;
-        
         float cosA = std::cos(rad);
         float sinA = std::sin(rad);
         
@@ -39,15 +38,11 @@ struct CamaraVigilancia {
             -direccion.x * sinA + direccion.y * cosA
         );
         
-        return {
-            posicion,
-            posicion + dirIzq * alcance,
-            posicion + dirDer * alcance
-        };
+        return {posicion, posicion + dirIzq * alcance, posicion + dirDer * alcance};
     }
 };
 
-// Estructura para los minijuegos de desactivación
+// Estructura para las terminales donde se activan los minijuegos
 struct TerminalDesactivacion {
     sf::FloatRect areaInteraccion;
     bool completado;
@@ -57,7 +52,7 @@ struct TerminalDesactivacion {
 class Centinela3State : public State 
 {
 private:
-    // ========== JUGADOR Y MUNDO ==========
+    // JUGADOR Y MUNDO
     Player m_player;
     sf::Texture m_backgroundTexture;
     std::unique_ptr<sf::Sprite> m_background;
@@ -67,55 +62,65 @@ private:
     void configurarColisiones();
     
     sf::View m_camera;
-    sf::Vector2u m_lastWindowSize;
     
-    // ========== CÁMARAS DE VIGILANCIA ==========
+    // CAMARAS DE VIGILANCIA
     std::vector<CamaraVigilancia> m_camaras;
     void configurarCamaras();
     void dibujarCamaras();
     bool jugadorDetectadoPorCamaras();
     
-    // ========== TERMINALES DE DESACTIVACIÓN ==========
+    // TERMINALES Y PUERTA DE SALIDA
     TerminalDesactivacion m_terminalBlancas;
     TerminalDesactivacion m_terminalRojas;
-    TerminalDesactivacion m_terminalPuerta;
+    sf::FloatRect m_areaPuerta;
     void configurarTerminales();
     
-    // ========== ESTADO DE PROGRESO ==========
+    // ESTADO DE PROGRESO DEL NIVEL
     bool m_camarasBlancasDesactivadas;
     bool m_camarasRojasDesactivadas;
     bool m_puertaAbierta;
     bool m_juegoCompletado;
     
-    // ========== MINIJUEGOS ==========
+    // MINIJUEGOS
     bool m_minijuegoActivo;
-    int m_minijuegoActual;  // 1 = blancas, 2 = rojas, 3 = puerta
+    int m_minijuegoActual;  // 1 = hackeo blancas, 2 = interruptores rojas
     
-    // Variables para minijuego 1 y 2 (Secuencia de botones)
-    std::vector<int> m_secuenciaBotones;
-    int m_indiceSecuencia;
-    float m_tiempoMostrandoSecuencia;
-    bool m_mostrandoSecuencia;
-    float m_tiempoInput;
+    // Minijuego 1: Hackeo de terminal (adivinar palabra)
+    std::string m_palabraObjetivo;
+    std::string m_palabraIngresada;
+    int m_letraActual;
+    float m_tiempoHackeo;
+    std::vector<std::string> m_palabrasDisponibles;
+    float m_letrasCayendoOffset;
     
-    // Variables para minijuego 3 (Código numérico)
-    std::string m_codigoCorrecto;
-    std::string m_codigoIngresado;
+    // Minijuego 2: Panel de interruptores (igualar patron)
+    std::vector<bool> m_interruptores;
+    std::vector<bool> m_patronObjetivo;
+    int m_interruptorSeleccionado;
     
-    void iniciarMinijuegoDesactivacion(int tipo);
-    void actualizarMinijuegoDesactivacion(float dt);
-    void dibujarMinijuegoDesactivacion();
+    // CRONOMETRO Y EFECTO DE ALARMA
+    float m_tiempoLimite;
+    float m_tiempoAlarma;
+    float m_intensidadAlarma;
+    
+    // PANEL DE AYUDA INICIAL
+    bool m_panelAyudaActivo;
+    
+    void iniciarMinijuegoHackeo();
+    void actualizarMinijuegoHackeo(float dt);
+    void dibujarMinijuegoHackeo();
+    
+    void iniciarMinijuegoInterruptores();
+    void actualizarMinijuegoInterruptores(float dt);
+    void dibujarMinijuegoInterruptores();
+    
     void completarMinijuego();
     
-    void iniciarMinijuegoPuerta();
-    void actualizarMinijuegoPuerta(float dt);
-    void dibujarMinijuegoPuerta();
-    
-    // ========== DETECCIÓN ==========
+    // DETECCION POR CAMARAS
     bool m_jugadorDetectado;
     float m_tiempoDeteccion;
     
-    // ========== UI Y FUENTES ==========
+    // FUENTE Y TEXTOS DE INTERFAZ
     sf::Font m_font;
     bool m_fontLoaded;
     
@@ -123,7 +128,7 @@ private:
     std::unique_ptr<sf::Text> m_textoMensaje;
     float m_tiempoMensaje;
     
-    // ========== DIÁLOGO DE DECISIÓN FINAL ==========
+    // DIALOGO DE DECISION FINAL
     bool m_dialogoDecisionActivo;
     int m_opcionSeleccionada;
     std::unique_ptr<sf::Text> m_textoDialogoDecision;
@@ -131,9 +136,9 @@ private:
     std::unique_ptr<sf::Text> m_textoOpcion2;
     
     void mostrarDialogoDecision();
-    void handleDecisionInput();
+    void manejarDecisionInput();
     
-    // ========== CONTROL ==========
+    // CONTROL GENERAL
     bool m_debugMode;
     bool m_activo;
     
