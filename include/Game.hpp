@@ -63,6 +63,8 @@ public:
     void avanzarNivel();
     void entrarCentinela();
     void volverDeCentinela();
+
+        void irACentinela();
     
     // Configuración de audio
     void setVolGeneral(float v);

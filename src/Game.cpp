@@ -469,3 +469,13 @@ void Game::completarNivelActual(int siguienteNivelId) {
         changeState(std::move(newState));
     }
 }
+
+void Game::irACentinela() {
+    LevelTree& arbol = getLevelTree();
+    if (arbol.goToCentinela()) {
+        std::unique_ptr<State> nuevoEstado = arbol.createCurrentState(window.get(), this);
+        if (nuevoEstado) {
+            changeState(std::move(nuevoEstado));
+        }
+    }
+}

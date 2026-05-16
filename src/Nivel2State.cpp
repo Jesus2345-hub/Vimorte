@@ -108,21 +108,30 @@ Nivel2State::Nivel2State(sf::RenderWindow* window, Game* game)
     
     game->setIsInLevel(true);
 
-        // ===== INICIALIZAR SISTEMA DE EXPLOSION =====
+          // ===== INICIALIZAR SISTEMA DE EXPLOSION =====
     m_explosionIniciada = false;
     m_grietaAbierta = false;
-    m_piedraRota = false;
+    m_tienePalo = false;
+    m_paloLanzado = false;
+        m_debeIrACentinela = false;
+    m_tiempoAntesCentinela = 0.0f;
     
-    // Posicion donde ocurrira la explosion (la piedra misteriosa)
-    m_posicionExplosion = sf::Vector2f(600.f, 1050.f);
-    
-    // Area de interaccion con la piedra
-    m_areaPiedra = sf::FloatRect(
-        sf::Vector2f(m_posicionExplosion.x - 40.f, m_posicionExplosion.y - 40.f),
+    // Area donde esta el palo de pool que el jugador puede recoger
+    m_areaPalo = sf::FloatRect(
+        sf::Vector2f(885.f, 1030.f),
         sf::Vector2f(80.f, 80.f)
     );
     
-    // Area donde aparecera la grieta en la pared
+    // Area del cristal de la llave (donde se lanza la piedra)
+    m_areaCristal = sf::FloatRect(
+        sf::Vector2f(1055.f, 300.f),  // Cerca del vendedor de llaves
+        sf::Vector2f(100.f, 100.f)
+    );
+    
+    // Posicion donde ocurrira la explosion (el cristal/robot)
+    m_posicionExplosion = sf::Vector2f(1105.f, 350.f);
+    
+    // Area donde aparecera la grieta en la pared (cerca de la explosion)
     m_areaGrieta = sf::FloatRect(
         sf::Vector2f(m_posicionExplosion.x - 150.f, m_posicionExplosion.y - 200.f),
         sf::Vector2f(300.f, 250.f)
@@ -197,12 +206,11 @@ void Nivel2State::handleEvent(const sf::Event& event) {
     }
     
     // ----- EVENTOS DEL MINIJUEGO BARTENDER -----
-    if (m_bartenderMinigame.isActive()) {
+        if (m_bartenderMinigame.isActive()) {
         m_bartenderMinigame.handleEvent(event, *window);
         if (const auto* keyEvent = event.getIf<sf::Event::KeyPressed>()) {
-            if (keyEvent->code == sf::Keyboard::Key::Escape) {
+            if (keyEvent->code == sf::Keyboard::Key::F) {
                 m_bartenderMinigame.deactivate();
-                m_escapeConsumed = true;
                 return;
             }
         }
@@ -210,12 +218,11 @@ void Nivel2State::handleEvent(const sf::Event& event) {
     }
     
     // ----- EVENTOS DEL MINIJUEGO RULETA -----
-    if (m_ruletaMinigame.isActive()) {
+        if (m_ruletaMinigame.isActive()) {
         m_ruletaMinigame.handleEvent(event, *window);
         if (const auto* keyEvent = event.getIf<sf::Event::KeyPressed>()) {
-            if (keyEvent->code == sf::Keyboard::Key::Escape) {
+            if (keyEvent->code == sf::Keyboard::Key::F) {
                 m_ruletaMinigame.deactivate();
-                m_escapeConsumed = true;
                 return;
             }
         }
@@ -278,6 +285,26 @@ void Nivel2State::update(float dt) {
         if (m_explosion.haTerminado()) {
             m_grieta.establecerProgresoAnimacion(1.0f);
             m_grietaAbierta = true;
+            
+            // Activar bandera para ir al centinela (no llamar directamente)
+            if (!m_debeIrACentinela) {
+                m_debeIrACentinela = true;
+                m_tiempoAntesCentinela = 2.0f;  // Esperar 2 segundos antes de ir
+            }
+        }
+    }
+    
+    // ===== IR AL CENTINELA DESPUES DE LA PAUSA =====
+    if (m_debeIrACentinela) {
+        m_tiempoAntesCentinela -= dt;
+        if (m_tiempoAntesCentinela <= 0.0f && game) {
+            m_debeIrACentinela = false;
+            
+            // Restaurar vista antes de cambiar de estado
+            window->setView(window->getDefaultView());
+            
+            game->irACentinela();
+            return;  // Salir del update inmediatamente
         }
     }
     
@@ -323,20 +350,20 @@ void Nivel2State::update(float dt) {
     } else { rBartenderPresionado = false; }
     
     // ----- COMPRAR LLAVE (TECLA E CERCA DEL VENDEDOR) -----
-    static bool ePresionadoVendedor = false;
-    if (m_cercaVendedor && !m_tieneLlave && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::E)) {
+       static bool ePresionadoVendedor = false;
+    if (m_cercaVendedor && !m_tieneLlave && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F)) {
         if (!ePresionadoVendedor) {
             ePresionadoVendedor = true;
             if (m_dinero >= 100) {
                 // Tiene suficiente dinero: comprar llave
                 m_dinero -= 100;
                 m_tieneLlave = true;
-                
+                 
                 // Añadir la llave al inventario del jugador
 				Inventory* inv = m_player.getInventory();
 				if (inv) {
-   					 Item llave("Llave Casino", sf::Color(255, 215, 0));
-    				inv->addItem(llave);
+   				                Item llave("Llave Casino", sf::Color(255, 215, 0), "assets/images/niveles/nivel2/llaves.png");
+                inv->addItem(llave);
 				}
                 mostrarMensaje("Has comprado la llave! Ve a la puerta de salida.", 3.0f, sf::Color::Green);
             } else {
@@ -346,32 +373,55 @@ void Nivel2State::update(float dt) {
         }
     } else { ePresionadoVendedor = false; }
     
-        // ===== INTERACTUAR CON LA PIEDRA (TECLA F) =====
-    if (!m_piedraRota) {
-        m_cercaPiedra = m_player.getHurtbox().findIntersection(m_areaPiedra).has_value();
-        
-        static bool fPiedraPresionado = false;
-        if (m_cercaPiedra && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F)) {
-            if (!fPiedraPresionado) {
-                fPiedraPresionado = true;
-                
-                // Romper la piedra y activar la explosion
-                m_piedraRota = true;
-                m_explosionIniciada = true;
-                
-                std::cout << "Piedra rota. Explosion iniciada." << std::endl;
-                
-                m_explosion.iniciar(m_posicionExplosion, 0.8f);
-                m_grieta.iniciar(
-                    sf::Vector2f(m_areaGrieta.position.x, m_areaGrieta.position.y),
-                    sf::Vector2f(m_areaGrieta.size.x, m_areaGrieta.size.y)
-                );
-                
-                mostrarMensaje("La piedra ha explotado! Se ha abierto una grieta en la pared.", 3.0f, sf::Color::Yellow);
+            // ===== RECOGER PIEDRA (TECLA F cuando esta cerca) =====
+    m_cercaPiedra = m_player.getHurtbox().findIntersection(m_areaPalo).has_value();
+    
+    static bool fPiedraPresionado = false;
+    if (m_cercaPiedra && !m_tienePalo && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F)) {
+        if (!fPiedraPresionado) {
+            fPiedraPresionado = true;
+            
+            // Recoger la piedra y guardarla en el inventario
+            m_tienePalo = true;
+            Inventory* inv = m_player.getInventory();
+            if (inv) {
+                Item palo("Palo de Pool", sf::Color(139, 90, 43), "assets/images/niveles/nivel2/palo.png");
+                inv->addItem(palo);
             }
-        } else {
-            fPiedraPresionado = false;
+            
+            mostrarMensaje("Has recogido un palo de pool. Puede ser util para romper el cristal.", 3.0f, sf::Color::Yellow);
+            std::cout << "Palo de pool recogido." << std::endl;
         }
+    } else {
+        fPiedraPresionado = false;
+    }
+    
+       // ===== LANZAR PIEDRA AL CRISTAL (TECLA Q cuando esta cerca del cristal) =====
+    m_cercaCristal = m_player.getHurtbox().findIntersection(m_areaCristal).has_value();
+    
+    static bool clickPiedraPresionado = false;
+    if (m_cercaCristal && m_tienePalo && !m_paloLanzado && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Q)) {
+        if (!clickPiedraPresionado) {
+            clickPiedraPresionado = true;
+            
+            std::cout << "Palo lanzado al cristal. Explosion iniciada." << std::endl;
+            // Marcar como lanzada
+            m_paloLanzado = true;
+            m_tienePalo = false;
+            
+            // Iniciar la explosion (INTENSIDAD BAJA para probar)
+            m_explosionIniciada = true;
+            m_explosion.iniciar(m_posicionExplosion, 0.5f);
+            
+            // Iniciar la grieta
+            m_grieta.iniciar(
+                sf::Vector2f(m_areaGrieta.position.x, m_areaGrieta.position.y),
+                sf::Vector2f(m_areaGrieta.size.x, m_areaGrieta.size.y)
+            );
+                      mostrarMensaje("El cristal se ha roto! El robot ha explotado! Se ha abierto una grieta.", 3.0f, sf::Color::Yellow);
+        }
+    } else {
+        clickPiedraPresionado = false;
     }
 
     // ----- MOVIMIENTO DEL JUGADOR (WASD Y FLECHAS) -----
@@ -480,14 +530,14 @@ void Nivel2State::draw() {
         dibujarArea(m_vendedorArea, sf::Color::Yellow);
         dibujarArea(m_puertaSalidaArea, sf::Color::Green);
         
-        // Area de la piedra (verde)
-        sf::RectangleShape areaPiedraRect;
-        areaPiedraRect.setPosition(m_areaPiedra.position);
-        areaPiedraRect.setSize(m_areaPiedra.size);
-        areaPiedraRect.setFillColor(sf::Color(0, 255, 0, 30));
-        areaPiedraRect.setOutlineColor(sf::Color::Green);
-        areaPiedraRect.setOutlineThickness(2.f);
-        window->draw(areaPiedraRect);
+           // Area del palo de pool (verde)
+        sf::RectangleShape areaPaloRect;
+        areaPaloRect.setPosition(m_areaPalo.position);
+        areaPaloRect.setSize(m_areaPalo.size);
+        areaPaloRect.setFillColor(sf::Color(0, 255, 0, 30));
+        areaPaloRect.setOutlineColor(sf::Color::Green);
+        areaPaloRect.setOutlineThickness(2.f);
+        window->draw(areaPaloRect);
         
         // Area de la grieta (naranja)
         sf::RectangleShape areaGrietaRect;
@@ -497,6 +547,15 @@ void Nivel2State::draw() {
         areaGrietaRect.setOutlineColor(sf::Color(255, 100, 0));
         areaGrietaRect.setOutlineThickness(2.f);
         window->draw(areaGrietaRect);
+
+                // Area del cristal (cyan)
+        sf::RectangleShape areaCristalRect;
+        areaCristalRect.setPosition(m_areaCristal.position);
+        areaCristalRect.setSize(m_areaCristal.size);
+        areaCristalRect.setFillColor(sf::Color(0, 255, 255, 30));
+        areaCristalRect.setOutlineColor(sf::Color::Cyan);
+        areaCristalRect.setOutlineThickness(2.f);
+        window->draw(areaCristalRect);
     }
     
     // Dibujar jugador
@@ -527,15 +586,46 @@ void Nivel2State::draw() {
     if (m_textoDinero) {
         m_textoDinero->setPosition(sf::Vector2f(20.f, 20.f));
         window->draw(*m_textoDinero);
+        }
+    
+    // ===== MENSAJES ESPECIALES EN LA PARTE SUPERIOR =====
+    // Estos mensajes van pegados arriba para que se vean bien
+    if (m_fontLoaded && m_textoInteraccion) {
+        float winW = static_cast<float>(window->getSize().x);
+        
+               auto drawTextTop = [&](const std::string& texto, sf::Color color) {
+            m_textoInteraccion->setString(texto);
+            m_textoInteraccion->setFillColor(color);
+            m_textoInteraccion->setOutlineThickness(1.5f);
+            m_textoInteraccion->setOutlineColor(sf::Color::Black);
+            sf::FloatRect bounds = m_textoInteraccion->getLocalBounds();
+            m_textoInteraccion->setOrigin(sf::Vector2f(bounds.size.x / 2.f, 0.f));
+            m_textoInteraccion->setPosition(sf::Vector2f(winW / 2.f, 50.f));
+            window->draw(*m_textoInteraccion);
+        };
+        
+                // Texto para el palo de pool (recogerlo) - ARRIBA
+        if (m_cercaPiedra && !m_tienePalo)
+            drawTextTop("Presiona F para recoger el palo de pool", sf::Color::Yellow);
+        
+        // Texto para el cristal (lanzar palo) - ARRIBA
+        if (m_cercaCristal && m_tienePalo && !m_paloLanzado)
+            drawTextTop("Presiona Q para lanzar el palo al cristal", sf::Color::Yellow);
+        // Texto para la grieta abierta - ARRIBA
+        if (m_grietaAbierta && m_cercaGrieta)
+            drawTextTop("Una grieta misteriosa se ha abierto en la pared", sf::Color::Yellow);
     }
     
-    // Textos de interaccion (aparecen abajo cuando estas cerca de algo)
+    // ===== MENSAJES NORMALES EN LA PARTE INFERIOR =====
     if (m_fontLoaded && m_textoInteraccion) {
         float winW = static_cast<float>(window->getSize().x);
         float winH = static_cast<float>(window->getSize().y);
         
-        auto drawText = [&](const std::string& texto) {
+                auto drawText = [&](const std::string& texto) {
             m_textoInteraccion->setString(texto);
+            m_textoInteraccion->setFillColor(sf::Color::White);
+            m_textoInteraccion->setOutlineThickness(1.5f);
+            m_textoInteraccion->setOutlineColor(sf::Color::Black);
             sf::FloatRect bounds = m_textoInteraccion->getLocalBounds();
             m_textoInteraccion->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
             m_textoInteraccion->setPosition(sf::Vector2f(winW / 2.f, winH - 90.f));
@@ -552,19 +642,13 @@ void Nivel2State::draw() {
         
         // Texto para el vendedor de llaves
         if (m_cercaVendedor && !m_tieneLlave)
-            drawText("Presiona E para comprar la llave ($100) | Dinero: $" + std::to_string(m_dinero));
+            drawText("Presiona F para comprar la llave ($100) | Dinero: $" + std::to_string(m_dinero));
         if (m_cercaVendedor && m_tieneLlave)
             drawText("Ya tienes la llave. Dirigete a la puerta de salida.");
         
         // Texto para la puerta de salida
         if (m_cercaPuertaSalida)
-            drawText(m_tieneLlave ? "Presiona E para usar la llave y salir" : "Necesitas comprar la llave ($100) en la tienda.");
-        
-        // Texto para la piedra misteriosa
-        if (m_cercaPiedra && !m_piedraRota)
-            drawText("Presiona F para examinar la piedra extrana");
-        if (m_grietaAbierta && m_cercaGrieta)
-            drawText("Una grieta misteriosa se ha abierto en la pared");
+            drawText(m_tieneLlave ? "Presiona F para usar la llave y salir" : "Necesitas comprar la llave ($100) en la tienda.");
     }
     
     // Mensaje temporal (feedback de acciones)
@@ -617,8 +701,7 @@ void Nivel2State::verificarSalidaNivel() {
     m_cercaPuertaSalida = m_player.getHurtbox().findIntersection(m_puertaSalidaArea).has_value();
     
     static bool ePresionado = false;
-    if (m_cercaPuertaSalida && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::E)) {
-        if (!ePresionado) {
+       if (m_cercaPuertaSalida && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F)) {
             ePresionado = true;
             
             // Verificar si tiene la llave en el inventario
@@ -641,7 +724,7 @@ void Nivel2State::verificarSalidaNivel() {
                 mostrarMensaje("Necesitas la llave del casino para salir. Comprala por $100.", 2.0f, sf::Color::Red);
             }
         }
-    } else {
+     else {
         ePresionado = false;
     }
 }

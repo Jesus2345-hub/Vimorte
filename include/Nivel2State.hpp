@@ -43,9 +43,14 @@ private:
     bool m_cercaVendedor = false;
         bool m_cercaPiedra;    // Indica si el jugador esta cerca de la piedra explosiva
     bool m_cercaGrieta;    // Indica si el jugador esta cerca de la grieta abierta
-    
+        bool m_cercaCristal;     // Indica si el jugador esta cerca del cristal
+
     int m_dinero = 0;
     bool m_tieneLlave = false;
+        bool m_tienePalo;
+    bool m_paloLanzado;
+        bool m_debeIrACentinela;     // Bandera para ir al centinela en el momento seguro
+    float m_tiempoAntesCentinela; // Pequeña pausa antes de ir al centinela
     
     MinigameRuleta m_ruletaMinigame;
     MinigameBartender m_bartenderMinigame;
@@ -77,8 +82,9 @@ private:
     bool m_grietaAbierta;
     sf::FloatRect m_areaGrieta;
     sf::Vector2f m_posicionExplosion;
-    sf::FloatRect m_areaPiedra;  // Area de la piedra que el jugador rompe
-    bool m_piedraRota;
+    sf::FloatRect m_areaPalo;  // Area de la piedra que el jugador rompe
+           // Indica si ya se lanzo la piedra
+    sf::FloatRect m_areaCristal;     // Area donde esta el cristal de la llave
 };
 
 #endif

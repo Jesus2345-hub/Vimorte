@@ -1,11 +1,12 @@
 #include "EfectoExplosion.hpp"
 #include <cmath>
+#include <algorithm>
+#include <iostream>
 
 // Constructor: inicializa el efecto en estado inactivo
-// Los objetos sf::Text y sf::Sound requieren inicializacion especial
 EfectoExplosion::EfectoExplosion() 
-    : textoBoom(fuente, "", 30)  // Inicializar sf::Text con una fuente y tamano por defecto
-    , sonidoExplosion(bufferExplosion)  // Inicializar sf::Sound con un buffer por defecto
+    : textoBoom(fuente, "", 30)  // Inicializar con la fuente (aunque no este cargada aun)
+    , sonidoExplosion(bufferExplosion)  // Inicializar con el buffer (aunque este vacio)
     , activo(false)
     , tiempoTranscurrido(0.0f)
     , intensidad(1.0f)
@@ -16,8 +17,9 @@ EfectoExplosion::EfectoExplosion()
     std::random_device dispositivoAleatorio;
     generadorAleatorio = std::mt19937(dispositivoAleatorio());
     
-    // Cargar la fuente para el texto BOOM que aparece en pantalla
-    if (fuente.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf")) {
+    // Cargar la fuente (intentar, no es obligatorio)
+    bool fuenteCargada = fuente.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf");
+    if (fuenteCargada) {
         textoBoom.setFont(fuente);
         textoBoom.setString("BOOM");
         textoBoom.setCharacterSize(120);
@@ -27,20 +29,16 @@ EfectoExplosion::EfectoExplosion()
         textoBoom.setStyle(sf::Text::Bold);
     }
     
-    // Configurar la capa de flash que cubre toda la pantalla
+    // Configurar la capa de flash
     capaFlash.setSize(sf::Vector2f(1920.f, 1080.f));
     capaFlash.setFillColor(sf::Color(255, 200, 50, 0));
-    
-    // Intentar cargar el sonido de explosion (no es obligatorio)
-    if (bufferExplosion.loadFromFile("assets/sounds/explosion.wav")) {
-        sonidoExplosion.setBuffer(bufferExplosion);
-        sonidoExplosion.setVolume(80.f);
-    }
 }
 
 // Inicia el efecto de explosion en la posicion especificada
-// La intensidad va de 0.0 (debil) a 1.0 (muy fuerte)
 void EfectoExplosion::iniciar(const sf::Vector2f& pos, float intensidadExplosion) {
+    // Verificar que la intensidad sea valida
+    if (intensidadExplosion <= 0.0f) return;
+    
     this->posicion = pos;
     this->intensidad = intensidadExplosion;
     this->activo = true;
@@ -49,65 +47,52 @@ void EfectoExplosion::iniciar(const sf::Vector2f& pos, float intensidadExplosion
     
     particulas.clear();
     
-    // Calcular cuantas particulas crear segun la intensidad
+    // Calcular cuantas particulas crear
     int cantidadParticulas = static_cast<int>(80 * intensidad);
+    if (cantidadParticulas < 1) cantidadParticulas = 1;
+    if (cantidadParticulas > 200) cantidadParticulas = 200;
     
-    // Distribuciones aleatorias para las propiedades de las particulas
-    std::uniform_real_distribution<float> distribucionAngulo(0.0f, 2.0f * 3.14159f);
-    std::uniform_real_distribution<float> distribucionVelocidad(100.f, 400.f * intensidad);
-    std::uniform_real_distribution<float> distribucionTamano(3.f, 15.f);
-    std::uniform_real_distribution<float> distribucionTiempoVida(0.5f, 1.5f);
-    
-    // Colores que pueden tener las particulas de la explosion
-    std::vector<sf::Color> coloresExplosion = {
-        sf::Color(255, 200, 0),    // Amarillo fuego
-        sf::Color(255, 100, 0),    // Naranja
-        sf::Color(255, 50, 0),     // Rojo anaranjado
-        sf::Color(255, 0, 0),      // Rojo intenso
-        sf::Color(255, 255, 100),  // Amarillo claro
-        sf::Color(200, 200, 200),  // Gris humo
-    };
-    std::uniform_int_distribution<int> distribucionColor(0, coloresExplosion.size() - 1);
-    
-    // Crear cada particula con propiedades aleatorias
+    // Crear cada particula
     for (int i = 0; i < cantidadParticulas; ++i) {
         ParticulaExplosion p;
-        float angulo = distribucionAngulo(generadorAleatorio);
-        float velocidad = distribucionVelocidad(generadorAleatorio);
         
-        p.forma.setRadius(distribucionTamano(generadorAleatorio));
-        p.forma.setOrigin(sf::Vector2f(p.forma.getRadius(), p.forma.getRadius()));
+        // Propiedades aleatorias
+        float angulo = static_cast<float>(rand() % 628) / 100.0f;  // 0 a 2*PI
+        float velocidad = 100.0f + static_cast<float>(rand() % 300) * intensidad;
+        float radio = 3.0f + static_cast<float>(rand() % 12);
+        
+        p.forma.setRadius(radio);
+        p.forma.setOrigin(sf::Vector2f(radio, radio));
         p.forma.setPosition(posicion);
-        p.forma.setFillColor(coloresExplosion[distribucionColor(generadorAleatorio)]);
+        
+        // Color aleatorio de explosion
+        int colorIdx = rand() % 6;
+        switch (colorIdx) {
+            case 0: p.forma.setFillColor(sf::Color(255, 200, 0)); break;   // Amarillo
+            case 1: p.forma.setFillColor(sf::Color(255, 100, 0)); break;   // Naranja
+            case 2: p.forma.setFillColor(sf::Color(255, 50, 0)); break;    // Rojo anaranjado
+            case 3: p.forma.setFillColor(sf::Color(255, 0, 0)); break;     // Rojo
+            case 4: p.forma.setFillColor(sf::Color(255, 255, 100)); break; // Amarillo claro
+            case 5: p.forma.setFillColor(sf::Color(200, 200, 200)); break; // Gris
+        }
         
         p.velocidad = sf::Vector2f(std::cos(angulo) * velocidad, std::sin(angulo) * velocidad);
-        p.tiempoVidaMaximo = distribucionTiempoVida(generadorAleatorio);
+        p.tiempoVidaMaximo = 0.5f + static_cast<float>(rand() % 100) / 100.0f;
         p.tiempoVida = p.tiempoVidaMaximo;
         
         particulas.push_back(p);
     }
     
-    // Configurar el flash inicial (mas intenso al principio)
-    alphaFlash = 180.f * intensidad;
+    // Flash inicial
+    alphaFlash = 180.0f * intensidad;
+    if (alphaFlash > 255.0f) alphaFlash = 255.0f;
     
-    // Configurar el temblor de camara
-    intensidadTemblor = 15.f * intensidad;
-    centroOriginalCamara = sf::Vector2f(640.f, 360.f);
-    
-    // Configurar el texto BOOM centrado en pantalla
-    textoBoom.setCharacterSize(static_cast<unsigned int>(120 * intensidad));
-    textoBoom.setOrigin(sf::Vector2f(
-        textoBoom.getLocalBounds().size.x / 2.f,
-        textoBoom.getLocalBounds().size.y / 2.f
-    ));
-    
-    // Reproducir el sonido de explosion si esta disponible
-    // Verificar si el buffer tiene datos (puntero no nulo)
-    if (bufferExplosion.getSampleCount() > 0) {
-        sonidoExplosion.play();
-    }
+    // Temblor de camara
+    intensidadTemblor = 15.0f * intensidad;
     
     reloj.restart();
+    
+    std::cout << "[EXPLOSION] Iniciada en (" << pos.x << ", " << pos.y << ") con " << cantidadParticulas << " particulas" << std::endl;
 }
 
 // Actualiza la animacion de la explosion cada frame
@@ -116,45 +101,46 @@ void EfectoExplosion::actualizar(float dt) {
     
     tiempoTranscurrido += dt;
     
-    // Actualizar cada particula: mover, reducir velocidad, desvanecer
+    // Actualizar cada particula
     for (auto& p : particulas) {
         p.tiempoVida -= dt;
         p.forma.move(p.velocidad * dt);
-        
-        // Aplicar friccion para que las particulas se frenen
         p.velocidad *= 0.98f;
         
-        // Calcular la transparencia segun el tiempo de vida restante
-        float proporcion = p.tiempoVida / p.tiempoVidaMaximo;
-        sf::Color color = p.forma.getFillColor();
-        color.a = static_cast<uint8_t>(255 * proporcion);
-        p.forma.setFillColor(color);
-        
-        // Reducir el tamano de la particula conforme se desvanece
-        float escala = proporcion;
-        p.forma.setScale(sf::Vector2f(escala, escala));
+        // Transparencia segun tiempo de vida
+        if (p.tiempoVidaMaximo > 0.0f) {
+            float proporcion = p.tiempoVida / p.tiempoVidaMaximo;
+            if (proporcion < 0.0f) proporcion = 0.0f;
+            
+            sf::Color color = p.forma.getFillColor();
+            color.a = static_cast<uint8_t>(255.0f * proporcion);
+            p.forma.setFillColor(color);
+            
+            p.forma.setScale(sf::Vector2f(proporcion, proporcion));
+        }
     }
     
-    // Eliminar las particulas que ya cumplieron su tiempo de vida
+    // Eliminar particulas muertas
     particulas.erase(
         std::remove_if(particulas.begin(), particulas.end(),
-                       [](const ParticulaExplosion& p) { return p.tiempoVida <= 0.0f; })
+            [](const ParticulaExplosion& p) { return p.tiempoVida <= 0.0f; }),
+        particulas.end()
     );
     
-    // Reducir gradualmente el flash naranja de la pantalla
-    alphaFlash = std::max(0.0f, alphaFlash - dt * 200.f);
+    // Reducir flash
+    alphaFlash = std::max(0.0f, alphaFlash - dt * 200.0f);
     capaFlash.setFillColor(sf::Color(255, 200, 50, static_cast<uint8_t>(alphaFlash)));
     
-    // Reducir gradualmente la intensidad del temblor
-    intensidadTemblor = std::max(0.0f, intensidadTemblor - dt * 20.f);
+    // Reducir temblor
+    intensidadTemblor = std::max(0.0f, intensidadTemblor - dt * 20.0f);
     
-    // Desactivar cuando termine la duracion total
+    // Desactivar cuando termine
     if (tiempoTranscurrido >= duracionTotal) {
         activo = false;
     }
 }
 
-// Dibuja las particulas en las coordenadas del mundo del juego
+// Dibuja las particulas en el mundo
 void EfectoExplosion::dibujar(sf::RenderWindow& ventana) {
     if (!activo && particulas.empty()) return;
     
@@ -163,46 +149,44 @@ void EfectoExplosion::dibujar(sf::RenderWindow& ventana) {
     }
 }
 
-// Dibuja los efectos de interfaz: flash naranja y texto BOOM
+// Dibuja los efectos de UI
 void EfectoExplosion::dibujarUI(sf::RenderWindow& ventana) {
     if (!activo) return;
     
-    // Dibujar el flash naranja sobre toda la pantalla
+    // Flash naranja
     if (alphaFlash > 5.0f) {
         ventana.draw(capaFlash);
     }
     
-    // Dibujar el texto BOOM durante el primer segundo y medio
-    if (tiempoTranscurrido < 1.5f) {
+    // Texto BOOM (solo si la fuente se cargo)
+    if (tiempoTranscurrido < 1.5f && fuente.getInfo().family != "") {
         float alpha = 1.0f;
         if (tiempoTranscurrido > 0.8f) {
             alpha = 1.0f - ((tiempoTranscurrido - 0.8f) / 0.7f);
         }
         
-        // El texto crece con el tiempo
         float escala = 1.0f + tiempoTranscurrido * 2.0f;
         textoBoom.setScale(sf::Vector2f(escala, escala));
         
-        // Aplicar transparencia al texto
         sf::Color colorTexto = textoBoom.getFillColor();
-        colorTexto.a = static_cast<uint8_t>(255 * alpha);
+        colorTexto.a = static_cast<uint8_t>(255.0f * alpha);
         textoBoom.setFillColor(colorTexto);
         
-        // Posicion centrada con un pequeno movimiento vibratorio
         textoBoom.setPosition(sf::Vector2f(
-            ventana.getSize().x / 2.f + std::sin(tiempoTranscurrido * 20.f) * 5.f,
-            ventana.getSize().y / 2.f + std::cos(tiempoTranscurrido * 15.f) * 5.f
+            ventana.getSize().x / 2.0f,
+            ventana.getSize().y / 2.0f
         ));
         
         ventana.draw(textoBoom);
     }
 }
 
-// Devuelve un desplazamiento aleatorio para simular el temblor de camara
-// CORREGIDO: se quito el 'const' para poder usar el generador aleatorio
+// Devuelve desplazamiento para temblor de camara
 sf::Vector2f EfectoExplosion::obtenerDesplazamientoTemblor() {
     if (intensidadTemblor <= 0.0f) return sf::Vector2f(0.f, 0.f);
     
-    std::uniform_real_distribution<float> distribucionTemblor(-intensidadTemblor, intensidadTemblor);
-    return sf::Vector2f(distribucionTemblor(generadorAleatorio), distribucionTemblor(generadorAleatorio));
+    float dx = static_cast<float>(rand() % 100) / 100.0f * intensidadTemblor * 2.0f - intensidadTemblor;
+    float dy = static_cast<float>(rand() % 100) / 100.0f * intensidadTemblor * 2.0f - intensidadTemblor;
+    
+    return sf::Vector2f(dx, dy);
 }

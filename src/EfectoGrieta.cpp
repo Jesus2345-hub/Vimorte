@@ -6,6 +6,7 @@
 EfectoGrieta::EfectoGrieta()
     : activo(false)
     , progresoAnimacion(0.0f)
+    , bordeAgujero(sf::PrimitiveType::TriangleFan, 20) 
 {
     // El agujero base es completamente negro
     agujeroOscuro.setFillColor(sf::Color(0, 0, 0));
