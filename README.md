@@ -55,33 +55,35 @@ Vimorte es un juego desarrollado en C++ con SFML 3.0.2.
 ### 🔹 LINUX (Ubuntu/Debian)
 
 ```bash
-# Instalar dependencias
-sudo apt update
-sudo apt install build-essential cmake git xorg-dev libx11-dev libxcursor-dev libxi-dev libudev-dev libfreetype-dev libopenal-dev libvorbis-dev libflac-dev
+   # Instalar dependencias
+   sudo apt update
+   sudo apt install build-essential cmake git xorg-dev libx11-dev libxcursor-dev libxi-dev libudev-dev libfreetype-dev libopenal-dev libvorbis-dev libflac-dev
 
-# Clonar y compilar
-git clone https://github.com/Jesus2345-hub/Vimorte.git
-cd Vimorte
-mkdir build
-cd build
-cmake ..
-make
-./Vimorte
+   # Clonar y compilar
+   git clone https://github.com/Jesus2345-hub/Vimorte.git
+   cd Vimorte
+   mkdir build
+   cd build
+   cmake ..
+   make
+   ./Vimorte
+   ```
 
 ### 🔹 macOS
+```bash
+   # Instalar Xcode Command Line Tools (si no los tienes)
+   xcode-select --install
 
-# Instalar Xcode Command Line Tools (si no los tienes)
-xcode-select --install
+   # Instalar dependencias con Homebrew
+   brew install cmake
 
-# Instalar dependencias con Homebrew
-brew install cmake
+   # Clonar y Compilar
+   git clone https://github.com/Jesus2345-hub/Vimorte.git
+   cd Vimorte
+   mkdir -p build && cd build
+   cmake ..
+   make -j$(sysctl -n hw.logicalcpu)
 
-# Clonar y Compilar
-git clone https://github.com/Jesus2345-hub/Vimorte.git
-cd Vimorte
-mkdir -p build && cd build
-cmake ..
-make -j$(sysctl -n hw.logicalcpu)
-
-# Ejecutar
-./Vimorte
+   # Ejecutar
+   ./Vimorte
+   ```
