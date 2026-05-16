@@ -3,7 +3,7 @@
 #include <iostream>
 #include <cmath>
 #include <algorithm>
-
+//
 Nivel7State::Nivel7State(sf::RenderWindow *window, Game *game)
     : State(window, game),
       m_background(nullptr),
