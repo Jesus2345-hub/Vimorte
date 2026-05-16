@@ -542,21 +542,6 @@ void Nivel4State::update(float dt) {
     m_player.move(movimiento, dt);
     m_player.update(dt);
 
-    // Mostrar coordenadas debug
-    
-    if (m_textoCoordenadas && m_fontLoaded) {
-        // Obtener posición del mouse en pantalla
-        sf::Vector2i mousePixelPos = sf::Mouse::getPosition(*window);
-        
-        // Convertir coordenadas de pantalla a coordenadas del mundo (con la cámara)
-        sf::Vector2f mouseWorldPos = window->mapPixelToCoords(mousePixelPos, m_camera);
-        
-        m_textoCoordenadas->setString(
-            "Mouse - Pantalla: (" + std::to_string(mousePixelPos.x) + ", " + std::to_string(mousePixelPos.y) + ")\n"
-            "Mouse - Mundo: (" + std::to_string((int)mouseWorldPos.x) + ", " + std::to_string((int)mouseWorldPos.y) + ")"
-        );
-    }
-
     // Verificar recoleccion de herramienta
     if (!m_herramientaRecogida) {
         m_cercaHerramienta = m_player.getHurtbox().findIntersection(m_herramientaArea).has_value();

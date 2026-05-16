@@ -122,11 +122,11 @@ void Game::cambiarMusica(const std::string &rutaMusica)
         m_currentMusic.setLooping(true);
         m_currentMusic.setVolume(getRealMusica());
         m_currentMusic.play();
-        std::cout << "🎵 Música cambiada: " << rutaMusica << std::endl;
+        std::cout << " Musica cambiada: " << rutaMusica << std::endl;
     }
     else
     {
-        std::cerr << "❌ Error: No se pudo cargar la música: " << rutaMusica << std::endl;
+        std::cerr << " Error: No se pudo cargar la música: " << rutaMusica << std::endl;
     }
 }
 
