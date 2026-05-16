@@ -44,6 +44,7 @@ Nivel6State::Nivel6State(sf::RenderWindow *window, Game *game)
     }
     else
     {
+        //
         std::cerr << "Error: No se pudo cargar background del nivel 6" << std::endl;
         m_worldSize = sf::Vector2f(1754.f, 1587.f);
     }
