@@ -6,6 +6,8 @@
 #include "MinigameCables.hpp"
 #include "MinigamePatron.hpp"
 #include "MinigameMemoria.hpp"
+#include "EfectoExplosion.hpp"
+#include "EfectoGrieta.hpp"
 #include <SFML/Graphics.hpp>
 #include <vector>
 #include <memory>
@@ -99,6 +101,20 @@ std::string generarTextoPista(const std::vector<int>& orden,
 MinigamePatron m_minijuegoPatron;
 
 MinigameMemoria m_minijuegoMemoria;
+
+    // ===== SISTEMA DE EXPLOSION Y GRIETA =====
+    EfectoExplosion m_explosion;
+    EfectoGrieta m_grieta;
+    bool m_explosionIniciada;
+    bool m_grietaAbierta;
+    bool m_jugadorMuerto;
+    float m_tiempoMuerte;
+    sf::FloatRect m_areaExplosion;  // Area de muerte por explosion
+    sf::FloatRect m_areaGrieta;     // Donde aparecera la grieta
+    sf::Vector2f m_posicionBomba;   // Centro de la bomba
+    bool m_cercaGrieta;
+    bool m_debeIrACentinela;
+    float m_tiempoAntesCentinela;
 };
 
 #endif

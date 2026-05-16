@@ -143,6 +143,29 @@ Nivel3State::Nivel3State(sf::RenderWindow* window, Game* game)
         game->guardarPartidaActual();
     }
     
+        // ===== INICIALIZAR SISTEMA DE EXPLOSION =====
+    m_explosionIniciada = false;
+    m_grietaAbierta = false;
+    m_jugadorMuerto = false;
+    m_tiempoMuerte = 0.0f;
+    m_debeIrACentinela = false;
+    m_tiempoAntesCentinela = 0.0f;
+    
+    // Posicion de la bomba (centro del area de la bomba)
+    m_posicionBomba = sf::Vector2f(1165.f, 275.f);
+    
+    // Area de muerte: el jugador debe estar en la otra esquina para salvarse
+    m_areaExplosion = sf::FloatRect(
+        sf::Vector2f(m_posicionBomba.x - 1000.f, m_posicionBomba.y - 400.f),
+        sf::Vector2f(1600.f, 1600.f)
+    );
+    
+    // Area donde aparecera la grieta (en la pared superior derecha)
+    m_areaGrieta = sf::FloatRect(
+        sf::Vector2f(900.f, 50.f),
+        sf::Vector2f(250.f, 250.f)
+    );
+
     game->setIsInLevel(true);
     
     mostrarMensaje("DESACTIVA LA BOMBA! Tienes 3 minutos!", 4.0f, sf::Color::Red);
@@ -225,13 +248,48 @@ sf::Color Nivel3State::getColorTiempo() const {
 // EXPLOTAR BOMBA
 // ============================================================
 void Nivel3State::explotarBomba() {
+    if (m_explosionIniciada) return;
+    
     m_bombaExploto = true;
-    if (m_textoBomba) {
-        m_textoBomba->setString("¡BOMBA EXPLOTADA!");
-        m_textoBomba->setFillColor(sf::Color::Red);
+    m_explosionIniciada = true;
+    
+    std::cout << "BOOM! La bomba ha explotado." << std::endl;
+    
+    // Iniciar efecto visual de explosion
+    m_explosion.iniciar(m_posicionBomba, 1.0f);
+    
+    // Iniciar grieta en la pared
+    m_grieta.iniciar(
+        sf::Vector2f(m_areaGrieta.position.x, m_areaGrieta.position.y),
+        sf::Vector2f(m_areaGrieta.size.x, m_areaGrieta.size.y)
+    );
+    
+    // Verificar si el jugador esta en el area de muerte
+    sf::Vector2f posicionJugador = m_player.getPosition();
+    bool jugadorEnAreaExplosion = m_areaExplosion.contains(posicionJugador);
+    
+    if (jugadorEnAreaExplosion) {
+        // JUGADOR MUERE - Estaba demasiado cerca de la bomba
+        m_jugadorMuerto = true;
+        m_tiempoMuerte = 3.0f;
+        
+        if (m_textoBomba) {
+            m_textoBomba->setString("HAS MUERTO");
+            m_textoBomba->setFillColor(sf::Color::Red);
+        }
+        mostrarMensaje("Estabas demasiado cerca! La explosion te ha matado.", 3.0f, sf::Color::Red);
+        std::cout << "Jugador en area de explosion. MUERTE." << std::endl;
+    } else {
+        // JUGADOR SOBREVIVE - Estaba lejos de la bomba
+        m_jugadorMuerto = false;
+        
+        if (m_textoBomba) {
+            m_textoBomba->setString("BOMBA EXPLOTO (Sobreviviste)");
+            m_textoBomba->setFillColor(sf::Color(255, 150, 0));
+        }
+        mostrarMensaje("La bomba exploto! Pero estabas a salvo. Se ha abierto una grieta.", 4.0f, sf::Color::Yellow);
+        std::cout << "Jugador fuera de area de explosion. SOBREVIVE. Grieta abierta." << std::endl;
     }
-    mostrarMensaje("La bomba ha explotado. Has perdido.", 5.0f, sf::Color::Red);
-    std::cout << "Bomba explotada. Fin del juego." << std::endl;
 }
 
 // ============================================================
@@ -362,7 +420,7 @@ void Nivel3State::update(float dt) {
         return;
     }
     
-    // ===== MINIJUEGO DE PATRÓN ACTIVO =====
+    // ===== MINIJUEGO DE PATRON ACTIVO =====
     if (m_minijuegoPatron.isActive()) {
         actualizarCronometro(dt);
         m_minijuegoPatron.update(dt);
@@ -375,8 +433,58 @@ void Nivel3State::update(float dt) {
         return;
     }
     
-    // Actualizar cronómetro
+    // Actualizar cronometro
     actualizarCronometro(dt);
+    
+    // ===== ACTUALIZAR EXPLOSION =====
+    if (m_explosionIniciada) {
+        m_explosion.actualizar(dt);
+        m_grieta.actualizar(dt);
+        
+        // Aplicar temblor a la camara durante la explosion
+        if (m_explosion.estaActivo()) {
+            sf::Vector2f temblor = m_explosion.obtenerDesplazamientoTemblor();
+            sf::Vector2f posJugador = m_player.getPosition();
+            m_camera.setCenter(posJugador + temblor);
+        }
+        
+        // Si el jugador murio, esperar y cargar final malo
+        if (m_jugadorMuerto) {
+            m_tiempoMuerte -= dt;
+            if (m_tiempoMuerte <= 0.0f) {
+                window->setView(window->getDefaultView());
+                LevelTree& arbolNiveles = game->getLevelTree();
+                if (arbolNiveles.jumpToNode("final_malo_centinela3")) {
+                    std::unique_ptr<State> nuevoEstado = arbolNiveles.createCurrentState(window, game);
+                    if (nuevoEstado) game->changeState(std::move(nuevoEstado));
+                }
+                return;
+            }
+        }
+        
+        // Si la explosion termino y el jugador sobrevivio
+        if (m_explosion.haTerminado() && !m_jugadorMuerto) {
+            m_grieta.establecerProgresoAnimacion(1.0f);
+            m_grietaAbierta = true;
+            
+            // Activar bandera para ir al centinela
+            if (!m_debeIrACentinela) {
+                m_debeIrACentinela = true;
+                m_tiempoAntesCentinela = 2.0f;
+            }
+        }
+    }
+    
+    // ===== IR AL CENTINELA DESPUES DE LA PAUSA =====
+    if (m_debeIrACentinela) {
+        m_tiempoAntesCentinela -= dt;
+        if (m_tiempoAntesCentinela <= 0.0f && game) {
+            m_debeIrACentinela = false;
+            window->setView(window->getDefaultView());
+            game->irACentinela();
+            return;
+        }
+    }
     
     sf::Vector2u currentSize = window->getSize();
     if (currentSize != m_lastWindowSize) {
@@ -391,10 +499,11 @@ void Nivel3State::update(float dt) {
     
     sf::Vector2f posAnterior = m_player.getPosition();
     
-    // Verificar cercanía a zonas
+    // Verificar cercania a zonas
     m_cercaBomba  = m_player.getHurtbox().findIntersection(m_bombaArea).has_value();
     m_cercaPista1 = m_player.getHurtbox().findIntersection(m_pista1Area).has_value();
     m_cercaPista2 = m_player.getHurtbox().findIntersection(m_pista2Area).has_value();
+    m_cercaGrieta = m_grietaAbierta && m_player.getHurtbox().findIntersection(m_areaGrieta).has_value();
     
     // ===== BOMBA (TECLA F) - Minijuego de cables =====
     static bool fBombaPresionado = false;
@@ -425,7 +534,7 @@ void Nivel3State::update(float dt) {
         fPista1Presionado = false;
     }
     
-    // ===== PISTA 2 (TECLA F) - Minijuego de patrón =====
+    // ===== PISTA 2 (TECLA F) - Minijuego de patron =====
     static bool fPista2Presionado = false;
     if (m_cercaPista2 && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F)) {
         if (!fPista2Presionado) {
@@ -461,7 +570,7 @@ void Nivel3State::update(float dt) {
         }
     }
     
-    // Cámara
+    // Camara
     sf::Vector2f playerPos = m_player.getPosition();
     playerPos.x = std::clamp(playerPos.x, 640.f, m_worldSize.x - 640.f);
     playerPos.y = std::clamp(playerPos.y, 360.f, m_worldSize.y - 360.f);
@@ -478,10 +587,12 @@ void Nivel3State::update(float dt) {
             if (m_bombaDesactivada) {
                 std::cout << "Saliendo del nivel 3..." << std::endl;
                 game->avanzarNivel();
-            } else if (m_bombaExploto) {
+            } else if (m_bombaExploto && m_jugadorMuerto) {
                 mostrarMensaje("Es demasiado tarde...", 3.0f, sf::Color::Red);
+            } else if (m_bombaExploto && !m_jugadorMuerto) {
+                mostrarMensaje("La grieta te ha abierto un nuevo camino...", 3.0f, sf::Color::Yellow);
             } else {
-                mostrarMensaje("¡Desactiva la bomba primero!", 2.0f, sf::Color::Red);
+                mostrarMensaje("Desactiva la bomba primero!", 2.0f, sf::Color::Red);
             }
         }
     } else {
@@ -522,6 +633,16 @@ void Nivel3State::draw() {
         window->draw(fallback);
     }
     
+    // ===== DIBUJAR GRIETA EN EL MUNDO =====
+    if (m_grietaAbierta || m_explosionIniciada) {
+        m_grieta.dibujar(*window);
+    }
+    
+    // ===== DIBUJAR PARTICULAS DE EXPLOSION =====
+    if (m_explosionIniciada && m_explosion.estaActivo()) {
+        m_explosion.dibujar(*window);
+    }
+    
     // Colisiones DEBUG
     if (CoordenadasDebug::getInstance().isVisible()) {
         for (const auto& rect : m_mapaFisico) {
@@ -548,12 +669,45 @@ void Nivel3State::draw() {
         dibujarArea(m_pista1Area, sf::Color::Cyan);
         dibujarArea(m_pista2Area, sf::Color::Cyan);
         dibujarArea(m_puertaSalidaArea, sf::Color::Green);
+        
+        // Area de explosion (rojo)
+        sf::RectangleShape areaExpRect;
+        areaExpRect.setPosition(m_areaExplosion.position);
+        areaExpRect.setSize(m_areaExplosion.size);
+        areaExpRect.setFillColor(sf::Color(255, 0, 0, 30));
+        areaExpRect.setOutlineColor(sf::Color::Red);
+        areaExpRect.setOutlineThickness(3.f);
+        window->draw(areaExpRect);
+        
+        // Area de grieta (naranja)
+        sf::RectangleShape areaGrietaRect;
+        areaGrietaRect.setPosition(m_areaGrieta.position);
+        areaGrietaRect.setSize(m_areaGrieta.size);
+        areaGrietaRect.setFillColor(sf::Color(255, 100, 0, 30));
+        areaGrietaRect.setOutlineColor(sf::Color(255, 100, 0));
+        areaGrietaRect.setOutlineThickness(3.f);
+        window->draw(areaGrietaRect);
     }
     
     m_player.draw(*window);
     
     // ===== FASE 2: UI =====
     window->setView(window->getDefaultView());
+    
+    // ===== FLASH Y TEXTO BOOM EN PANTALLA =====
+    if (m_explosionIniciada && m_explosion.estaActivo()) {
+        float alphaFlash = m_explosion.obtenerAlphaFlash();
+        if (alphaFlash > 0.0f) {
+            sf::RectangleShape flash(sf::Vector2f(
+                static_cast<float>(window->getSize().x),
+                static_cast<float>(window->getSize().y)
+            ));
+            flash.setFillColor(sf::Color(255, 150, 0, static_cast<uint8_t>(alphaFlash)));
+            window->draw(flash);
+        }
+        
+        m_explosion.dibujarUI(*window);
+    }
     
     CoordenadasDebug::getInstance().dibujar(*window);
     
@@ -571,8 +725,11 @@ void Nivel3State::draw() {
         float winW = static_cast<float>(window->getSize().x);
         float winH = static_cast<float>(window->getSize().y);
         
-        auto drawText = [&](const std::string& texto) {
+        auto drawText = [&](const std::string& texto, sf::Color color = sf::Color::White) {
             m_textoInteraccion->setString(texto);
+            m_textoInteraccion->setFillColor(color);
+            m_textoInteraccion->setOutlineThickness(1.5f);
+            m_textoInteraccion->setOutlineColor(sf::Color::Black);
             sf::FloatRect bounds = m_textoInteraccion->getLocalBounds();
             m_textoInteraccion->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
             m_textoInteraccion->setPosition(sf::Vector2f(winW / 2.f, winH - 90.f));
@@ -580,21 +737,23 @@ void Nivel3State::draw() {
         };
         
         if (m_cercaBomba && !m_bombaDesactivada && !m_bombaExploto)
-            drawText("Presiona F para desactivar la bomba");
+            drawText("Presiona F para desactivar la bomba", sf::Color::Yellow);
         if (m_cercaBomba && m_bombaDesactivada)
-            drawText("Bomba desactivada. Dirigete a la salida.");
+            drawText("Bomba desactivada. Dirigete a la salida.", sf::Color::Green);
         if (m_cercaPista1 && !m_pista1Encontrada)
-            drawText("Presiona F para buscar pista");
+            drawText("Presiona F para buscar pista", sf::Color::Cyan);
         if (m_cercaPista1 && m_pista1Encontrada)
-            drawText("Pista 1 encontrada: " + m_pista1Texto);
+            drawText("Pista 1 encontrada: " + m_pista1Texto, sf::Color::Cyan);
         if (m_cercaPista2 && !m_pista2Encontrada)
-            drawText("Presiona F para buscar pista");
+            drawText("Presiona F para buscar pista", sf::Color::Green);
         if (m_cercaPista2 && m_pista2Encontrada)
-            drawText("Pista 2 encontrada: " + m_pista2Texto);
+            drawText("Pista 2 encontrada: " + m_pista2Texto, sf::Color::Green);
         if (m_cercaPuertaSalida && m_bombaDesactivada)
-            drawText("Presiona F para salir del edificio");
+            drawText("Presiona F para salir del edificio", sf::Color::Green);
         if (m_cercaPuertaSalida && !m_bombaDesactivada && !m_bombaExploto)
-            drawText("Debes desactivar la bomba antes de salir");
+            drawText("Debes desactivar la bomba antes de salir", sf::Color::Red);
+        if (m_grietaAbierta && m_cercaGrieta)
+            drawText("Una grieta se ha abierto en la pared por la explosion", sf::Color::Yellow);
     }
     
     if (m_textoMensaje && m_msjActual.tiempoRestante > 0.0f && !m_textoMensaje->getString().isEmpty()) {

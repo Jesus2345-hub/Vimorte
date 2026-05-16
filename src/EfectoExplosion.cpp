@@ -32,6 +32,12 @@ EfectoExplosion::EfectoExplosion()
     // Configurar la capa de flash
     capaFlash.setSize(sf::Vector2f(1920.f, 1080.f));
     capaFlash.setFillColor(sf::Color(255, 200, 50, 0));
+    
+    // Intentar cargar el sonido de explosion (no es obligatorio)
+    if (bufferExplosion.loadFromFile("assets/sounds/explosion.wav")) {
+        sonidoExplosion.setBuffer(bufferExplosion);
+        sonidoExplosion.setVolume(80.f);
+    }
 }
 
 // Inicia el efecto de explosion en la posicion especificada
@@ -87,8 +93,13 @@ void EfectoExplosion::iniciar(const sf::Vector2f& pos, float intensidadExplosion
     alphaFlash = 180.0f * intensidad;
     if (alphaFlash > 255.0f) alphaFlash = 255.0f;
     
-    // Temblor de camara
+       // Temblor de camara
     intensidadTemblor = 15.0f * intensidad;
+    
+    // Reproducir sonido de explosion si esta disponible
+    if (bufferExplosion.getSampleCount() > 0) {
+        sonidoExplosion.play();
+    }
     
     reloj.restart();
     
