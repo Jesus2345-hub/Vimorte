@@ -126,8 +126,6 @@ void MinigameTicTacToe::initBoard()
     m_gameWon = false;
     m_gameLost = false;
 
-    if (m_turnText)
-        m_turnText->setString("Tu turno (X)");
     if (m_titleText)
     {
         m_titleText->setString("TIC TAC TOE");
@@ -210,21 +208,11 @@ void MinigameTicTacToe::placeMark(int cellX, int cellY)
         if (winner == 1)
         {
             m_gameWon = true;
-            if (m_titleText)
-            {
-                m_titleText->setString("¡GANASTE!");
-                m_titleText->setFillColor(sf::Color::Green);
-            }
             showWinLine(winner);
         }
         else
         {
             m_gameLost = true;
-            if (m_titleText)
-            {
-                m_titleText->setString("PERDISTE...");
-                m_titleText->setFillColor(sf::Color::Red);
-            }
             showWinLine(winner);
         }
         return;
@@ -242,12 +230,6 @@ void MinigameTicTacToe::placeMark(int cellX, int cellY)
     }
     if (empate)
     {
-        // Mostrar mensaje de empate brevemente y reiniciar
-        if (m_titleText)
-        {
-            m_titleText->setString("EMPATE - Reiniciando...");
-            m_titleText->setFillColor(sf::Color(255, 165, 0));
-        }
         // Reiniciar después de 1 segundo
         m_messageTimer = 1.0f;
         m_playerTurn = false; // Bloquear clicks durante el reinicio
@@ -255,10 +237,6 @@ void MinigameTicTacToe::placeMark(int cellX, int cellY)
     }
 
     m_playerTurn = !m_playerTurn;
-    if (m_turnText)
-    {
-        m_turnText->setString(m_playerTurn ? "Tu turno (X)" : "Turno del joven (O)");
-    }
 
     // Movimiento de la IA
     if (!m_playerTurn && !m_gameWon && !m_gameLost)
@@ -287,7 +265,6 @@ void MinigameTicTacToe::aiMove()
             sprite->setPosition(getCellPosition(idx));
             m_boardSprites.push_back(std::move(sprite));
             m_playerTurn = true;
-            if (m_turnText) m_turnText->setString("Tu turno (X)");
             return;
         }
     }
@@ -310,11 +287,6 @@ void MinigameTicTacToe::aiMove()
                 m_boardSprites.push_back(std::move(sprite));
 
                 m_gameLost = true;
-                if (m_titleText)
-                {
-                    m_titleText->setString("PERDISTE...");
-                    m_titleText->setFillColor(sf::Color::Red);
-                }
                 showWinLine(2);
                 return;
             }
@@ -340,8 +312,7 @@ void MinigameTicTacToe::aiMove()
                 m_boardSprites.push_back(std::move(sprite));
 
                 m_playerTurn = true;
-                if (m_turnText)
-                    m_turnText->setString("Tu turno (X)");
+                
                 return;
             }
             m_board[i] = 0;
@@ -364,8 +335,7 @@ void MinigameTicTacToe::aiMove()
             m_boardSprites.push_back(std::move(sprite));
 
             m_playerTurn = true;
-            if (m_turnText)
-                m_turnText->setString("Tu turno (X)");
+            
             return;
         }
     }
@@ -483,7 +453,6 @@ void MinigameTicTacToe::update(float dt)
         {
             // Reiniciar el tablero
             initBoard();
-            std::cout << "Empate - Tablero reiniciado" << std::endl;
         }
     }
 }

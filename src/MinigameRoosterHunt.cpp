@@ -118,7 +118,7 @@ void MinigameRoosterHunt::setSize(const sf::Vector2f &size)
             m_position.y + 660.f));
 
         m_closeText = std::make_unique<sf::Text>(m_font);
-        m_closeText->setString("ESC para salir");
+        m_closeText->setString("F para salir");
         m_closeText->setCharacterSize(20);
         m_closeText->setFillColor(sf::Color(150, 150, 150));
         m_closeText->setPosition(sf::Vector2f(m_position.x + m_size.x - 120.f, m_position.y + m_size.y - 30.f));
@@ -393,7 +393,7 @@ void MinigameRoosterHunt::shoot(const sf::Vector2f &mousePos)
     {
         if (m_titleText)
         {
-            m_titleText->setString("SIN BALAS - ESC para salir");
+            m_titleText->setString("SIN BALAS - F para salir");
             m_titleText->setFillColor(sf::Color::Red);
         }
     }

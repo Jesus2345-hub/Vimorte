@@ -105,6 +105,50 @@ Nivel6State::Nivel6State(sf::RenderWindow *window, Game *game)
         m_mesasBounds.push_back(sf::FloatRect(sf::Vector2f(397.f - mitad, 849.f - mitad), sf::Vector2f(tamanoMesa, tamanoMesa)));
     }
 
+    // ===== CAMBUR (523, 291) =====
+    if (m_camburTexture.loadFromFile("assets/images/niveles/nivel6/cambur.png"))
+    {
+        m_camburTexture.setSmooth(true);
+        m_camburSprite = std::make_unique<sf::Sprite>(m_camburTexture);
+
+        float escalaCambur = 0.16f;
+        m_camburSprite->setScale(sf::Vector2f(escalaCambur, escalaCambur));
+
+        sf::FloatRect bounds = m_camburSprite->getLocalBounds();
+        m_camburSprite->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
+        m_camburSprite->setPosition(sf::Vector2f(523.f, 291.f));
+
+        m_camburArea = sf::FloatRect(sf::Vector2f(523.f - 40.f, 291.f - 40.f), sf::Vector2f(80.f, 80.f));
+    }
+
+    // ===== DESTORNILLADOR encima de la mesa 5 (397, 654) =====
+    if (m_destornilladorTexture.loadFromFile("assets/images/items/destornillador.png"))
+    {
+        m_destornilladorTexture.setSmooth(true);
+        m_destornilladorSprite = std::make_unique<sf::Sprite>(m_destornilladorTexture);
+
+        float escalaDestornillador = 0.015f; // ← AJUSTA ESTE VALOR
+        m_destornilladorSprite->setScale(sf::Vector2f(escalaDestornillador, escalaDestornillador));
+
+        sf::FloatRect bounds = m_destornilladorSprite->getLocalBounds();
+        m_destornilladorSprite->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
+        m_destornilladorSprite->setPosition(sf::Vector2f(397.f, 610.f));
+
+        m_destornilladorArea = sf::FloatRect(sf::Vector2f(397.f - 40.f, 600.f - 40.f), sf::Vector2f(80.f, 80.f));
+    }
+
+    // ===== REJILLA DEL CENTINELA (1603, 631) =====
+    if (m_rejillaTexture.loadFromFile("assets/images/niveles/nivel6/rejilla.png"))
+    {
+        m_rejillaSprite = std::make_unique<sf::Sprite>(m_rejillaTexture);
+        m_rejillaSprite->setScale(sf::Vector2f(0.12f, 0.12f));
+        sf::FloatRect bounds = m_rejillaSprite->getLocalBounds();
+        m_rejillaSprite->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
+        m_rejillaSprite->setPosition(sf::Vector2f(1603.f, 651.f));
+    }
+
+    m_entradaCentinelaArea = sf::FloatRect(sf::Vector2f(1570.f, 620.f), sf::Vector2f(70.f, 70.f));
+
     sf::Vector2u windowSize = window->getSize();
     float fixedWidth = 1280.f;
     float fixedHeight = 720.f;
@@ -122,7 +166,8 @@ Nivel6State::Nivel6State(sf::RenderWindow *window, Game *game)
 
     // Rifle
     m_rifleRecogido = false;
-    m_rifleArea = sf::FloatRect(sf::Vector2f(522.f, 500.f), sf::Vector2f(40.f, 40.f));
+    // Rifle encima de la mesa 2 (122, 654) - tamaño 100
+    m_rifleArea = sf::FloatRect(sf::Vector2f(122.f - 50.f, 654.f - 90.f), sf::Vector2f(100.f, 100.f));
     m_cercaRifle = false;
 
     // Cargar sprite del rifle en el mapa
@@ -132,9 +177,7 @@ Nivel6State::Nivel6State(sf::RenderWindow *window, Game *game)
         m_rifleMapSprite->setScale(sf::Vector2f(0.05f, 0.05f)); // Ajustar tamaño
         sf::FloatRect bounds = m_rifleMapSprite->getLocalBounds();
         m_rifleMapSprite->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
-        m_rifleMapSprite->setPosition(sf::Vector2f(
-            m_rifleArea.position.x + m_rifleArea.size.x / 2.f,
-            m_rifleArea.position.y + m_rifleArea.size.y / 2.f));
+        m_rifleMapSprite->setPosition(sf::Vector2f(122.f, 610.f));
     }
 
     // Gallo
@@ -235,7 +278,7 @@ void Nivel6State::handleEvent(const sf::Event &event)
         if (event.is<sf::Event::KeyPressed>())
         {
             const auto &keyEvent = event.getIf<sf::Event::KeyPressed>();
-            if (keyEvent->code == sf::Keyboard::Key::Escape)
+            if (keyEvent->code == sf::Keyboard::Key::F)
             {
                 m_roosterHuntMinigame.deactivate();
                 window->setMouseCursorVisible(true);
@@ -251,7 +294,7 @@ void Nivel6State::handleEvent(const sf::Event &event)
         if (event.is<sf::Event::KeyPressed>())
         {
             const auto &keyEvent = event.getIf<sf::Event::KeyPressed>();
-            if (keyEvent->code == sf::Keyboard::Key::Escape)
+            if (keyEvent->code == sf::Keyboard::Key::F)
             {
                 m_tictactoeMinigame.deactivate();
                 return;
@@ -448,6 +491,20 @@ void Nivel6State::update(float dt)
             {
                 rJovenPresionado = true;
                 m_joven.despertar();
+                // Quitar gallina del inventario
+                Inventory *inv = m_player.getInventory();
+                if (inv)
+                {
+                    for (int i = 0; i < 15; i++)
+                    {
+                        Item *item = inv->getItem(i);
+                        if (item && item->name == "Gallina")
+                        {
+                            inv->removeItem(i);
+                            break;
+                        }
+                    }
+                }
                 m_bloquearR = true;
                 m_tiempoUltimaR.restart();
                 mostrarMensaje("Quieres jugar la vieja?", 2.f, sf::Color::Yellow);
@@ -527,10 +584,25 @@ void Nivel6State::update(float dt)
             {
                 rAbuelitaPresionado = true;
                 m_abuelita.sonreir();
+                // Quitar dientes del inventario
+                Inventory *inv = m_player.getInventory();
+                if (inv)
+                {
+                    for (int i = 0; i < 15; i++)
+                    {
+                        Item *item = inv->getItem(i);
+                        if (item && item->name == "Dientes")
+                        {
+                            inv->removeItem(i);
+                            break;
+                        }
+                    }
+                }
+
                 m_llaveObtenida = true;
 
                 // AGREGAR AL INVENTARIO
-                Inventory *inv = m_player.getInventory();
+                inv = m_player.getInventory();
                 if (inv)
                 {
                     Item llave("Llave", sf::Color(255, 215, 0), "assets/images/items/llave.png"); // Color dorado
@@ -552,6 +624,82 @@ void Nivel6State::update(float dt)
     else if (m_llaveObtenida && !m_cercaAbuelita)
     {
         m_abuelita.ponerNormal();
+    }
+
+    // ===== RECOGER CAMBUR =====
+    if (!m_camburRecogido)
+    {
+        m_cercaCambur = m_player.getHurtbox().findIntersection(m_camburArea).has_value();
+        static bool rCamburPresionado = false;
+        if (m_cercaCambur && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F))
+        {
+            if (!rCamburPresionado)
+            {
+                rCamburPresionado = true;
+                m_camburRecogido = true;
+
+                Inventory *inv = m_player.getInventory();
+                if (inv)
+                {
+                    Item cambur("Cambur", sf::Color(255, 255, 0), "assets/images/niveles/nivel6/cambur.png");
+                    inv->addItem(cambur);
+                }
+                mostrarMensaje("Cambur recogido!", 2.f, sf::Color::Yellow);
+            }
+        }
+        else
+        {
+            rCamburPresionado = false;
+        }
+    }
+
+    // ===== RECOGER DESTORNILLADOR =====
+    if (!m_destornilladorRecogido)
+    {
+        m_cercaDestornillador = m_player.getHurtbox().findIntersection(m_destornilladorArea).has_value();
+        static bool rDestornilladorPresionado = false;
+        if (m_cercaDestornillador && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F))
+        {
+            if (!rDestornilladorPresionado)
+            {
+                rDestornilladorPresionado = true;
+                m_destornilladorRecogido = true;
+
+                Inventory *inv = m_player.getInventory();
+                if (inv)
+                {
+                    Item destornillador("Destornillador", sf::Color(192, 192, 192), "assets/images/items/destornillador.png");
+                    inv->addItem(destornillador);
+                }
+                mostrarMensaje("Destornillador recogido!", 2.f, sf::Color::Green);
+            }
+        }
+        else
+        {
+            rDestornilladorPresionado = false;
+        }
+    }
+
+    // ===== ENTRADA AL CENTINELA =====
+    m_cercaEntradaCentinela = m_player.getHurtbox().findIntersection(m_entradaCentinelaArea).has_value();
+
+    if (m_destornilladorRecogido && m_cercaEntradaCentinela)
+    {
+        static bool fCentinelaPresionado = false;
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F))
+        {
+            if (!fCentinelaPresionado)
+            {
+                fCentinelaPresionado = true;
+                mostrarMensaje("Entrando al centinela...", 2.f, sf::Color::Yellow);
+                game->entrarCentinela();
+                return;
+            }
+        }
+        else
+        {
+            fCentinelaPresionado = false;
+        }
     }
 
     // Movimiento
@@ -736,12 +884,63 @@ void Nivel6State::draw()
             mesaDebug.setOutlineColor(sf::Color::Yellow);
             window->draw(mesaDebug);
         }
+
+        // Área cambur (amarillo)
+        if (!m_camburRecogido)
+        {
+            sf::RectangleShape camburDebug;
+            camburDebug.setPosition(sf::Vector2f(m_camburArea.position.x, m_camburArea.position.y));
+            camburDebug.setSize(sf::Vector2f(m_camburArea.size.x, m_camburArea.size.y));
+            camburDebug.setFillColor(sf::Color(255, 255, 0, 80));
+            camburDebug.setOutlineThickness(2.f);
+            camburDebug.setOutlineColor(sf::Color::Yellow);
+            window->draw(camburDebug);
+        }
+
+        // Área destornillador (cyan)
+        if (!m_destornilladorRecogido)
+        {
+            sf::RectangleShape destornilladorDebug;
+            destornilladorDebug.setPosition(sf::Vector2f(m_destornilladorArea.position.x, m_destornilladorArea.position.y));
+            destornilladorDebug.setSize(sf::Vector2f(m_destornilladorArea.size.x, m_destornilladorArea.size.y));
+            destornilladorDebug.setFillColor(sf::Color(0, 255, 255, 80));
+            destornilladorDebug.setOutlineThickness(2.f);
+            destornilladorDebug.setOutlineColor(sf::Color::Cyan);
+            window->draw(destornilladorDebug);
+        }
+
+        // Área entrada centinela (magenta)
+        sf::RectangleShape centinelaDebug;
+        centinelaDebug.setPosition(sf::Vector2f(m_entradaCentinelaArea.position.x, m_entradaCentinelaArea.position.y));
+        centinelaDebug.setSize(sf::Vector2f(m_entradaCentinelaArea.size.x, m_entradaCentinelaArea.size.y));
+        centinelaDebug.setFillColor(sf::Color(255, 0, 255, 80));
+        centinelaDebug.setOutlineThickness(2.f);
+        centinelaDebug.setOutlineColor(sf::Color::Magenta);
+        window->draw(centinelaDebug);
     }
 
     // Dibujar mesas
     for (auto &mesa : m_mesas)
     {
         window->draw(*mesa);
+    }
+
+    // Cambur
+    if (!m_camburRecogido && m_camburSprite)
+    {
+        window->draw(*m_camburSprite);
+    }
+
+    // Destornillador
+    if (!m_destornilladorRecogido && m_destornilladorSprite)
+    {
+        window->draw(*m_destornilladorSprite);
+    }
+
+    // Rejilla del centinela
+    if (m_rejillaSprite)
+    {
+        window->draw(*m_rejillaSprite);
     }
 
     // Jugador (adelante)
@@ -837,6 +1036,16 @@ void Nivel6State::draw()
     if (m_llaveObtenida && m_cercaAbuelita && m_textoInteraccion && m_fontLoaded)
     {
         m_textoInteraccion->setString("Abuelita: Gracias, con esa llave puedes salir de aqui");
+        sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
+        m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
+        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 85.f));
+        window->draw(*m_textoInteraccion);
+    }
+
+    // Texto entrada centinela
+    if (m_destornilladorRecogido && m_cercaEntradaCentinela && m_textoInteraccion && m_fontLoaded)
+    {
+        m_textoInteraccion->setString("Presiona F para abrir el ducto");
         sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
         m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
         m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 85.f));
