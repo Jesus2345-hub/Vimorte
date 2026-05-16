@@ -340,7 +340,7 @@ void Nivel6State::verificarSalidaNivel()
 
                 if (tieneLlave || m_llaveObtenida)
                 {
-                    std::cout << "Saliendo del Nivel 6 con la llave..." << std::endl;
+                    game->detenerMusica();
                     game->avanzarNivel();
                 }
                 else
@@ -692,6 +692,7 @@ void Nivel6State::update(float dt)
             {
                 fCentinelaPresionado = true;
                 mostrarMensaje("Entrando al centinela...", 2.f, sf::Color::Yellow);
+                game->detenerMusica();
                 game->entrarCentinela();
                 return;
             }
