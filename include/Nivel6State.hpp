@@ -9,15 +9,15 @@
 #include <memory>
 #include <vector>
 #include "MinigameRoosterHunt.hpp"
-#include "MinigameTicTacToe.hpp"
+#include "MiniGameTicTacToe.hpp"
 #include "entities/Joven.hpp"
 #include "entities/Abuelita.hpp"
 
-class Nivel6State : public State 
+class Nivel6State : public State
 {
 private:
     Player m_player;
-    
+
     // Fondo del nivel 6
     sf::Texture m_backgroundTexture;
     std::unique_ptr<sf::Sprite> m_background;
@@ -34,6 +34,26 @@ private:
     std::vector<std::unique_ptr<sf::Sprite>> m_mesas;
     std::vector<sf::FloatRect> m_mesasBounds;
 
+    // Cambur
+    sf::Texture m_camburTexture;
+    std::unique_ptr<sf::Sprite> m_camburSprite;
+    sf::FloatRect m_camburArea;
+    bool m_camburRecogido = false;
+    bool m_cercaCambur = false;
+
+    // Destornillador
+    sf::Texture m_destornilladorTexture;
+    std::unique_ptr<sf::Sprite> m_destornilladorSprite;
+    sf::FloatRect m_destornilladorArea;
+    bool m_destornilladorRecogido = false;
+    bool m_cercaDestornillador = false;
+
+    // Entrada centinela
+    sf::Texture m_rejillaTexture;
+    std::unique_ptr<sf::Sprite> m_rejillaSprite;
+    sf::FloatRect m_entradaCentinelaArea;
+    bool m_cercaEntradaCentinela = false;
+
     // Minijuego RoosterHunt
     MinigameRoosterHunt m_roosterHuntMinigame;
 
@@ -43,8 +63,8 @@ private:
     bool m_dientesObtenidos;
 
     // Objeto recogible (rifle)
-    bool m_rifleRecogido;                        
-    sf::FloatRect m_rifleArea;                   
+    bool m_rifleRecogido;
+    sf::FloatRect m_rifleArea;
     bool m_cercaRifle;
 
     // Gallo del gallinero
@@ -53,9 +73,9 @@ private:
     bool m_cercaGallo;
 
     // Joven dormido
-    Joven m_joven;              
+    Joven m_joven;
     sf::FloatRect m_jovenArea;
-    bool m_cercaJoven;   
+    bool m_cercaJoven;
 
     // Abuelita
     Abuelita m_abuelita;
@@ -66,28 +86,29 @@ private:
     // Sistema de colisiones
     std::vector<Obstaculo> m_mapaFisico;
     void configurarColisiones();
-    
+
     // Cámara
     sf::View m_camera;
     sf::Vector2u m_lastWindowSize;
-    
+
     // Tutorial
     bool m_mostrarTutorial;
     bool m_mostrarTutorialPorTecla;
     bool m_escapeConsumed;
     bool m_fontLoaded;
-    
+
     // Fuente y textos
     sf::Font m_font;
     std::unique_ptr<sf::Text> m_textoInteraccion;
     std::unique_ptr<sf::Text> m_textoMensaje;
-    struct MensajeTemporal {
+    struct MensajeTemporal
+    {
         std::string texto;
         float tiempoRestante;
         sf::Color color;
     } m_msjActual;
-    void mostrarMensaje(const std::string& texto, float duracion = 2.0f, sf::Color color = sf::Color::Yellow);
-    
+    void mostrarMensaje(const std::string &texto, float duracion = 2.0f, sf::Color color = sf::Color::Yellow);
+
     // Áreas de interacción
     sf::FloatRect m_puertaSalidaArea;
     bool m_cercaPuertaSalida;
@@ -95,16 +116,16 @@ private:
 
     sf::Clock m_tiempoUltimaR;
     bool m_bloquearR;
-    
+
     // Métodos
     void verificarSalidaNivel();
     void verificarEntradaCentinela();
     void jugadorHaMuerto();
-    
+
 public:
-    Nivel6State(sf::RenderWindow* window, Game* game);
+    Nivel6State(sf::RenderWindow *window, Game *game);
     void update(float dt) override;
     void draw() override;
-    void handleEvent(const sf::Event& event) override;
+    void handleEvent(const sf::Event &event) override;
     ~Nivel6State() override = default;
 };
