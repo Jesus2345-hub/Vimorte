@@ -5,6 +5,8 @@
 #include "entities/Player.hpp"
 #include "MinigameRuleta.hpp"
 #include "MinigameBartender.hpp"
+#include "EfectoExplosion.hpp"
+#include "EfectoGrieta.hpp"
 #include <SFML/Graphics.hpp>
 #include <vector>
 #include <memory>
@@ -39,6 +41,8 @@ private:
     bool m_cercaRuleta = false;
     bool m_cercaPuertaSalida = false;
     bool m_cercaVendedor = false;
+        bool m_cercaPiedra;    // Indica si el jugador esta cerca de la piedra explosiva
+    bool m_cercaGrieta;    // Indica si el jugador esta cerca de la grieta abierta
     
     int m_dinero = 0;
     bool m_tieneLlave = false;
@@ -65,6 +69,16 @@ private:
         sf::Color color = sf::Color::Yellow;
     };
     MensajeTemporal m_msjActual;
+
+        // ===== SISTEMA DE EXPLOSION Y GRIETA =====
+    EfectoExplosion m_explosion;
+    EfectoGrieta m_grieta;
+    bool m_explosionIniciada;
+    bool m_grietaAbierta;
+    sf::FloatRect m_areaGrieta;
+    sf::Vector2f m_posicionExplosion;
+    sf::FloatRect m_areaPiedra;  // Area de la piedra que el jugador rompe
+    bool m_piedraRota;
 };
 
 #endif

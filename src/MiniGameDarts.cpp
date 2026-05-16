@@ -1,4 +1,4 @@
-#include "MinigameDarts.hpp"
+#include "MiniGameDarts.hpp"
 #include <iostream>
 #include <algorithm>
 

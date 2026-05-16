@@ -107,6 +107,26 @@ Nivel2State::Nivel2State(sf::RenderWindow* window, Game* game)
     }
     
     game->setIsInLevel(true);
+
+        // ===== INICIALIZAR SISTEMA DE EXPLOSION =====
+    m_explosionIniciada = false;
+    m_grietaAbierta = false;
+    m_piedraRota = false;
+    
+    // Posicion donde ocurrira la explosion (la piedra misteriosa)
+    m_posicionExplosion = sf::Vector2f(600.f, 1050.f);
+    
+    // Area de interaccion con la piedra
+    m_areaPiedra = sf::FloatRect(
+        sf::Vector2f(m_posicionExplosion.x - 40.f, m_posicionExplosion.y - 40.f),
+        sf::Vector2f(80.f, 80.f)
+    );
+    
+    // Area donde aparecera la grieta en la pared
+    m_areaGrieta = sf::FloatRect(
+        sf::Vector2f(m_posicionExplosion.x - 150.f, m_posicionExplosion.y - 200.f),
+        sf::Vector2f(300.f, 250.f)
+    );
 }
 
 // ============================================================
@@ -241,6 +261,25 @@ void Nivel2State::update(float dt) {
     }
     
     sf::Vector2f posAnterior = m_player.getPosition();  // Guardar posición por si hay colisión
+
+        // ===== ACTUALIZAR EXPLOSION =====
+    if (m_explosionIniciada) {
+        m_explosion.actualizar(dt);
+        m_grieta.actualizar(dt);
+        
+        // Aplicar temblor a la camara durante la explosion
+        if (m_explosion.estaActivo()) {
+            sf::Vector2f temblor = m_explosion.obtenerDesplazamientoTemblor();
+            sf::Vector2f posJugador = m_player.getPosition();
+            m_camera.setCenter(posJugador + temblor);
+        }
+        
+        // Cuando la explosion termina, la grieta queda fija
+        if (m_explosion.haTerminado()) {
+            m_grieta.establecerProgresoAnimacion(1.0f);
+            m_grietaAbierta = true;
+        }
+    }
     
     // ----- VERIFICAR CERCANÍA A ZONAS DE INTERACCIÓN -----
     m_cercaRuleta   = m_player.getHurtbox().findIntersection(m_ruletaArea).has_value();
@@ -307,6 +346,34 @@ void Nivel2State::update(float dt) {
         }
     } else { ePresionadoVendedor = false; }
     
+        // ===== INTERACTUAR CON LA PIEDRA (TECLA F) =====
+    if (!m_piedraRota) {
+        m_cercaPiedra = m_player.getHurtbox().findIntersection(m_areaPiedra).has_value();
+        
+        static bool fPiedraPresionado = false;
+        if (m_cercaPiedra && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F)) {
+            if (!fPiedraPresionado) {
+                fPiedraPresionado = true;
+                
+                // Romper la piedra y activar la explosion
+                m_piedraRota = true;
+                m_explosionIniciada = true;
+                
+                std::cout << "Piedra rota. Explosion iniciada." << std::endl;
+                
+                m_explosion.iniciar(m_posicionExplosion, 0.8f);
+                m_grieta.iniciar(
+                    sf::Vector2f(m_areaGrieta.position.x, m_areaGrieta.position.y),
+                    sf::Vector2f(m_areaGrieta.size.x, m_areaGrieta.size.y)
+                );
+                
+                mostrarMensaje("La piedra ha explotado! Se ha abierto una grieta en la pared.", 3.0f, sf::Color::Yellow);
+            }
+        } else {
+            fPiedraPresionado = false;
+        }
+    }
+
     // ----- MOVIMIENTO DEL JUGADOR (WASD Y FLECHAS) -----
     sf::Vector2f movimiento(0.f, 0.f);
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up))    movimiento.y -= 1.f;
@@ -357,10 +424,13 @@ void Nivel2State::update(float dt) {
 // ============================================================
 // DIBUJAR - Renderiza todo el nivel
 // ============================================================
+// ============================================================
+// DIBUJAR - Renderiza todo el nivel
+// ============================================================
 void Nivel2State::draw() {
     if (!window) return;
     
-    // ===== FASE 1: MUNDO DEL JUEGO (VISTA DE CÁMARA) =====
+    // ===== FASE 1: MUNDO DEL JUEGO (VISTA DE CAMARA) =====
     window->setView(m_camera);
     
     // Dibujar fondo del casino
@@ -370,6 +440,64 @@ void Nivel2State::draw() {
         fallback.setFillColor(sf::Color(50, 30, 30));
         window->draw(fallback);
     }
+
+    // ===== DIBUJAR GRIETA EN EL MUNDO =====
+    if (m_grietaAbierta || m_explosionIniciada) {
+        m_grieta.dibujar(*window);
+    }
+    
+    // ===== DIBUJAR PARTICULAS DE EXPLOSION =====
+    if (m_explosionIniciada && m_explosion.estaActivo()) {
+        m_explosion.dibujar(*window);
+    }
+    
+    // ===== DEBUG DE COLISIONES Y AREAS (F3) =====
+    if (CoordenadasDebug::getInstance().isVisible()) {
+        // Colisiones del mapa
+        for (const auto& rect : m_mapaFisico) {
+            sf::RectangleShape colision;
+            colision.setPosition(rect.position);
+            colision.setSize(rect.size);
+            colision.setFillColor(sf::Color(255, 0, 0, 100));
+            colision.setOutlineColor(sf::Color::Red);
+            colision.setOutlineThickness(2.f);
+            window->draw(colision);
+        }
+        
+        // Areas de interaccion
+        auto dibujarArea = [&](const sf::FloatRect& area, sf::Color color) {
+            sf::RectangleShape rect;
+            rect.setPosition(area.position);
+            rect.setSize(area.size);
+            rect.setFillColor(sf::Color(color.r, color.g, color.b, 50));
+            rect.setOutlineColor(color);
+            rect.setOutlineThickness(2.f);
+            window->draw(rect);
+        };
+        
+        dibujarArea(m_barArea, sf::Color::Blue);
+        dibujarArea(m_ruletaArea, sf::Color::Magenta);
+        dibujarArea(m_vendedorArea, sf::Color::Yellow);
+        dibujarArea(m_puertaSalidaArea, sf::Color::Green);
+        
+        // Area de la piedra (verde)
+        sf::RectangleShape areaPiedraRect;
+        areaPiedraRect.setPosition(m_areaPiedra.position);
+        areaPiedraRect.setSize(m_areaPiedra.size);
+        areaPiedraRect.setFillColor(sf::Color(0, 255, 0, 30));
+        areaPiedraRect.setOutlineColor(sf::Color::Green);
+        areaPiedraRect.setOutlineThickness(2.f);
+        window->draw(areaPiedraRect);
+        
+        // Area de la grieta (naranja)
+        sf::RectangleShape areaGrietaRect;
+        areaGrietaRect.setPosition(m_areaGrieta.position);
+        areaGrietaRect.setSize(m_areaGrieta.size);
+        areaGrietaRect.setFillColor(sf::Color(255, 100, 0, 30));
+        areaGrietaRect.setOutlineColor(sf::Color(255, 100, 0));
+        areaGrietaRect.setOutlineThickness(2.f);
+        window->draw(areaGrietaRect);
+    }
     
     // Dibujar jugador
     m_player.draw(*window);
@@ -377,6 +505,21 @@ void Nivel2State::draw() {
     // ===== FASE 2: INTERFAZ DE USUARIO (VISTA POR DEFECTO) =====
     window->setView(window->getDefaultView());
     
+    // ===== FLASH Y TEXTO BOOM EN PANTALLA =====
+    if (m_explosionIniciada && m_explosion.estaActivo()) {
+        float alphaFlash = m_explosion.obtenerAlphaFlash();
+        if (alphaFlash > 0.0f) {
+            sf::RectangleShape flash(sf::Vector2f(
+                static_cast<float>(window->getSize().x),
+                static_cast<float>(window->getSize().y)
+            ));
+            flash.setFillColor(sf::Color(255, 150, 0, static_cast<uint8_t>(alphaFlash)));
+            window->draw(flash);
+        }
+        
+        m_explosion.dibujarUI(*window);
+    }
+
     // Coordenadas de debug (F3 para activar)
     CoordenadasDebug::getInstance().dibujar(*window);
     
@@ -386,7 +529,7 @@ void Nivel2State::draw() {
         window->draw(*m_textoDinero);
     }
     
-    // Textos de interacción (aparecen abajo cuando estás cerca de algo)
+    // Textos de interaccion (aparecen abajo cuando estas cerca de algo)
     if (m_fontLoaded && m_textoInteraccion) {
         float winW = static_cast<float>(window->getSize().x);
         float winH = static_cast<float>(window->getSize().y);
@@ -416,6 +559,12 @@ void Nivel2State::draw() {
         // Texto para la puerta de salida
         if (m_cercaPuertaSalida)
             drawText(m_tieneLlave ? "Presiona E para usar la llave y salir" : "Necesitas comprar la llave ($100) en la tienda.");
+        
+        // Texto para la piedra misteriosa
+        if (m_cercaPiedra && !m_piedraRota)
+            drawText("Presiona F para examinar la piedra extrana");
+        if (m_grietaAbierta && m_cercaGrieta)
+            drawText("Una grieta misteriosa se ha abierto en la pared");
     }
     
     // Mensaje temporal (feedback de acciones)
@@ -427,7 +576,7 @@ void Nivel2State::draw() {
         window->draw(*m_textoMensaje);
     }
     
-    // Dibujar minijuegos (si están activos)
+    // Dibujar minijuegos (si estan activos)
     if (m_bartenderMinigame.isActive()) m_bartenderMinigame.draw(*window);
     if (m_ruletaMinigame.isActive())   m_ruletaMinigame.draw(*window);
     
