@@ -30,10 +30,12 @@ AdminMenuState::AdminMenuState(sf::RenderWindow *window, Game *game)
     m_instructionText = std::make_unique<sf::Text>(m_font,
                                                    "Click en nodo: Saltar a nivel | Scroll: Navegar | ESC: Volver", 13);
     m_instructionText->setFillColor(sf::Color(150, 150, 150));
+    m_instructionText->setOutlineThickness(1.5f);
+    m_instructionText->setOutlineColor(sf::Color::Black);
 
     construirArbolVisual(game->getLevelTree().getRoot(), 600.f, 130.f, 500.f, 150.f, 0);
 
-    m_maxScroll = std::max(0.f, m_arbolTotalY - 550.f);
+    m_maxScroll = std::max(0.f, m_arbolTotalY - 350.f);
 }
 
 void AdminMenuState::construirArbolVisual(LevelNode *nodo, float x, float y, float espacioX, float espacioY, int profundidad)
@@ -54,8 +56,10 @@ void AdminMenuState::construirArbolVisual(LevelNode *nodo, float x, float y, flo
 
     visual.texto = std::make_unique<sf::Text>(m_font, nombreMostrar, 12);
     visual.texto->setFillColor(sf::Color::White);
+    visual.texto->setOutlineThickness(1.5f);
+    visual.texto->setOutlineColor(sf::Color::Black);
 
-    float anchoCaja = 140.f;
+    float anchoCaja = 110.f;
     float altoCaja = 35.f;
 
     visual.caja.setSize(sf::Vector2f(anchoCaja, altoCaja));
@@ -140,9 +144,9 @@ void AdminMenuState::handleEvent(const sf::Event &event)
         {
             for (auto &nodo : m_nodosVisuales)
             {
-                float factorExpansion = 1.0f + (m_scrollOffset / 60.f);
+                float factorExpansion = 1.0f + (m_scrollOffset / 55.f);
                 float centroX = 600.f; // Centro del panel (1200/2)
-                float desplazamientoX = m_scrollOffset * 7.f;
+                float desplazamientoX = m_scrollOffset * 7.8f;
                 float nodoY = nodo.y - m_scrollOffset;
 
                 float xOriginal = nodo.x;
@@ -210,8 +214,8 @@ void AdminMenuState::draw()
         sf::View texturaView(sf::Vector2f(600.f, 290.f), sf::Vector2f(1200.f, 580.f));
         m_arbolTexture.setView(texturaView);
 
-        float factorExpansion = 1.0f + (m_scrollOffset / 60.f);
-        float desplazamientoX = m_scrollOffset * 7.f;
+        float factorExpansion = 1.0f + (m_scrollOffset / 55.f);
+        float desplazamientoX = m_scrollOffset * 7.8f;
         float centroX = 600.f; // Centro del panel (1200/2)
 
         // Líneas
