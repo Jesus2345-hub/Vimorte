@@ -22,6 +22,11 @@ private:
     std::unique_ptr<sf::Sprite> m_arbolSprite;
     bool m_textureCreada = false;
 
+    sf::RectangleShape m_scrollBar;
+    sf::RectangleShape m_scrollThumb;
+    bool m_arrastrandoScroll = false;
+    float m_scrollThumbY = 0.f;
+
     struct NodoVisual
     {
         LevelNode *nodo;

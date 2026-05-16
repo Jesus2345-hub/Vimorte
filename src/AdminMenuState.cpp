@@ -33,6 +33,19 @@ AdminMenuState::AdminMenuState(sf::RenderWindow *window, Game *game)
     m_instructionText->setOutlineThickness(1.5f);
     m_instructionText->setOutlineColor(sf::Color::Black);
 
+    // Barra de desplazamiento
+    m_scrollBar.setSize(sf::Vector2f(12.f, 580.f));
+    m_scrollBar.setPosition(sf::Vector2f(1248.f, 70.f));
+    m_scrollBar.setFillColor(sf::Color(40, 40, 50, 200));
+    m_scrollBar.setOutlineThickness(1.f);
+    m_scrollBar.setOutlineColor(sf::Color(100, 100, 100));
+
+    m_scrollThumb.setSize(sf::Vector2f(10.f, 60.f));
+    m_scrollThumb.setPosition(sf::Vector2f(1249.f, 70.f));
+    m_scrollThumb.setFillColor(sf::Color(150, 150, 150, 200));
+    m_scrollThumb.setOutlineThickness(1.f);
+    m_scrollThumb.setOutlineColor(sf::Color(200, 200, 200));
+
     construirArbolVisual(game->getLevelTree().getRoot(), 600.f, 130.f, 500.f, 150.f, 0);
 
     m_maxScroll = std::max(0.f, m_arbolTotalY - 350.f);
@@ -124,54 +137,73 @@ void AdminMenuState::construirArbolVisual(LevelNode *nodo, float x, float y, flo
 
 void AdminMenuState::handleEvent(const sf::Event &event)
 {
-    // Convertir mouse a coordenadas de la textura del árbol (relativas al panel)
     sf::Vector2f mousePos = window->mapPixelToCoords(sf::Mouse::getPosition(*window), m_camera);
+    float mouseLocalX = mousePos.x - 40.f;
+    float mouseLocalY = mousePos.y - 70.f;
 
-    // Ajustar mouse a coordenadas locales del panel
-    float mouseLocalX = mousePos.x - 40.f; // panel.x = 40
-    float mouseLocalY = mousePos.y - 70.f; // panel.y = 70
-
-    // Scroll
+    // Scroll con rueda
     if (const auto *scroll = event.getIf<sf::Event::MouseWheelScrolled>())
     {
         m_scrollOffset = std::clamp(m_scrollOffset - scroll->delta * 40.f, 0.f, m_maxScroll);
     }
 
-    // Click
+    // Mouse presionado
     if (const auto *mouse = event.getIf<sf::Event::MouseButtonPressed>())
     {
         if (mouse->button == sf::Mouse::Button::Left)
         {
-            for (auto &nodo : m_nodosVisuales)
+            // Verificar si click en la barra de scroll
+            sf::FloatRect barBounds = m_scrollBar.getGlobalBounds();
+            if (barBounds.contains(mousePos))
             {
-                float factorExpansion = 1.0f + (m_scrollOffset / 55.f);
-                float centroX = 600.f; // Centro del panel (1200/2)
-                float desplazamientoX = m_scrollOffset * 7.8f;
-                float nodoY = nodo.y - m_scrollOffset;
-
-                float xOriginal = nodo.x;
-                float xCentrado = centroX + (xOriginal - centroX) * factorExpansion + desplazamientoX;
-
-                // Usar la caja real del nodo para detectar click
-                sf::RectangleShape cajaTemp = nodo.caja;
-                cajaTemp.setPosition(sf::Vector2f(xCentrado, nodoY));
-                sf::FloatRect bounds = cajaTemp.getGlobalBounds();
-
-                if (bounds.contains(sf::Vector2f(mouseLocalX, mouseLocalY)))
+                m_arrastrandoScroll = true;
+                // Mover el thumb a la posición del click
+                float porcentaje = (mousePos.y - 70.f) / 580.f;
+                m_scrollOffset = std::clamp(porcentaje * m_maxScroll, 0.f, m_maxScroll);
+            }
+            else
+            {
+                // Click en nodos
+                for (auto &nodo : m_nodosVisuales)
                 {
-                    std::cout << "[ADMIN] Click en: " << nodo.nodo->displayName << std::endl;
-                    game->getLevelTree().jumpToNode(nodo.nodo->id);
-                    game->detenerMusica();
+                    float factorExpansion = 1.0f + (m_scrollOffset / 55.f);
+                    float centroX = 600.f;
+                    float desplazamientoX = m_scrollOffset * 7.8f;
+                    float nodoY = nodo.y - m_scrollOffset;
 
-                    auto newState = game->getLevelTree().createCurrentState(window, game);
-                    if (newState)
-                        game->changeState(std::move(newState));
-                    return;
+                    float xOriginal = nodo.x;
+                    float xCentrado = centroX + (xOriginal - centroX) * factorExpansion + desplazamientoX;
+
+                    sf::RectangleShape cajaTemp = nodo.caja;
+                    cajaTemp.setPosition(sf::Vector2f(xCentrado, nodoY));
+                    sf::FloatRect bounds = cajaTemp.getGlobalBounds();
+
+                    if (bounds.contains(sf::Vector2f(mouseLocalX, mouseLocalY)))
+                    {
+                        std::cout << "[ADMIN] Click en: " << nodo.nodo->displayName << std::endl;
+                        game->getLevelTree().jumpToNode(nodo.nodo->id);
+                        game->detenerMusica();
+
+                        auto newState = game->getLevelTree().createCurrentState(window, game);
+                        if (newState)
+                            game->changeState(std::move(newState));
+                        return;
+                    }
                 }
             }
         }
     }
 
+    // Mouse soltado
+    if (const auto *mouseReleased = event.getIf<sf::Event::MouseButtonReleased>())
+    {
+        if (mouseReleased->button == sf::Mouse::Button::Left)
+        {
+            m_arrastrandoScroll = false;
+        }
+    }
+
+    // Escape
     if (const auto *keyPressed = event.getIf<sf::Event::KeyPressed>())
     {
         if (keyPressed->code == sf::Keyboard::Key::Escape)
@@ -181,8 +213,16 @@ void AdminMenuState::handleEvent(const sf::Event &event)
     }
 }
 
-void AdminMenuState::update(float dt) {}
-
+void AdminMenuState::update(float dt)
+{
+    // Arrastrar barra de scroll
+    if (m_arrastrandoScroll)
+    {
+        sf::Vector2f mousePos = window->mapPixelToCoords(sf::Mouse::getPosition(*window), m_camera);
+        float porcentaje = (mousePos.y - 70.f) / 580.f;
+        m_scrollOffset = std::clamp(porcentaje * m_maxScroll, 0.f, m_maxScroll);
+    }
+}
 void AdminMenuState::draw()
 {
     if (!window)
@@ -208,17 +248,16 @@ void AdminMenuState::draw()
     // ============================================================
     if (m_textureCreada)
     {
-        m_arbolTexture.clear(sf::Color(20, 20, 40, 240)); // Mismo color que el panel
+        m_arbolTexture.clear(sf::Color(20, 20, 40, 240));
 
-        // Vista para la textura: centrada en el panel
         sf::View texturaView(sf::Vector2f(600.f, 290.f), sf::Vector2f(1200.f, 580.f));
         m_arbolTexture.setView(texturaView);
 
         float factorExpansion = 1.0f + (m_scrollOffset / 55.f);
         float desplazamientoX = m_scrollOffset * 7.8f;
-        float centroX = 600.f; // Centro del panel (1200/2)
+        float centroX = 600.f;
 
-        // Líneas
+        // Líneas (dibujadas 2 veces para simular grosor)
         for (auto &linea : m_lineas)
         {
             sf::VertexArray lineaDibujo = linea;
@@ -229,6 +268,14 @@ void AdminMenuState::draw()
                 lineaDibujo[i].position.y -= m_scrollOffset;
             }
             m_arbolTexture.draw(lineaDibujo);
+
+            // Segunda pasada desplazada 1px para más grosor
+            sf::VertexArray lineaGruesa = lineaDibujo;
+            for (size_t i = 0; i < lineaGruesa.getVertexCount(); i++)
+            {
+                lineaGruesa[i].position.y += 1.f;
+            }
+            m_arbolTexture.draw(lineaGruesa);
         }
 
         // Nodos
@@ -245,7 +292,6 @@ void AdminMenuState::draw()
             sf::RectangleShape caja = nodo.caja;
             caja.setPosition(sf::Vector2f(xCentrado, nodoY));
 
-            // Hover
             sf::FloatRect bounds = caja.getGlobalBounds();
             if (bounds.contains(sf::Vector2f(mouseLocalX, mouseLocalY)))
             {
@@ -274,13 +320,26 @@ void AdminMenuState::draw()
     m_background.setSize(sf::Vector2f(1280.f, 720.f));
     window->draw(m_background);
 
-    // Panel (fondo del recuadro)
+    // Panel
     window->draw(m_panel);
 
-    // Árbol (textura recortada al panel)
+    // Árbol
     if (m_textureCreada)
     {
         window->draw(*m_arbolSprite);
+    }
+
+    // Barra de desplazamiento
+    if (m_maxScroll > 0.f)
+    {
+        float thumbHeight = std::max(30.f, 580.f * (580.f / (m_arbolTotalY + 100.f)));
+        float thumbY = 70.f + (m_scrollOffset / m_maxScroll) * (580.f - thumbHeight);
+
+        m_scrollThumb.setSize(sf::Vector2f(10.f, thumbHeight));
+        m_scrollThumb.setPosition(sf::Vector2f(1249.f, thumbY));
+
+        window->draw(m_scrollBar);
+        window->draw(m_scrollThumb);
     }
 
     // Título
