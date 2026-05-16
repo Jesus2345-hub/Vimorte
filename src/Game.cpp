@@ -85,7 +85,7 @@ void Game::cargarConfiguracionAudio()
         std::getline(ss, token, ',');
         volEfectos = std::stof(token);
 
-        std::cout << "✅ Configuración de audio cargada" << std::endl;
+        std::cout << " Configuración de audio cargada" << std::endl;
     }
 }
 
@@ -104,7 +104,7 @@ void Game::guardarConfiguracionAudio()
     file << "vol_general,vol_musica,vol_efectos\n";
     file << volGeneral << "," << volMusica << "," << volEfectos << "\n";
 
-    std::cout << "✅ Configuración de audio guardada" << std::endl;
+    std::cout << " Configuracion de audio guardada" << std::endl;
 }
 
 void Game::cambiarMusica(const std::string &rutaMusica)
@@ -179,7 +179,7 @@ void Game::guardarPartidaActual()
     {
         saveManager.getCurrentProgress().rutaActual = levelTree.getCurrentPath();
         saveManager.guardarProgresoActual();
-        std::cout << "💾 Partida guardada en slot " << saveManager.getCurrentSlotId() << std::endl;
+        std::cout << " Partida guardada en slot " << saveManager.getCurrentSlotId() << std::endl;
     }
 }
 
@@ -216,7 +216,7 @@ void Game::entrarCentinela()
                 progress.checkpointRutaArbol = levelTree.getCurrentPath();
                 progress.checkpointCentinelaId = levelTree.getCurrentNode()->id;
                 guardarPartidaActual();
-                std::cout << "💾 Checkpoint guardado antes del centinela" << std::endl;
+                std::cout << " Checkpoint guardado antes del centinela" << std::endl;
             }
         }
 
@@ -262,7 +262,7 @@ void Game::cargarPartidaYContinuar(int slotId)
             levelTree.restorePath(rutaGuardada);
         }
 
-        std::cout << "📂 Cargando partida del slot " << slotId << " - "
+        std::cout << " Cargando partida del slot " << slotId << " - "
                   << levelTree.getCurrentNodeInfo() << std::endl;
 
         detenerMusica();

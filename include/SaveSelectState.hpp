@@ -1,6 +1,7 @@
 #pragma once
 #include "State.hpp"
 #include "GameSaveManager.hpp"
+#include "VideoFinalState.hpp"
 #include <SFML/Graphics.hpp>
 #include <memory>
 #include <vector>

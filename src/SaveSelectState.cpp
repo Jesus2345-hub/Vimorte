@@ -28,7 +28,7 @@ SaveSelectState::SaveSelectState(sf::RenderWindow *window, Game *game, bool solo
     m_panel.setOutlineThickness(3.f);
     m_panel.setOutlineColor(sf::Color(100, 100, 150));
 
-    // Título
+    // Titulo
     std::string titulo = "SELECCIONAR PARTIDA";
     m_title = std::make_unique<sf::Text>(m_font, titulo, 40);
     m_title->setFillColor(sf::Color::Yellow);
@@ -44,7 +44,7 @@ SaveSelectState::SaveSelectState(sf::RenderWindow *window, Game *game, bool solo
     m_instructionText->setOrigin(sf::Vector2f(instBounds.size.x / 2.f, instBounds.size.y / 2.f));
     m_instructionText->setPosition(sf::Vector2f(640.f, 680.f));
 
-    // Botón eliminar
+    // Boton eliminar
     m_btnEliminar.setSize(sf::Vector2f(150.f, 40.f));
     m_btnEliminar.setPosition(sf::Vector2f(850.f, 620.f));
     m_btnEliminar.setFillColor(sf::Color(150, 0, 0, 200));
@@ -58,7 +58,7 @@ SaveSelectState::SaveSelectState(sf::RenderWindow *window, Game *game, bool solo
     m_btnEliminarText->setPosition(sf::Vector2f(925.f, 640.f));
 
     // Texto de slot seleccionado
-    m_selectedSlotText = std::make_unique<sf::Text>(m_font, "Ningún slot seleccionado", 14);
+    m_selectedSlotText = std::make_unique<sf::Text>(m_font, "Ningun slot seleccionado", 14);
     m_selectedSlotText->setFillColor(sf::Color(150, 150, 150));
     m_selectedSlotText->setPosition(sf::Vector2f(340.f, 150.f));
 
@@ -68,7 +68,7 @@ SaveSelectState::SaveSelectState(sf::RenderWindow *window, Game *game, bool solo
 
     actualizarUI();
 
-    std::cout << "✅ SaveSelectState inicializado" << std::endl;
+    std::cout << " SaveSelectState inicializado" << std::endl;
 }
 
 void SaveSelectState::actualizarUI()
@@ -126,7 +126,7 @@ void SaveSelectState::seleccionarSlot(int slotId)
 {
     m_slotSeleccionadoParaEliminar = slotId;
 
-    // Actualizar texto de selección
+    // Actualizar texto de seleccion
     std::string seleccionText = "Slot seleccionado: " + std::to_string(slotId + 1);
     if (slots[slotId].nombrePartida != "[VACIO]")
     {
@@ -138,12 +138,12 @@ void SaveSelectState::seleccionarSlot(int slotId)
     }
     m_selectedSlotText->setString(seleccionText);
 
-    std::cout << "📍 Slot " << (slotId + 1) << " seleccionado" << std::endl;
+    std::cout << "Slot " << (slotId + 1) << " seleccionado" << std::endl;
 }
 
 void SaveSelectState::ejecutarAccionSlot(int slotId)
 {
-    // Vacío = nueva partida, ocupado = cargar
+    // Vacio = nueva partida, ocupado = cargar
     if (slots[slotId].nombrePartida == "[VACIO]")
     {
         iniciarNuevaPartida(slotId);
@@ -162,13 +162,13 @@ void SaveSelectState::iniciarNuevaPartida(int slotId)
         {
             if (saveManager.crearNuevaPartida(slotId, m_nombreInput))
             {
-                std::cout << "✅ Nueva partida creada: " << m_nombreInput << std::endl;
+                std::cout << "Nueva partida creada: " << m_nombreInput << std::endl;
 
-                // Detener música del menú antes de cambiar de estado
+                // Detener musica del menu
                 game->detenerMusica();
 
-                // En lugar de ir directo al Lobby, mostrar elección de modo
-                game->changeState(std::make_unique<ModoJuegoState>(window, game, m_nombreInput, slotId));
+                // Usa el constructor de introduccion de VideoFinalState
+                game->changeState(std::make_unique<VideoFinalState>(window, game, "assets/videos/Inicio", slotId, m_nombreInput));
             }
         }
     }
@@ -177,7 +177,7 @@ void SaveSelectState::iniciarNuevaPartida(int slotId)
         m_modoNuevaPartida = true;
         m_slotSeleccionado = slotId;
         m_nombreInput = "";
-        std::cout << "📝 Ingrese nombre para nueva partida en slot " << (slotId + 1) << std::endl;
+        std::cout << "Ingrese nombre para nueva partida en slot " << (slotId + 1) << std::endl;
     }
 }
 
@@ -197,15 +197,15 @@ void SaveSelectState::eliminarPartidaSeleccionada()
         saveManager.eliminarPartida(slotAEliminar);
         actualizarUI();
 
-        // Resetear selección
+        // Resetear seleccion
         m_slotSeleccionadoParaEliminar = -1;
-        m_selectedSlotText->setString("Ningún slot seleccionado");
+        m_selectedSlotText->setString("Ningun slot seleccionado");
 
-        std::cout << "🗑️ Partida eliminada del slot " << (slotAEliminar + 1) << std::endl;
+        std::cout << " Partida eliminada del slot " << (slotAEliminar + 1) << std::endl;
     }
     else
     {
-        std::cout << "⚠️ No hay un slot válido seleccionado para eliminar" << std::endl;
+        std::cout << " No hay un slot valido seleccionado para eliminar" << std::endl;
     }
 }
 
@@ -248,7 +248,7 @@ void SaveSelectState::handleEvent(const sf::Event &event)
     {
         m_slotHover[i] = m_slotBoxes[i].getGlobalBounds().contains(mousePos);
 
-        // Color diferente según estado
+        // Color diferente segun estado
         if (i == (size_t)m_slotSeleccionadoParaEliminar)
         {
             // Slot seleccionado: borde verde
@@ -269,7 +269,7 @@ void SaveSelectState::handleEvent(const sf::Event &event)
         }
     }
 
-    // Actualizar hover del botón eliminar
+    // Actualizar hover del boton eliminar
     if (m_btnEliminarText)
     {
         m_btnEliminarHover = m_btnEliminar.getGlobalBounds().contains(mousePos);
@@ -280,7 +280,7 @@ void SaveSelectState::handleEvent(const sf::Event &event)
     {
         if (mouseEvent->button == sf::Mouse::Button::Left)
         {
-            // PRIMERO: Verificar si se hizo click en el botón eliminar
+            // PRIMERO: Verificar si se hizo click en el boton eliminar
             if (m_btnEliminarHover)
             {
                 eliminarPartidaSeleccionada();
@@ -292,14 +292,14 @@ void SaveSelectState::handleEvent(const sf::Event &event)
             {
                 if (m_slotHover[i])
                 {
-                    // Si ya estaba seleccionado, ejecutar acción (doble click implícito)
+                    // Si ya estaba seleccionado, ejecutar accion (doble click implicito)
                     if (m_slotSeleccionadoParaEliminar == (int)i)
                     {
                         ejecutarAccionSlot(i);
                     }
                     else
                     {
-                        // Si no, solo seleccionarlo
+                        
                         seleccionarSlot(i);
                     }
                     break;
@@ -321,7 +321,7 @@ void SaveSelectState::handleEvent(const sf::Event &event)
             eliminarPartidaSeleccionada();
         }
 
-        // Enter para ejecutar acción en slot seleccionado
+        // Enter para ejecutar accion en slot seleccionado
         if (keyEvent->code == sf::Keyboard::Key::Enter && m_slotSeleccionadoParaEliminar >= 0)
         {
             ejecutarAccionSlot(m_slotSeleccionadoParaEliminar);
