@@ -111,7 +111,7 @@ std::unique_ptr<LevelNode> crearFinalFelizNivel6()
     auto finalFeliz = std::make_unique<LevelNode>("final_feliz_nivel6", "Final Feliz - Escape", LevelType::NORMAL, 0);
     finalFeliz->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
     {
-        return std::make_unique<VideoFinalState>(w, g, "assets/videos/FinalFeliz_Nivel6", true);
+        return std::make_unique<VideoFinalState>(w, g, "assets/videos/Final_Lineal", true);
     };
     return finalFeliz;
 }
