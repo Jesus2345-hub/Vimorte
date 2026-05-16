@@ -10,7 +10,7 @@ class Game;
 class VideoFinalState : public State {
 private:
 
-    sf::Vector2f m_initialScale;
+    void updateSpriteScale();
     std::vector<sf::Texture> m_frames;
     std::unique_ptr<sf::Sprite> m_videoSprite;
     sf::Clock m_frameClock;

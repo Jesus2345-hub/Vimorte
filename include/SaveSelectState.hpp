@@ -28,7 +28,7 @@ private:
     std::string m_nombreInput;
     std::unique_ptr<sf::Text> m_inputText;
     int m_slotSeleccionado = -1;
-    int m_slotSeleccionadoParaEliminar = -1;  // Nuevo: slot seleccionado para eliminar
+    int m_slotSeleccionadoParaEliminar = -1; 
     
     // Botones de acción
     sf::RectangleShape m_btnEliminar;
@@ -43,6 +43,7 @@ public:
     void handleEvent(const sf::Event& event) override;
     
 private:
+
     void actualizarUI();
     void seleccionarSlot(int slotId);
     void ejecutarAccionSlot(int slotId);

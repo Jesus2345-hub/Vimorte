@@ -36,16 +36,8 @@ VideoFinalState::VideoFinalState(sf::RenderWindow* window, Game* game,
     }
     
     m_videoSprite = std::make_unique<sf::Sprite>(m_frames[0]);
-    
-    sf::Vector2u winSize = window->getSize();
-    sf::Vector2u texSize = m_frames[0].getSize();
-    
-    if (texSize.x > 0 && texSize.y > 0) {
-        m_initialScale.x = static_cast<float>(winSize.x) / static_cast<float>(texSize.x);
-        m_initialScale.y = static_cast<float>(winSize.y) / static_cast<float>(texSize.y);
-        m_videoSprite->setScale(m_initialScale);
-        m_videoSprite->setPosition(sf::Vector2f(0.f, 0.f));
-    }
+    updateSpriteScale();  
+    m_videoSprite->setPosition(sf::Vector2f(0.f, 0.f));
     
     std::string musicPath = videoFolder + "/music.ogg";
     if (std::filesystem::exists(musicPath)) {
@@ -92,17 +84,8 @@ VideoFinalState::VideoFinalState(sf::RenderWindow* window, Game* game,
     }
     
     m_videoSprite = std::make_unique<sf::Sprite>(m_frames[0]);
-    
-    // Escalar UNA SOLA VEZ con el primer frame
-    sf::Vector2u winSize = window->getSize();
-    sf::Vector2u texSize = m_frames[0].getSize();
-    
-    if (texSize.x > 0 && texSize.y > 0) {
-        m_initialScale.x = static_cast<float>(winSize.x) / static_cast<float>(texSize.x);
-        m_initialScale.y = static_cast<float>(winSize.y) / static_cast<float>(texSize.y);
-        m_videoSprite->setScale(m_initialScale);
-        m_videoSprite->setPosition(sf::Vector2f(0.f, 0.f));
-    }
+    updateSpriteScale();  
+    m_videoSprite->setPosition(sf::Vector2f(0.f, 0.f));
     
     std::string musicPath = videoFolder + "/music.ogg";
     if (std::filesystem::exists(musicPath)) {
@@ -114,6 +97,22 @@ VideoFinalState::VideoFinalState(sf::RenderWindow* window, Game* game,
     
     m_frameClock.restart();
     std::cout << "Video de introduccion iniciado (" << m_frames.size() << " frames)" << std::endl;
+}
+
+
+void VideoFinalState::updateSpriteScale() {
+    if (!m_videoSprite) return;
+    
+    sf::Vector2u winSize = window->getSize();
+    
+    const sf::Texture& texture = m_videoSprite->getTexture();
+    sf::Vector2u texSize = texture.getSize();
+    
+    if (texSize.x > 0 && texSize.y > 0) {
+        float scaleX = static_cast<float>(winSize.x) / static_cast<float>(texSize.x);
+        float scaleY = static_cast<float>(winSize.y) / static_cast<float>(texSize.y);
+        m_videoSprite->setScale({scaleX, scaleY});
+    }
 }
 
 void VideoFinalState::update(float dt) {
@@ -134,9 +133,9 @@ void VideoFinalState::update(float dt) {
             return;
         }
         
-        // Solo cambiar la textura, mantener escala y posición
+        // Cambiar la textura y recalcular escala para este frame específico
         m_videoSprite->setTexture(m_frames[m_currentFrame]);
-        m_videoSprite->setScale(m_initialScale);
+        updateSpriteScale();  // Recalcular escala para la nueva textura
         m_videoSprite->setPosition(sf::Vector2f(0.f, 0.f));
         
         m_frameClock.restart();
