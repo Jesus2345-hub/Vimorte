@@ -280,8 +280,11 @@ void MinigameDarts::handleEvent(const sf::Event& event, const sf::RenderWindow& 
                 
                 if (m_vitalSigns && m_vitalSigns->isGameOver()) {
                     showTemporaryMessage("El paciente ha muerto", sf::Color::Red, 2.f);
+                    
                 } else if (m_vitalSigns && !m_vitalSigns->isStabilized()) {
-                    showTemporaryMessage("No lograste estabilizarlo\n F y vuelve a intentarlo", sf::Color::Red, 2.5f);
+                    showTemporaryMessage("No lograste estabilizarlo", sf::Color::Red, 2.5f);
+                   
+                    m_vitalSigns->applyEffect(-100); 
                 } else {
                     showTemporaryMessage("GAME OVER", sf::Color::Red, 2.f);
                 }

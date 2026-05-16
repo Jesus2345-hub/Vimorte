@@ -27,6 +27,12 @@ public:
 
 private:
 
+    // Para manejo de muerte
+    float m_muerteTimer;
+    bool m_mostrandoMuerte;
+    std::string m_mensajeMuerte;
+    bool m_gameOverTriggered;
+
     // LOGICAS PARA COMPLETAR CENTINELA
     BloqueMuro m_bloqueMuro;
     bool m_cercaBloqueMuro;

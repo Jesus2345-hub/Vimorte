@@ -1,6 +1,7 @@
 #include "Nivel4State.hpp"
 #include "PauseState.hpp"
 #include "MiniGameTetris.hpp"
+#include "GameOverState.hpp"
 #include "Game.hpp"
 #include <iostream>
 #include <cmath>
@@ -18,7 +19,8 @@ Nivel4State::Nivel4State(sf::RenderWindow* window, Game* game)
     m_mostrarTutorialPorTecla(false),
     m_escapeConsumed(false),
     m_fontLoaded(false),
-    m_skipPauseThisFrame(false)
+    m_skipPauseThisFrame(false),
+    m_gameOverTriggered(false)
 {
     m_vitalSignsAndrea.setAnchorRight(true);
     m_vitalSignsAndres.setAnchorRight(false);
@@ -172,6 +174,10 @@ Nivel4State::Nivel4State(sf::RenderWindow* window, Game* game)
     actualizarUIPosiciones();
     std::cout << "Nivel4State inicializado correctamente" << std::endl;
     game->setIsInLevel(true);
+
+    // Establecer nombres de los pacientes
+    m_vitalSignsAndres.setPatientName("Andres");
+    m_vitalSignsAndrea.setPatientName("Andrea");
 }
 
 void Nivel4State::configurarColisiones() {
@@ -405,7 +411,7 @@ void Nivel4State::handleEvent(const sf::Event& event) {
 }
 
 void Nivel4State::update(float dt) {
-    // Actualizar tamaño de ventana
+   // Actualizar tamaño de ventana
     sf::Vector2u currentSize = window->getSize();
     if (currentSize != m_lastWindowSize) {
         m_lastWindowSize = currentSize;
@@ -432,6 +438,36 @@ void Nivel4State::update(float dt) {
     // Actualizar signos vitales
     m_vitalSignsAndres.update(dt);
     m_vitalSignsAndrea.update(dt);
+    
+    // ===== VERIFICAR MUERTE DE PACIENTES (AÑADIR ESTO) =====
+    if (!m_gameOverTriggered) {
+        // Verificar si algún paciente acaba de morir
+        if (m_vitalSignsAndres.justDied()) {
+            m_vitalSignsAndres.clearJustDied();
+            m_mostrandoMuerte = true;
+            m_muerteTimer = 3.0f;
+            m_mensajeMuerte = "¡HAS MATADO A ANDRES!\nFallo en el minijuego de dardos";
+            m_gameOverTriggered = true;
+        }
+        else if (m_vitalSignsAndrea.justDied()) {
+            m_vitalSignsAndrea.clearJustDied();
+            m_mostrandoMuerte = true;
+            m_muerteTimer = 3.0f;
+            m_mensajeMuerte = "¡HAS MATADO A ANDREA!\nFallo en el minijuego de patrones";
+            m_gameOverTriggered = true;
+        }
+    }
+    
+    // Manejar el timer de muerte
+    if (m_mostrandoMuerte) {
+        m_muerteTimer -= dt;
+        if (m_muerteTimer <= 0.f) {
+            m_mostrandoMuerte = false;
+            // Mostrar Game Over después del mensaje
+            game->changeState(std::make_unique<GameOverState>(window, game));
+            return;
+        }
+    }
 
     sf::Vector2f posAnterior = m_player.getPosition();
 
@@ -722,12 +758,12 @@ void Nivel4State::draw() {
     }
 
     m_player.draw(*window);
-    // dibujarMuro();
 
     // Dibujar herramienta en el mapa
     if (!m_herramientaRecogida && m_herramientaMapSprite) {
         window->draw(*m_herramientaMapSprite);
     }
+    
     // Minijuegos
     if (m_dartsMinigame.isActive()) {
         window->setView(window->getDefaultView());
@@ -739,8 +775,55 @@ void Nivel4State::draw() {
         m_tetris.draw(*window);
     }
 
-       // UI EN VISTA POR DEFECTO
+    if (m_mostrandoMuerte) {
+        sf::View defaultView = window->getDefaultView();
+        window->setView(defaultView);
+        
+        sf::Vector2u winSize = window->getSize();
+        float winW = static_cast<float>(winSize.x);
+        float winH = static_cast<float>(winSize.y);
+        
+        // Fondo semitransparente
+        sf::RectangleShape overlay(sf::Vector2f(winW, winH));
+        overlay.setFillColor(sf::Color(0, 0, 0, 200));
+        window->draw(overlay);
+        
+        // Panel del mensaje
+        sf::RectangleShape panel(sf::Vector2f(winW * 0.7f, 200.f));
+        panel.setFillColor(sf::Color(50, 0, 0, 220));
+        panel.setOutlineThickness(4.f);
+        panel.setOutlineColor(sf::Color::Red);
+        panel.setPosition(sf::Vector2f(winW * 0.15f, winH * 0.35f));
+        window->draw(panel);
+        
+        // Texto del mensaje 
+        sf::Text muerteText(m_font, m_mensajeMuerte, 30);
+        muerteText.setFillColor(sf::Color::Red);
+        muerteText.setOutlineThickness(2.f);
+        muerteText.setOutlineColor(sf::Color::Black);
+        muerteText.setStyle(sf::Text::Style::Bold);
+        
+        // Centrar el texto 
+        sf::FloatRect bounds = muerteText.getLocalBounds();
+        muerteText.setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
+        muerteText.setPosition(sf::Vector2f(winW / 2.f, winH * 0.45f));
+        window->draw(muerteText);
+        
+        // Texto de espera 
+        sf::Text waitText(m_font, "Game Over en " + std::to_string((int)std::ceil(m_muerteTimer)) + "...", 20);
+        waitText.setFillColor(sf::Color::White);
+        waitText.setOutlineThickness(1.f);
+        waitText.setOutlineColor(sf::Color::Black);
+        
+        bounds = waitText.getLocalBounds();
+        waitText.setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
+        waitText.setPosition(sf::Vector2f(winW / 2.f, winH * 0.55f));
+        window->draw(waitText);
+    }
+
+    // UI EN VISTA POR DEFECTO
     window->setView(window->getDefaultView());
+
 
     // Texto de interaccion de Tetris
     if (m_cercaTetris && !m_tetris.isActive() && !m_dartsMinigame.isActive() && m_textoInteraccion && m_fontLoaded) {
@@ -897,7 +980,53 @@ void Nivel4State::draw() {
     if (m_textoCoordenadas && m_fontLoaded) {
         window->draw(*m_textoCoordenadas);
     }
-
+    // MOSTRAR MENSAJE DE MUERTE 
+    if (m_mostrandoMuerte) {
+        sf::View defaultView = window->getDefaultView();
+        window->setView(defaultView);
+        
+        sf::Vector2u winSize = window->getSize();
+        float winW = static_cast<float>(winSize.x);
+        float winH = static_cast<float>(winSize.y);
+        
+        // Fondo semitransparente
+        sf::RectangleShape overlay(sf::Vector2f(winW, winH));
+        overlay.setFillColor(sf::Color(0, 0, 0, 200));
+        window->draw(overlay);
+        
+        // Panel del mensaje
+        sf::RectangleShape panel(sf::Vector2f(winW * 0.7f, 200.f));
+        panel.setFillColor(sf::Color(50, 0, 0, 220));
+        panel.setOutlineThickness(4.f);
+        panel.setOutlineColor(sf::Color::Red);
+        panel.setPosition(sf::Vector2f(winW * 0.15f, winH * 0.35f));
+        window->draw(panel);
+        
+        // TEXTO DEL MENSAJE DE MUERTE - CORREGIDO
+        sf::Text muerteText(m_font, m_mensajeMuerte, 30);
+        muerteText.setFillColor(sf::Color::Red);
+        muerteText.setOutlineThickness(2.f);
+        muerteText.setOutlineColor(sf::Color::Black);
+        muerteText.setStyle(sf::Text::Style::Bold);
+        
+        // Centrar el texto - USAR / 2.f, NO / 2.5
+        sf::FloatRect boundsMuerte = muerteText.getLocalBounds();
+        muerteText.setOrigin(sf::Vector2f(boundsMuerte.size.x / 2.f, boundsMuerte.size.y / 2.f));
+        muerteText.setPosition(sf::Vector2f(winW / 2.f, winH * 0.45f));
+        window->draw(muerteText);
+        
+        // TEXTO DE ESPERA - CORREGIDO
+        sf::Text waitText(m_font, "Game Over en " + std::to_string((int)std::ceil(m_muerteTimer)) + "...", 20);
+        waitText.setFillColor(sf::Color::White);
+        waitText.setOutlineThickness(1.5f);
+        waitText.setOutlineColor(sf::Color::Black);
+        
+        // Centrar el texto de espera - USAR / 2.f
+        sf::FloatRect boundsWait = waitText.getLocalBounds();
+        waitText.setOrigin(sf::Vector2f(boundsWait.size.x / 2.f, boundsWait.size.y / 2.f));
+        waitText.setPosition(sf::Vector2f(winW / 2.f, winH * 0.55f));
+        window->draw(waitText);
+    }
     // Tutorial
     if (m_mostrarTutorial || m_mostrarTutorialPorTecla) {
         sf::RectangleShape overlay(sf::Vector2f(window->getSize().x, window->getSize().y));

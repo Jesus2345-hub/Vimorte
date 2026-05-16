@@ -2,6 +2,7 @@
 #include "PauseState.hpp"
 #include "MuerteCentinelaState.hpp"
 #include "CoordenadasDebug.hpp"
+#include "GameOverState.hpp"
 #include <cmath>
 #include <algorithm>
 
@@ -338,7 +339,7 @@ void Nivel5State::handleEvent(const sf::Event &event)
         }
         return;
     }
-    
+
     // Teclas globales (solo si NO hay mensaje activo)
     if (const auto *keyPressed = event.getIf<sf::Event::KeyPressed>())
     {

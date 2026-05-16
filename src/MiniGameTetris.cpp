@@ -676,7 +676,7 @@ void MiniGameTetris::verifyPattern() {
         m_roundCompleted = true;
         m_roundCompleteTimer = 1.5f;
         
-        if (m_vitalSigns) {
+         if (m_vitalSigns) {
             m_vitalSigns->applyEffect(5);
         }
     } else {

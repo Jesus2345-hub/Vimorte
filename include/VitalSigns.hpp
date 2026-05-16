@@ -20,6 +20,12 @@ public:
     }
     void useRelativePosition(bool use) { m_useAbsolutePosition = !use; }
 private:
+
+    //Game over
+    std::string m_patientName = "Paciente";
+    bool m_justDied = false;
+
+
     sf::RectangleShape m_backgroundPanel;
     bool m_showBackground = true;
     float m_titleOffsetX = 0.f;
@@ -68,6 +74,12 @@ private:
     bool m_useAbsolutePosition;   
 
 public:
+
+    // Game over
+    std::string getPatientName() const { return m_patientName; }
+    void setPatientName(const std::string& name) { m_patientName = name; }
+    bool justDied() const { return m_justDied; }
+    void clearJustDied() { m_justDied = false; }
 
     void setLeftMargin(float margin) { m_marginLeft = margin; }
     void setBottomMargin(float margin) { m_marginBottom = margin; }

@@ -133,13 +133,12 @@ void VitalSigns::updateMessage(float dt) {
 }
 
 
-// Actualización principal (fluctuación periódica)
+// Actualización principal 
 
 void VitalSigns::update(float dt) {
     if (m_gameOver || m_stabilized) return;
     updateMessage(dt);
     
-    // ACTUALIZAR TEXTOS CADA FRAME 
     updateTexts();
     updateBars();
 
@@ -154,19 +153,22 @@ void VitalSigns::update(float dt) {
         m_bloodPressure = std::clamp(m_bloodPressure + dist(rng), 0.f, 200.f);
         m_oxygen = std::clamp(m_oxygen + dist(rng), 0.f, 100.f);
 
-        // Verificar muerte
-        if (m_heartRate <= 0 || m_bloodPressure <= 0 || m_oxygen <= 0) {
+        // Verificar muerte con flag justDied
+        if (!m_gameOver && (m_heartRate <= 0 || m_bloodPressure <= 0 || m_oxygen <= 0)) {
             m_gameOver = true;
-            showMessage("El paciente ha muerto", sf::Color::Red);
+            m_justDied = true;
+            showMessage(m_patientName + " ha muerto", sf::Color::Red);
         }
     }
 }
+
+
 
 // Aplicar efecto de un dardo (puntos positivos o negativos)
 
 void VitalSigns::applyEffect(int points) {
     if (m_gameOver || m_stabilized) return;
-    // No se comprueba m_opportunitiesLeft
+    
     m_heartRate = std::clamp(m_heartRate + points, 0.f, 150.f);
     m_bloodPressure = std::clamp(m_bloodPressure + points, 0.f, 200.f);
     m_oxygen = std::clamp(m_oxygen + points, 0.f, 100.f);
@@ -179,12 +181,13 @@ void VitalSigns::applyEffect(int points) {
     else if (points < 0)
         showMessage(" - Efecto negativo -", sf::Color::Red);
 
-    // Verificar muerte
-    if (m_heartRate <= 0 || m_bloodPressure <= 0 || m_oxygen <= 0) {
+    // Verificar muerte con flag justDied
+    if (!m_gameOver && (m_heartRate <= 0 || m_bloodPressure <= 0 || m_oxygen <= 0)) {
         m_gameOver = true;
-        showMessage("El paciente ha muerto", sf::Color::Red);
+        m_justDied = true;
+        showMessage(m_patientName + " ha muerto", sf::Color::Red);
     }
-    // Estabilización automática si los tres están en rango
+    
     if (isHeartNormal() && isBPNormal() && isOxygenNormal()) {
         stabilize();
     }
@@ -337,12 +340,13 @@ void VitalSigns::reset() {
     m_opportunitiesLeft = 999;
     m_gameOver = false;
     m_stabilized = false;
+    m_justDied = false;  
     m_fluctuationTimer = 0.f;
     m_messageTimer = 0.f;
     m_lastMessage.clear();
     updateTexts();
     updateBars();
-    showMessage(" Juego reiniciado", sf::Color::Cyan);
+    showMessage("Juego reiniciado", sf::Color::Cyan);
 }
 
 
