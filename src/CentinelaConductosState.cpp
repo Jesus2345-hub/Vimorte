@@ -11,7 +11,7 @@
 // CONSTRUCTOR
 // ============================================================
 CentinelaConductosState::CentinelaConductosState(sf::RenderWindow *window, Game *game)
-    : State(window, game), m_tiempoRestante(45.0f), m_tiempoAgotado(false), m_nivelCompletado(false), m_fontLoaded(false), m_mensajeTimer(0.f), m_parpadeoTimer(0.f), m_parpadeoVisible(true)
+    : State(window, game), m_tiempoRestante(45.0f), m_tiempoAgotado(false), m_nivelCompletado(false), m_fontLoaded(false), m_mensajeTimer(0.f), m_parpadeoTimer(0.f), m_parpadeoVisible(true), m_finalCargado(false)
 {
     // ============================================================
     // FONDO
@@ -402,14 +402,19 @@ bool CentinelaConductosState::verificarColisionHumos()
 
 // ============================================================
 // VERIFICAR SALIDA
-// ============================================================
 void CentinelaConductosState::verificarSalida()
 {
-    if (m_player.getHurtbox().findIntersection(m_exitBounds).has_value())
-    {
-        m_nivelCompletado = true;
-        std::cout << "Salida encontrada! Final Alternativo" << std::endl;
-        mostrarMensaje("¡ESCAPASTE! Has encontrado la salida.", 3.0f);
+    if (!m_cercaSalida) return;
+
+    static bool fPresionado = false;
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F)) {
+        if (!fPresionado) {
+            fPresionado = true;
+            m_finalCargado = true;
+            cargarFinalBueno();
+        }
+    } else {
+        fPresionado = false;
     }
 }
 
@@ -483,58 +488,43 @@ void CentinelaConductosState::mostrarMensaje(const std::string &texto, float dur
 // ============================================================
 void CentinelaConductosState::update(float dt)
 {
-    if (m_nivelCompletado || m_tiempoAgotado)
-    {
-        m_mensajeTimer -= dt;
-        if (m_mensajeTimer <= 0.f)
-        {
-            if (m_nivelCompletado)
-            {
-                std::cout << "Final Alternativo conseguido" << std::endl;
-                game->volverDeCentinela();
-            }
-            else
-            {
-                GameProgressData &progress = game->getSaveManager().getCurrentProgress();
-                game->getSaveManager().addMuerte();
-
-                if (progress.modoElegido == GameProgressData::ModoJuego::CAMINO_AGRADABLE)
-                {
-                    game->pushState(std::make_unique<MuerteCentinelaState>(window, game, true));
-                }
-                else
-                {
-                    game->pushState(std::make_unique<MuerteCentinelaState>(window, game, false));
-                }
-            }
-        }
+    // Si ya se cargó un final, no actualizar nada más
+    if (m_finalCargado) {
         return;
     }
 
-    actualizarCronometro(dt);
-    actualizarHumos(dt);
-
-    if (verificarColisionHumos())
-    {
-        m_tiempoAgotado = true;
-        mostrarMensaje("¡HUMO TOXICO! Has muerto...", 3.0f);
+    // ===== VERIFICAR MUERTE POR TIEMPO AGOTADO =====
+    if (m_tiempoAgotado) {
+        m_finalCargado = true;
+        cargarFinalMalo();
+        return;
     }
 
-    if (m_mensajeTimer > 0.f)
-    {
+    // ===== VERIFICAR COLISIÓN CON HUMO TÓXICO =====
+    if (verificarColisionHumos()) {
+        m_finalCargado = true;
+        cargarFinalMalo();
+        return;
+    }
+
+    // ===== ACTUALIZAR CRONÓMETRO =====
+    actualizarCronometro(dt);
+
+    // ===== ACTUALIZAR HUMOS =====
+    actualizarHumos(dt);
+
+    // ===== ACTUALIZAR MENSAJE TEMPORAL =====
+    if (m_mensajeTimer > 0.f) {
         m_mensajeTimer -= dt;
-        if (m_mensajeTimer <= 0.f && m_mensajeText)
-        {
+        if (m_mensajeTimer <= 0.f && m_mensajeText) {
             m_mensajeText->setString("");
         }
     }
 
-    // Guardar posición anterior
+    // ===== MOVIMIENTO DEL JUGADOR =====
     sf::Vector2f posAnterior = m_player.getPosition();
 
-    // Movimiento con WASD
     sf::Vector2f movimiento(0.f, 0.f);
-
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W) ||
         sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up))
         movimiento.y -= 1.f;
@@ -548,8 +538,7 @@ void CentinelaConductosState::update(float dt)
         sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right))
         movimiento.x += 1.f;
 
-    if (movimiento.x != 0.f || movimiento.y != 0.f)
-    {
+    if (movimiento.x != 0.f || movimiento.y != 0.f) {
         float length = std::sqrt(movimiento.x * movimiento.x + movimiento.y * movimiento.y);
         movimiento /= length;
     }
@@ -557,25 +546,22 @@ void CentinelaConductosState::update(float dt)
     m_player.move(movimiento, dt);
     m_player.update(dt);
 
-    // Colisiones con paredes
-    for (const auto &wall : m_wallBounds)
-    {
-        if (m_player.getHurtbox().findIntersection(wall).has_value())
-        {
+    // ===== COLISIONES CON PAREDES =====
+    for (const auto& wall : m_wallBounds) {
+        if (m_player.getHurtbox().findIntersection(wall).has_value()) {
             m_player.setPosition(posAnterior.x, posAnterior.y);
             break;
         }
     }
 
-    // Límites del jugador en el mundo
+    // ===== LÍMITES DEL JUGADOR =====
     sf::Vector2f playerPos = m_player.getPosition();
     playerPos.x = std::clamp(playerPos.x, 35.f, m_worldSize.x - 35.f);
     playerPos.y = std::clamp(playerPos.y, 35.f, m_worldSize.y - 35.f);
     m_player.setPosition(playerPos.x, playerPos.y);
 
-    // Cámara sigue al jugador
+    // ===== CÁMARA SIGUE AL JUGADOR =====
     sf::Vector2f cameraPos = m_player.getPosition();
-
     float halfWidth = 640.f;
     float halfHeight = 360.f;
 
@@ -590,25 +576,21 @@ void CentinelaConductosState::update(float dt)
 
     m_camera.setCenter(cameraPos);
 
-    // Verificar si está cerca de la salida
+    // ===== VERIFICAR SI ESTÁ CERCA DE LA SALIDA =====
     m_cercaSalida = m_player.getHurtbox().findIntersection(m_exitBounds).has_value();
 
-    // Interacción con la salida
-    static bool fSalidaPresionado = false;
-    if (m_cercaSalida)
-    {
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F))
-        {
-            if (!fSalidaPresionado)
-            {
-                fSalidaPresionado = true;
-                verificarSalida();
-            }
+    // ===== VERIFICAR SALIDA (FINAL BUENO) =====
+    verificarSalida();
+
+    // ===== PAUSA =====
+    static bool escapeProcesado = false;
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape)) {
+        if (!escapeProcesado) {
+            escapeProcesado = true;
+            game->pushState(std::make_unique<PauseState>(window, game));
         }
-        else
-        {
-            fSalidaPresionado = false;
-        }
+    } else {
+        escapeProcesado = false;
     }
 }
 
@@ -749,7 +731,7 @@ void CentinelaConductosState::draw()
         window->draw(*m_mensajeText);
     }
 
-    // Pantalla final
+    // Pantalla final 
     if (m_nivelCompletado || m_tiempoAgotado)
     {
         sf::RectangleShape overlay(sf::Vector2f(winW, winH));
@@ -776,6 +758,34 @@ void CentinelaConductosState::draw()
             resultadoText.setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
             resultadoText.setPosition(sf::Vector2f(winW / 2.f, winH / 2.f));
             window->draw(resultadoText);
+        }
+    }
+}
+
+void CentinelaConductosState::cargarFinalBueno()
+{
+    // Restaurar vista antes de cambiar de estado
+    window->setView(window->getDefaultView());
+    
+    LevelTree& levelTree = game->getLevelTree();
+    if (levelTree.jumpToNode("final_bueno_centinela1")) {
+        std::unique_ptr<State> newState = levelTree.createCurrentState(window, game);
+        if (newState) {
+            game->changeState(std::move(newState));
+        }
+    }
+}
+
+void CentinelaConductosState::cargarFinalMalo()
+{
+    // Restaurar vista antes de cambiar de estado
+    window->setView(window->getDefaultView());
+    
+    LevelTree& levelTree = game->getLevelTree();
+    if (levelTree.jumpToNode("final_malo_centinela1")) {
+        std::unique_ptr<State> newState = levelTree.createCurrentState(window, game);
+        if (newState) {
+            game->changeState(std::move(newState));
         }
     }
 }

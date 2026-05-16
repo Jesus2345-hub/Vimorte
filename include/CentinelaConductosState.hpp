@@ -12,7 +12,10 @@ private:
     // Cámara
     sf::View m_camera;
     sf::Vector2f m_worldSize;
-
+    bool m_finalCargado;
+    void cargarFinalBueno();
+    void cargarFinalMalo();
+    
     // Sistema de humo tóxico
     struct HumoToxico
     {
