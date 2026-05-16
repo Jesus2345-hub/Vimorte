@@ -17,6 +17,7 @@ private:
     std::unique_ptr<sf::Text> m_loadText;
     std::unique_ptr<sf::Text> m_menuText;
     std::unique_ptr<sf::Text> m_exitText;
+    std::unique_ptr<sf::Text> m_guideText;
     
     bool mostrarConfig;
     int seleccionConfig;
@@ -29,6 +30,19 @@ private:
     bool m_menuHover = false;
     bool m_exitHover = false;
     bool m_configHover = false;
+    bool m_guideHover = false; 
+
+    // Guia de instrucciones
+    bool mostrarGuia;
+    sf::RectangleShape m_guidePanel;
+    std::unique_ptr<sf::Text> m_guideTitle;
+    std::vector<std::unique_ptr<sf::Text>> m_guideEntries;
+    std::unique_ptr<sf::Text> m_closeGuideText;
+    bool m_closeGuideHover;
+    
+    void inicializarGuia();
+    void actualizarGuia(const sf::Vector2f& mousePos);
+    void dibujarGuia();
     
 public:
     PauseState(sf::RenderWindow* window, Game* game);

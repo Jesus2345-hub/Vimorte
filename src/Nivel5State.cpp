@@ -318,7 +318,7 @@ void Nivel5State::handleEvent(const sf::Event &event)
                                 "GRACIAS! Has recuperado todas mis joyas.\n"
                                 "Eres un heroe...\n\n"
                                 "Ahora dirigete al ASCENSOR\n"
-                                "y presiona E para avanzar al siguiente nivel.";
+                                "y presiona F para avanzar al siguiente nivel.";
                             
                             std::cout << "OBJETOS ENTREGADOS CORRECTAMENTE! Nivel completado." << std::endl;
                         } 
@@ -625,10 +625,10 @@ void Nivel5State::reajustarMinijuegoCriminal()
 void Nivel5State::verificarSalidaNivel() {
     m_cercaPuertaSalida = m_player.getHurtbox().findIntersection(m_puertaSalidaArea).has_value();
     
-    static bool ePresionado = false;
-    if (m_cercaPuertaSalida && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::E)) {
-        if (!ePresionado) {
-            ePresionado = true;
+    static bool fPresionado = false;
+    if (m_cercaPuertaSalida && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F)) {
+        if (!fPresionado) {
+            fPresionado = true;
             
             if (m_nivelCompletado) {
                 std::cout << "Saliendo del nivel 5..." << std::endl;
@@ -638,7 +638,7 @@ void Nivel5State::verificarSalidaNivel() {
             }
         }
     } else {
-        ePresionado = false;
+        fPresionado = false;
     }
 }
 
@@ -1091,7 +1091,7 @@ void Nivel5State::draw()
                 instruccionText.setFillColor(sf::Color(255, 215, 0, 255));
             }
             else if (m_nivelCompletado) {
-                instruccionText.setString("[ F ] Cerrar    ->    Ve al ascensor y presiona [ E ]");
+                instruccionText.setString("[ F ] Cerrar    ->    Ve al ascensor y presiona [ F ]");
                 instruccionText.setFillColor(sf::Color(100, 255, 100, 255));
             }
             else if (m_criminalGameCompleted) {
@@ -1144,7 +1144,7 @@ void Nivel5State::draw()
         }
         if (m_cercaPuertaSalida && m_nivelCompletado)
         {
-            m_textoInteraccion->setString("Presiona E para avanzar al siguiente nivel");
+            m_textoInteraccion->setString("Presiona F para ir al siguiente nivel");
             m_textoInteraccion->setOutlineColor(sf::Color::Black);
             m_textoInteraccion->setOutlineThickness(2.0f);
             sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
