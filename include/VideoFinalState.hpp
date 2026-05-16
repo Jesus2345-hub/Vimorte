@@ -10,6 +10,7 @@ class Game;
 class VideoFinalState : public State {
 private:
 
+    sf::Vector2u m_lastWindowSize;
     void updateSpriteScale();
     std::vector<sf::Texture> m_frames;
     std::unique_ptr<sf::Sprite> m_videoSprite;

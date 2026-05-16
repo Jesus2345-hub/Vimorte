@@ -46,12 +46,12 @@ VideoFinalState::VideoFinalState(sf::RenderWindow* window, Game* game,
             m_music.play();
         }
     }
-    
+    m_lastWindowSize = window->getSize();
     m_frameClock.restart();
     std::cout << "Video final iniciado. Frames: " << m_frames.size() << std::endl;
 }
 
-// Constructor para introduccion 
+// Constructor para introduccion   
 VideoFinalState::VideoFinalState(sf::RenderWindow* window, Game* game, 
                                  const std::string& videoFolder, int slotId, const std::string& nombreJugador)
     : State(window, game)
@@ -94,7 +94,7 @@ VideoFinalState::VideoFinalState(sf::RenderWindow* window, Game* game,
             m_music.play();
         }
     }
-    
+    m_lastWindowSize = window->getSize();
     m_frameClock.restart();
     std::cout << "Video de introduccion iniciado (" << m_frames.size() << " frames)" << std::endl;
 }
@@ -104,20 +104,55 @@ void VideoFinalState::updateSpriteScale() {
     if (!m_videoSprite) return;
     
     sf::Vector2u winSize = window->getSize();
-    
     const sf::Texture& texture = m_videoSprite->getTexture();
     sf::Vector2u texSize = texture.getSize();
     
     if (texSize.x > 0 && texSize.y > 0) {
-        float scaleX = static_cast<float>(winSize.x) / static_cast<float>(texSize.x);
-        float scaleY = static_cast<float>(winSize.y) / static_cast<float>(texSize.y);
-        m_videoSprite->setScale({scaleX, scaleY});
+        // Mantener aspect ratio - LETTERBOX
+        float winAspect = static_cast<float>(winSize.x) / static_cast<float>(winSize.y);
+        float texAspect = static_cast<float>(texSize.x) / static_cast<float>(texSize.y);
+        
+        float scale;
+        if (winAspect > texAspect) {
+            // Pantalla más ancha - escalar por altura
+            scale = static_cast<float>(winSize.y) / static_cast<float>(texSize.y);
+        } else {
+            // Pantalla más alta - escalar por ancho
+            scale = static_cast<float>(winSize.x) / static_cast<float>(texSize.x);
+        }
+        
+        m_videoSprite->setScale({scale, scale});
+        
+        // Centrar en pantalla
+        sf::FloatRect bounds = m_videoSprite->getLocalBounds();
+        float scaledWidth = bounds.size.x * scale;
+        float scaledHeight = bounds.size.y * scale;
+        
+        m_videoSprite->setPosition({
+            (winSize.x - scaledWidth) / 2.f,
+            (winSize.y - scaledHeight) / 2.f
+    });
     }
 }
 
 void VideoFinalState::update(float dt) {
+    
     if (!m_videoSprite || m_frames.empty()) return;
     
+    // Verificar si la ventana cambió de tamaño
+    sf::Vector2u currentSize = window->getSize();
+    if (currentSize != m_lastWindowSize) {
+        m_lastWindowSize = currentSize;
+        updateSpriteScale();
+        // Reposicionar después de escalar
+        sf::FloatRect bounds = m_videoSprite->getLocalBounds();
+        float scaledWidth = bounds.size.x * m_videoSprite->getScale().x;
+        float scaledHeight = bounds.size.y * m_videoSprite->getScale().y;
+        m_videoSprite->setPosition({
+            (currentSize.x - scaledWidth) / 2.f,
+            (currentSize.y - scaledHeight) / 2.f
+        });
+    }
     if (m_frameClock.getElapsedTime().asSeconds() >= m_frameDuration) {
         m_currentFrame++;
         
@@ -149,28 +184,5 @@ void VideoFinalState::draw() {
 }
 
 void VideoFinalState::handleEvent(const sf::Event& event) {
-    if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>()) {
-        if (keyPressed->code == sf::Keyboard::Key::Escape) {
-            
-            m_music.stop();
-            
-            if (m_isIntro) {
-                std::cout << "ESC presionado durante introducción. Volviendo al menú..." << std::endl;
-                game->returnToMenu();
-            } else {
-                game->returnToMenu();
-            }
-        }
-        else if (keyPressed->code == sf::Keyboard::Key::Space ||
-                 keyPressed->code == sf::Keyboard::Key::Enter) {
-            
-            m_music.stop();
-            
-            if (m_isIntro) {
-                game->changeState(std::make_unique<ModoJuegoState>(window, game, m_introNombreJugador, m_introSlotId));
-            } else {
-                game->returnToMenu();
-            }
-        }
-    }
+ //empty
 }

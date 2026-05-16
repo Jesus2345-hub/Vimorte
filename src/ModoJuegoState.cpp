@@ -1,97 +1,163 @@
 #include "ModoJuegoState.hpp"
-// Asegúrate de tener este include al inicio de Nivel1State.cpp:
 #include "MuerteCentinelaState.hpp"
 #include "PauseState.hpp"
 #include "Game.hpp"
 #include "Lobby.hpp"
 #include <iostream>
+#include <sstream>
 
 ModoJuegoState::ModoJuegoState(sf::RenderWindow* window, Game* game, 
                                const std::string& nombre, int slotId)
     : State(window, game), m_nombreJugador(nombre), m_slotId(slotId) {
     
     if (!m_font.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf")) {
-        std::cerr << "❌ Error cargando fuente en ModoJuegoState" << std::endl;
+        std::cerr << "Error cargando fuente en ModoJuegoState" << std::endl;
     }
     
+    updateScale();
+    
     // Fondo
-    m_background.setSize(sf::Vector2f(1280.f, 720.f));
     m_background.setFillColor(sf::Color(10, 10, 20, 255));
     
     // Panel central
-    m_panel.setSize(sf::Vector2f(900.f, 580.f));
-    m_panel.setPosition(sf::Vector2f(190.f, 70.f));
     m_panel.setFillColor(sf::Color(30, 30, 50, 240));
-    m_panel.setOutlineThickness(3.f);
     m_panel.setOutlineColor(sf::Color::Yellow);
     
+    rebuildTexts();
+     // INICIALIZAR COLORES DE BOTONES AQUÍ
+    m_botonAgradable.setFillColor(sf::Color(0, 80, 0, 200));
+    m_botonAgradable.setOutlineColor(sf::Color::Green);
+    m_botonAgradable.setOutlineThickness(getScaledValue(3.f));
+    
+    m_botonConsecuencias.setFillColor(sf::Color(80, 0, 0, 200));
+    m_botonConsecuencias.setOutlineColor(sf::Color::Red);
+    m_botonConsecuencias.setOutlineThickness(getScaledValue(3.f));
+    
+    std::cout << "Estado de eleccion de modo creado para: " << m_nombreJugador << std::endl;
+}
+
+void ModoJuegoState::updateScale() {
+    if (!window) return;
+    
+    sf::Vector2u winSize = window->getSize();
+    m_scaleX = static_cast<float>(winSize.x) / BASE_WIDTH;
+    m_scaleY = static_cast<float>(winSize.y) / BASE_HEIGHT;
+}
+
+int ModoJuegoState::getScaledFontSize(int baseSize) {
+    float scale = std::min(m_scaleX, m_scaleY);
+    return std::max(8, static_cast<int>(baseSize * scale));
+}
+
+float ModoJuegoState::getScaledValue(float baseValue) {
+    float scale = std::min(m_scaleX, m_scaleY);
+    return baseValue * scale;
+}
+
+std::vector<std::string> ModoJuegoState::wrapText(const std::string& text, int maxWidth, int fontSize) {
+    std::vector<std::string> lines;
+    std::stringstream ss(text);
+    std::string word;
+    std::string currentLine;
+    
+    // Crear un texto temporal para medir
+    sf::Text tempText(m_font, "", fontSize);
+    
+    while (ss >> word) {
+        std::string testLine = currentLine.empty() ? word : currentLine + " " + word;
+        tempText.setString(testLine);
+        sf::FloatRect bounds = tempText.getLocalBounds();
+        
+        if (bounds.size.x > maxWidth && !currentLine.empty()) {
+            lines.push_back(currentLine);
+            currentLine = word;
+        } else {
+            currentLine = testLine;
+        }
+    }
+    
+    if (!currentLine.empty()) {
+        lines.push_back(currentLine);
+    }
+    
+    return lines;
+}
+
+void ModoJuegoState::rebuildTexts() {
+    if (!window) return;
+    
+    float winW = static_cast<float>(window->getSize().x);
+    float winH = static_cast<float>(window->getSize().y);
+    float panelW = winW * 0.7f;
+    float maxTextWidth = static_cast<int>(panelW - getScaledValue(60.f));
+    
     // Título
-    m_title = std::make_unique<sf::Text>(m_font, "ELIGE TU CAMINO", 40);
+    m_title = std::make_unique<sf::Text>(m_font, "ELIGE TU CAMINO", getScaledFontSize(40));
     m_title->setFillColor(sf::Color::Yellow);
-    sf::FloatRect titleBounds = m_title->getLocalBounds();
-    m_title->setOrigin(sf::Vector2f(titleBounds.size.x / 2.f, 0.f));
-    m_title->setPosition(sf::Vector2f(640.f, 100.f));
     
     // Descripción
     m_description = std::make_unique<sf::Text>(m_font,
         "Esta eleccion afectara a TODA tu partida. Elige sabiamente.\n"
-        "No podras cambiar esta decision mas adelante.", 18);
+        "No podras cambiar esta decision mas adelante.", getScaledFontSize(18));
     m_description->setFillColor(sf::Color::White);
-    sf::FloatRect descBounds = m_description->getLocalBounds();
-    m_description->setOrigin(sf::Vector2f(descBounds.size.x / 2.f, 0.f));
-    m_description->setPosition(sf::Vector2f(640.f, 160.f));
     
-    // === OPCIÓN 1: MODO HISTORIA (CAMINO AGRADABLE) ===
-    m_botonAgradable.setSize(sf::Vector2f(380.f, 180.f));
-    m_botonAgradable.setPosition(sf::Vector2f(240.f, 260.f));
-    m_botonAgradable.setFillColor(sf::Color(0, 80, 0, 200));
-    m_botonAgradable.setOutlineThickness(3.f);
-    m_botonAgradable.setOutlineColor(sf::Color::Green);
+    // Advertencia
+    m_advertencia = std::make_unique<sf::Text>(m_font, 
+        "Jugador: " + m_nombreJugador + " | Esta eleccion es PERMANENTE para esta partida", 
+        getScaledFontSize(14));
+    m_advertencia->setFillColor(sf::Color(150, 150, 150));
     
-    m_opcionAgradableTitulo = std::make_unique<sf::Text>(m_font, "MODO HISTORIA", 28);
+    // Títulos de botones
+    m_opcionAgradableTitulo = std::make_unique<sf::Text>(m_font, "MODO HISTORIA", getScaledFontSize(24));
     m_opcionAgradableTitulo->setFillColor(sf::Color::Green);
-    sf::FloatRect titulo1Bounds = m_opcionAgradableTitulo->getLocalBounds();
-    m_opcionAgradableTitulo->setOrigin(sf::Vector2f(titulo1Bounds.size.x / 2.f, 0.f));
-    m_opcionAgradableTitulo->setPosition(sf::Vector2f(430.f, 275.f));
     
-    m_opcionAgradableDesc = std::make_unique<sf::Text>(m_font,
-        "• Tus decisiones NO son permanentes\n"
-        "• Si fallas en un desafio, puedes volver a intentarlo\n"
-        "• El juego se guarda antes de cada momento importante\n"
-        "• Podras explorar todos los caminos sin miedo\n"
-        "• Ideal para disfrutar la historia y descubrir secretos", 13);
-    m_opcionAgradableDesc->setFillColor(sf::Color(200, 255, 200));
-    m_opcionAgradableDesc->setPosition(sf::Vector2f(255.f, 330.f));
-    
-    // === OPCIÓN 2: MODO SUPERVIVENCIA (CAMINO CON CONSECUENCIAS) ===
-    m_botonConsecuencias.setSize(sf::Vector2f(380.f, 180.f));
-    m_botonConsecuencias.setPosition(sf::Vector2f(660.f, 260.f));
-    m_botonConsecuencias.setFillColor(sf::Color(80, 0, 0, 200));
-    m_botonConsecuencias.setOutlineThickness(3.f);
-    m_botonConsecuencias.setOutlineColor(sf::Color::Red);
-    
-    m_opcionConsecuenciasTitulo = std::make_unique<sf::Text>(m_font, "MODO SUPERVIVENCIA", 28);
+    m_opcionConsecuenciasTitulo = std::make_unique<sf::Text>(m_font, "MODO SUPERVIVENCIA", getScaledFontSize(24));
     m_opcionConsecuenciasTitulo->setFillColor(sf::Color::Red);
-    sf::FloatRect titulo2Bounds = m_opcionConsecuenciasTitulo->getLocalBounds();
-    m_opcionConsecuenciasTitulo->setOrigin(sf::Vector2f(titulo2Bounds.size.x / 2.f, 0.f));
-    m_opcionConsecuenciasTitulo->setPosition(sf::Vector2f(850.f, 275.f));
     
-    m_opcionConsecuenciasDesc = std::make_unique<sf::Text>(m_font,
-        "• Cada decision que tomes sera PARA SIEMPRE\n"
-        "• Si fallas en un desafio... no hay segunda oportunidad\n"
-        "• Tus errores afectaran el final de la historia\n"
-        "• Solo los mas valientes veran el verdadero desenlace\n"
-        "• Experiencia intensa con consecuencias reales", 13);
-    m_opcionConsecuenciasDesc->setFillColor(sf::Color(255, 200, 200));
-    m_opcionConsecuenciasDesc->setPosition(sf::Vector2f(675.f, 330.f));
+    // Texto descriptivo del MODO HISTORIA (con wrapping)
+    std::string textoAgradable = 
+        "- Tus decisiones NO\nson permanentes\n"
+        "- Si fallas en un desafio,\npuedes volver a intentarlo\n"
+        "- El juego se guarda antes\nde cada momento importante\n"
+        "- Podras explorar todos los\ncaminos sin miedo\n"
+        "- Ideal para disfrutar la\nhistoria y descubrir secretos";
     
-    // Texto de advertencia
-    sf::Text advertencia(m_font, 
-        "Jugador: " + m_nombreJugador + " | Esta eleccion es PERMANENTE para esta partida", 14);
-    advertencia.setFillColor(sf::Color(150, 150, 150));
-    advertencia.setPosition(sf::Vector2f(250.f, 520.f));
+    // Texto descriptivo del MODO SUPERVIVENCIA (con wrapping)
+    std::string textoConsecuencias = 
+        "- Cada decision que tomes\nsera PARA SIEMPRE\n"
+        "- Si fallas en un desafio...\nno hay segunda oportunidad\n"
+        "- Tus errores afectaran el\nfinal de la historia\n"
+        "- Solo los mas valientes\nveran el verdadero desenlace\n"
+        "- Experiencia intensa con\nconsecuencias reales";
     
-    std::cout << "🎮 Estado de eleccion de modo creado para: " << m_nombreJugador << std::endl;
+    // Limpiar líneas anteriores
+    m_opcionAgradableLineas.clear();
+    m_opcionConsecuenciasLineas.clear();
+    
+    // Crear líneas para cada texto
+    int descFontSize = getScaledFontSize(18);
+    
+    // Dividir el texto por saltos de línea existentes y luego aplicar wrap
+    std::stringstream ssAgradable(textoAgradable);
+    std::string line;
+    while (std::getline(ssAgradable, line)) {
+        auto wrappedLines = wrapText(line, maxTextWidth, descFontSize);
+        for (const auto& wrappedLine : wrappedLines) {
+            sf::Text textLine(m_font, wrappedLine, descFontSize);
+            textLine.setFillColor(sf::Color(200, 255, 200));
+            m_opcionAgradableLineas.push_back(textLine);
+        }
+    }
+    
+    std::stringstream ssConsecuencias(textoConsecuencias);
+    while (std::getline(ssConsecuencias, line)) {
+        auto wrappedLines = wrapText(line, maxTextWidth, descFontSize);
+        for (const auto& wrappedLine : wrappedLines) {
+            sf::Text textLine(m_font, wrappedLine, descFontSize);
+            textLine.setFillColor(sf::Color(255, 200, 200));
+            m_opcionConsecuenciasLineas.push_back(textLine);
+        }
+    }
 }
 
 void ModoJuegoState::handleEvent(const sf::Event& event) {
@@ -108,33 +174,31 @@ void ModoJuegoState::handleEvent(const sf::Event& event) {
     if (const auto* mouse = event.getIf<sf::Event::MouseButtonPressed>()) {
         if (mouse->button == sf::Mouse::Button::Left) {
             if (m_hoverAgradable) {
-                // Elegir camino agradable
                 game->getSaveManager().getCurrentProgress().modoElegido = 
                     GameProgressData::ModoJuego::CAMINO_AGRADABLE;
                 game->getSaveManager().guardarProgresoActual();
                 game->changeState(std::make_unique<LobbyState>(window, game));
-                std::cout << "🌟 Jugador '" << m_nombreJugador << "' eligio MODO HISTORIA" << std::endl;
+                std::cout << "Jugador '" << m_nombreJugador << "' eligio MODO HISTORIA" << std::endl;
             }
             else if (m_hoverConsecuencias) {
-                // Elegir camino con consecuencias
                 game->getSaveManager().getCurrentProgress().modoElegido = 
                     GameProgressData::ModoJuego::CAMINO_CON_CONSECUENCIAS;
                 game->getSaveManager().guardarProgresoActual();
                 game->changeState(std::make_unique<LobbyState>(window, game));
-                std::cout << "💀 Jugador '" << m_nombreJugador << "' eligio MODO SUPERVIVENCIA" << std::endl;
+                std::cout << "Jugador '" << m_nombreJugador << "' eligio MODO SUPERVIVENCIA" << std::endl;
             }
-        }
-    }
-    
-    if (const auto* keyEvent = event.getIf<sf::Event::KeyPressed>()) {
-        if (keyEvent->code == sf::Keyboard::Key::Escape) {
-            game->popState();
         }
     }
 }
 
 void ModoJuegoState::update(float dt) {
-    // No necesita actualización
+    static sf::Vector2u lastSize = window->getSize();
+    sf::Vector2u currentSize = window->getSize();
+    if (lastSize != currentSize) {
+        updateScale();
+        rebuildTexts();
+        lastSize = currentSize;
+    }
 }
 
 void ModoJuegoState::draw() {
@@ -145,63 +209,94 @@ void ModoJuegoState::draw() {
     float centerX = winW / 2.f;
     float centerY = winH / 2.f;
     
+    // Fondo
     m_background.setSize(sf::Vector2f(winW, winH));
     window->draw(m_background);
     
+    // Panel
     float panelW = winW * 0.7f;
     float panelH = winH * 0.8f;
+    float panelX = centerX - panelW/2.f;
+    float panelY = winH * 0.1f;
+    
     m_panel.setSize(sf::Vector2f(panelW, panelH));
-    m_panel.setPosition(sf::Vector2f(centerX - panelW/2.f, winH * 0.1f));
+    m_panel.setPosition(sf::Vector2f(panelX, panelY));
+    m_panel.setOutlineThickness(getScaledValue(3.f));
     window->draw(m_panel);
     
+    // Título
     if (m_title) {
         sf::FloatRect tb = m_title->getLocalBounds();
         m_title->setOrigin(sf::Vector2f(tb.size.x/2.f, 0.f));
-        m_title->setPosition(sf::Vector2f(centerX, winH * 0.14f));
+        m_title->setPosition(sf::Vector2f(centerX, panelY + getScaledValue(20.f)));
         window->draw(*m_title);
     }
     
+    // Descripción
     if (m_description) {
         sf::FloatRect db = m_description->getLocalBounds();
         m_description->setOrigin(sf::Vector2f(db.size.x/2.f, 0.f));
-        m_description->setPosition(sf::Vector2f(centerX, winH * 0.22f));
+        m_description->setPosition(sf::Vector2f(centerX, panelY + getScaledValue(80.f)));
         window->draw(*m_description);
     }
     
+    // Botones
     float btnW = panelW * 0.42f;
-    float btnH = panelH * 0.45f;
-    float btnY = winH * 0.36f;
+    float btnH = panelH * 0.5f;
+    float btnY = panelY + panelH * 0.35f;
     float gap = panelW * 0.04f;
     
+    float btn1X = centerX - btnW - gap/2.f;
+    float btn2X = centerX + gap/2.f;
+    
     m_botonAgradable.setSize(sf::Vector2f(btnW, btnH));
-    m_botonAgradable.setPosition(sf::Vector2f(centerX - btnW - gap/2.f, btnY));
+    m_botonAgradable.setPosition(sf::Vector2f(btn1X, btnY));
+    m_botonAgradable.setOutlineThickness(getScaledValue(3.f));
     window->draw(m_botonAgradable);
     
     m_botonConsecuencias.setSize(sf::Vector2f(btnW, btnH));
-    m_botonConsecuencias.setPosition(sf::Vector2f(centerX + gap/2.f, btnY));
+    m_botonConsecuencias.setPosition(sf::Vector2f(btn2X, btnY));
+    m_botonConsecuencias.setOutlineThickness(getScaledValue(3.f));
     window->draw(m_botonConsecuencias);
     
+    // Títulos de botones
     if (m_opcionAgradableTitulo) {
         sf::FloatRect tb = m_opcionAgradableTitulo->getLocalBounds();
         m_opcionAgradableTitulo->setOrigin(sf::Vector2f(tb.size.x/2.f, 0.f));
-        m_opcionAgradableTitulo->setPosition(sf::Vector2f(centerX - btnW/2.f - gap/2.f, btnY + 15.f));
+        m_opcionAgradableTitulo->setPosition(sf::Vector2f(btn1X + btnW/2.f, btnY + getScaledValue(10.f)));
         window->draw(*m_opcionAgradableTitulo);
-    }
-    
-    if (m_opcionAgradableDesc) {
-        m_opcionAgradableDesc->setPosition(sf::Vector2f(centerX - btnW - gap/2.f + 15.f, btnY + 55.f));
-        window->draw(*m_opcionAgradableDesc);
     }
     
     if (m_opcionConsecuenciasTitulo) {
         sf::FloatRect tb = m_opcionConsecuenciasTitulo->getLocalBounds();
         m_opcionConsecuenciasTitulo->setOrigin(sf::Vector2f(tb.size.x/2.f, 0.f));
-        m_opcionConsecuenciasTitulo->setPosition(sf::Vector2f(centerX + btnW/2.f + gap/2.f, btnY + 15.f));
+        m_opcionConsecuenciasTitulo->setPosition(sf::Vector2f(btn2X + btnW/2.f, btnY + getScaledValue(10.f)));
         window->draw(*m_opcionConsecuenciasTitulo);
     }
     
-    if (m_opcionConsecuenciasDesc) {
-        m_opcionConsecuenciasDesc->setPosition(sf::Vector2f(centerX + gap/2.f + 15.f, btnY + 55.f));
-        window->draw(*m_opcionConsecuenciasDesc);
+    // Líneas de texto (con wrapping)
+    float lineY = btnY + getScaledValue(45.f);
+    float lineHeight = getScaledValue(18.f);
+    float leftMargin = getScaledValue(15.f);
+    
+    for (auto& line : m_opcionAgradableLineas) {
+        line.setPosition(sf::Vector2f(btn1X + leftMargin, lineY));
+        window->draw(line);
+        lineY += lineHeight;
+    }
+    
+    lineY = btnY + getScaledValue(45.f);
+    for (auto& line : m_opcionConsecuenciasLineas) {
+        line.setPosition(sf::Vector2f(btn2X + leftMargin, lineY));
+        window->draw(line);
+        lineY += lineHeight;
+    }
+    
+    // Advertencia
+    if (m_advertencia) {
+        sf::FloatRect ab = m_advertencia->getLocalBounds();
+        m_advertencia->setOrigin(sf::Vector2f(ab.size.x/2.f, 0.f));
+        m_advertencia->setPosition(sf::Vector2f(centerX, panelY + panelH - getScaledValue(30.f)));
+        window->draw(*m_advertencia);
     }
 }
