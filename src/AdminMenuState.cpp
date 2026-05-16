@@ -1,96 +1,162 @@
-// Reemplazar AdminMenuState.cpp completo:
 #include "AdminMenuState.hpp"
 #include "Game.hpp"
 #include <iostream>
-#include <algorithm>
+#include <cmath>
 
 AdminMenuState::AdminMenuState(sf::RenderWindow *window, Game *game)
     : State(window, game), m_scrollOffset(0.f), m_maxScroll(0.f)
 {
-
     if (!m_font.openFromFile("assets/fonts/menu/VCR_OSD_MONO.ttf"))
     {
         std::cerr << "Error cargando fuente en AdminMenu" << std::endl;
     }
 
+    // Cámara fija 1280x720
+    m_camera = sf::View(sf::Vector2f(640.f, 360.f), sf::Vector2f(1280.f, 720.f));
+
     m_background.setSize(sf::Vector2f(1280.f, 720.f));
     m_background.setFillColor(sf::Color(10, 10, 20, 255));
-    m_panel.setSize(sf::Vector2f(900.f, 550.f));
-    m_panel.setPosition(sf::Vector2f(190.f, 85.f));
-    m_panel.setFillColor(sf::Color(30, 30, 50, 240));
+
+    m_panel.setSize(sf::Vector2f(1200.f, 580.f));
+    m_panel.setPosition(sf::Vector2f(40.f, 70.f));
+    m_panel.setFillColor(sf::Color(20, 20, 40, 240));
     m_panel.setOutlineThickness(3.f);
     m_panel.setOutlineColor(sf::Color(255, 0, 0));
 
-    m_title = std::make_unique<sf::Text>(m_font, "MODO ADMINISTRADOR", 36);
+    m_title = std::make_unique<sf::Text>(m_font, "MODO ADMINISTRADOR - ARBOL DE NIVELES", 30);
     m_title->setFillColor(sf::Color::Red);
-    m_title->setPosition(sf::Vector2f(400.f, 50.f));
+    m_title->setStyle(sf::Text::Bold);
 
-    m_instructionText = std::make_unique<sf::Text>(m_font, "Click: Saltar | ESC: Volver", 14);
-    m_instructionText->setFillColor(sf::Color(180, 180, 180));
-    m_instructionText->setPosition(sf::Vector2f(500.f, 680.f));
+    m_instructionText = std::make_unique<sf::Text>(m_font,
+                                                   "Click en nodo: Saltar a nivel | Scroll: Navegar | ESC: Volver", 13);
+    m_instructionText->setFillColor(sf::Color(150, 150, 150));
 
-    collectNodes(game->getLevelTree());
-    updateNodePositions();
+    construirArbolVisual(game->getLevelTree().getRoot(), 600.f, 130.f, 500.f, 150.f, 0);
+
+    m_maxScroll = std::max(0.f, m_arbolTotalY - 550.f);
 }
 
-void AdminMenuState::collectNodes(LevelTree &tree)
+void AdminMenuState::construirArbolVisual(LevelNode *nodo, float x, float y, float espacioX, float espacioY, int profundidad)
 {
-    m_allNodes.clear();
-    std::function<void(LevelNode *)> traverse = [&](LevelNode *node)
-    {
-        if (!node)
-            return;
-        m_allNodes.push_back(node);
-        traverse(node->left.get());
-        traverse(node->right.get());
-    };
-    traverse(tree.getRoot());
+    if (!nodo)
+        return;
 
-    for (size_t i = 0; i < m_allNodes.size(); ++i)
+    NodoVisual visual;
+    visual.nodo = nodo;
+    visual.x = x;
+    visual.y = y;
+    visual.espacioXOriginal = espacioX;
+    visual.profundidad = profundidad;
+
+    std::string nombreMostrar = nodo->displayName;
+    if (nombreMostrar.length() > 14)
+        nombreMostrar = nombreMostrar.substr(0, 13) + ".";
+
+    visual.texto = std::make_unique<sf::Text>(m_font, nombreMostrar, 12);
+    visual.texto->setFillColor(sf::Color::White);
+
+    float anchoCaja = 140.f;
+    float altoCaja = 35.f;
+
+    visual.caja.setSize(sf::Vector2f(anchoCaja, altoCaja));
+    visual.caja.setOrigin(sf::Vector2f(anchoCaja / 2.f, altoCaja / 2.f));
+    visual.caja.setPosition(sf::Vector2f(x, y));
+    visual.caja.setOutlineThickness(2.f);
+
+    if (nodo->type == LevelType::CENTINELA)
     {
-        sf::RectangleShape box(sf::Vector2f(840.f, 35.f));
-        box.setFillColor(sf::Color(40, 40, 60, 200));
-        m_nodeBoxes.push_back(box);
-        auto text = std::make_unique<sf::Text>(m_font, m_allNodes[i]->displayName, 15);
-        text->setFillColor(sf::Color::White);
-        m_nodeTexts.push_back(std::move(text));
-        m_nodeHover.push_back(false);
+        visual.caja.setFillColor(sf::Color(80, 40, 0, 230));
+        visual.caja.setOutlineColor(sf::Color(255, 150, 50));
     }
-    m_maxScroll = std::max(0.f, (m_allNodes.size() * 45.f) - 480.f);
-}
-
-void AdminMenuState::updateNodePositions()
-{
-    float startY = 140.f - m_scrollOffset;
-    for (size_t i = 0; i < m_nodeBoxes.size(); ++i)
+    else if (nodo->id.find("final_") != std::string::npos || nodo->id.find("Final") != std::string::npos)
     {
-        float y = startY + i * 45.f;
-        m_nodeBoxes[i].setPosition(sf::Vector2f(220.f, y));
-        m_nodeTexts[i]->setPosition(sf::Vector2f(240.f, y + 8.f));
+        visual.caja.setFillColor(sf::Color(0, 50, 0, 230));
+        visual.caja.setOutlineColor(sf::Color(100, 255, 100));
+    }
+    else
+    {
+        visual.caja.setFillColor(sf::Color(60, 60, 70, 230));
+        visual.caja.setOutlineColor(sf::Color(180, 180, 180));
+    }
+
+    sf::FloatRect tb = visual.texto->getLocalBounds();
+    visual.texto->setOrigin(sf::Vector2f(tb.size.x / 2.f, tb.size.y / 2.f));
+    visual.texto->setPosition(sf::Vector2f(x, y));
+
+    m_nodosVisuales.push_back(std::move(visual));
+
+    if (y > m_arbolTotalY)
+        m_arbolTotalY = y;
+
+    float hijoY = y + espacioY;
+    float hijoEspacioX = espacioX / 2.2f;
+
+    if (nodo->left)
+    {
+        float hijoX = x - hijoEspacioX;
+
+        m_lineas.push_back(sf::VertexArray(sf::PrimitiveType::Lines, 2));
+        m_lineas.back()[0].position = sf::Vector2f(x, y + altoCaja / 2.f);
+        m_lineas.back()[1].position = sf::Vector2f(hijoX, hijoY - altoCaja / 2.f);
+        m_lineas.back()[0].color = sf::Color(120, 120, 120);
+        m_lineas.back()[1].color = sf::Color(120, 120, 120);
+
+        construirArbolVisual(nodo->left.get(), hijoX, hijoY, hijoEspacioX, espacioY, profundidad + 1);
+    }
+
+    if (nodo->right)
+    {
+        float hijoX = x + hijoEspacioX;
+
+        m_lineas.push_back(sf::VertexArray(sf::PrimitiveType::Lines, 2));
+        m_lineas.back()[0].position = sf::Vector2f(x, y + altoCaja / 2.f);
+        m_lineas.back()[1].position = sf::Vector2f(hijoX, hijoY - altoCaja / 2.f);
+        m_lineas.back()[0].color = sf::Color(200, 150, 50, 150);
+        m_lineas.back()[1].color = sf::Color(200, 150, 50, 150);
+
+        construirArbolVisual(nodo->right.get(), hijoX, hijoY, hijoEspacioX, espacioY, profundidad + 1);
     }
 }
 
 void AdminMenuState::handleEvent(const sf::Event &event)
 {
-    sf::Vector2f mousePos = window->mapPixelToCoords(sf::Mouse::getPosition(*window));
+    // Convertir mouse a coordenadas de la textura del árbol (relativas al panel)
+    sf::Vector2f mousePos = window->mapPixelToCoords(sf::Mouse::getPosition(*window), m_camera);
 
+    // Ajustar mouse a coordenadas locales del panel
+    float mouseLocalX = mousePos.x - 40.f; // panel.x = 40
+    float mouseLocalY = mousePos.y - 70.f; // panel.y = 70
+
+    // Scroll
     if (const auto *scroll = event.getIf<sf::Event::MouseWheelScrolled>())
     {
-        m_scrollOffset = std::clamp(m_scrollOffset - scroll->delta * 30.f, 0.f, m_maxScroll);
-        updateNodePositions();
+        m_scrollOffset = std::clamp(m_scrollOffset - scroll->delta * 40.f, 0.f, m_maxScroll);
     }
 
+    // Click
     if (const auto *mouse = event.getIf<sf::Event::MouseButtonPressed>())
     {
         if (mouse->button == sf::Mouse::Button::Left)
         {
-            for (size_t i = 0; i < m_nodeBoxes.size(); ++i)
+            for (auto &nodo : m_nodosVisuales)
             {
-                if (m_nodeBoxes[i].getGlobalBounds().contains(mousePos))
-                {
-                    game->getLevelTree().jumpToNode(m_allNodes[i]->id);
+                float factorExpansion = 1.0f + (m_scrollOffset / 60.f);
+                float centroX = 600.f; // Centro del panel (1200/2)
+                float desplazamientoX = m_scrollOffset * 7.f;
+                float nodoY = nodo.y - m_scrollOffset;
 
-                    // Detener música del menú antes de cambiar de nivel
+                float xOriginal = nodo.x;
+                float xCentrado = centroX + (xOriginal - centroX) * factorExpansion + desplazamientoX;
+
+                // Usar la caja real del nodo para detectar click
+                sf::RectangleShape cajaTemp = nodo.caja;
+                cajaTemp.setPosition(sf::Vector2f(xCentrado, nodoY));
+                sf::FloatRect bounds = cajaTemp.getGlobalBounds();
+
+                if (bounds.contains(sf::Vector2f(mouseLocalX, mouseLocalY)))
+                {
+                    std::cout << "[ADMIN] Click en: " << nodo.nodo->displayName << std::endl;
+                    game->getLevelTree().jumpToNode(nodo.nodo->id);
                     game->detenerMusica();
 
                     auto newState = game->getLevelTree().createCurrentState(window, game);
@@ -102,10 +168,12 @@ void AdminMenuState::handleEvent(const sf::Event &event)
         }
     }
 
-    if (event.is<sf::Event::KeyPressed>() &&
-        event.getIf<sf::Event::KeyPressed>()->code == sf::Keyboard::Key::Escape)
+    if (const auto *keyPressed = event.getIf<sf::Event::KeyPressed>())
     {
-        game->popState();
+        if (keyPressed->code == sf::Keyboard::Key::Escape)
+        {
+            game->popState();
+        }
     }
 }
 
@@ -116,47 +184,116 @@ void AdminMenuState::draw()
     if (!window)
         return;
 
-    float winW = static_cast<float>(window->getSize().x);
-    float winH = static_cast<float>(window->getSize().y);
-    float centerX = winW / 2.f;
+    // ============================================================
+    // CREAR RENDERTEXTURE UNA SOLA VEZ
+    // ============================================================
+    if (!m_textureCreada)
+    {
+        sf::Vector2u panelSize(1200, 580);
+        if (m_arbolTexture.resize(panelSize))
+        {
+            m_arbolTexture.setSmooth(true);
+            m_arbolSprite = std::make_unique<sf::Sprite>(m_arbolTexture.getTexture());
+            m_arbolSprite->setPosition(sf::Vector2f(40.f, 70.f));
+            m_textureCreada = true;
+        }
+    }
 
-    m_background.setSize(sf::Vector2f(winW, winH));
+    // ============================================================
+    // DIBUJAR EL ÁRBOL EN LA TEXTURA
+    // ============================================================
+    if (m_textureCreada)
+    {
+        m_arbolTexture.clear(sf::Color(20, 20, 40, 240)); // Mismo color que el panel
+
+        // Vista para la textura: centrada en el panel
+        sf::View texturaView(sf::Vector2f(600.f, 290.f), sf::Vector2f(1200.f, 580.f));
+        m_arbolTexture.setView(texturaView);
+
+        float factorExpansion = 1.0f + (m_scrollOffset / 60.f);
+        float desplazamientoX = m_scrollOffset * 7.f;
+        float centroX = 600.f; // Centro del panel (1200/2)
+
+        // Líneas
+        for (auto &linea : m_lineas)
+        {
+            sf::VertexArray lineaDibujo = linea;
+            for (size_t i = 0; i < lineaDibujo.getVertexCount(); i++)
+            {
+                float xOriginal = lineaDibujo[i].position.x;
+                lineaDibujo[i].position.x = centroX + (xOriginal - centroX) * factorExpansion + desplazamientoX;
+                lineaDibujo[i].position.y -= m_scrollOffset;
+            }
+            m_arbolTexture.draw(lineaDibujo);
+        }
+
+        // Nodos
+        sf::Vector2f mousePos = window->mapPixelToCoords(sf::Mouse::getPosition(*window), m_camera);
+        float mouseLocalX = mousePos.x - 40.f;
+        float mouseLocalY = mousePos.y - 70.f;
+
+        for (auto &nodo : m_nodosVisuales)
+        {
+            float nodoY = nodo.y - m_scrollOffset;
+
+            float xCentrado = centroX + (nodo.x - centroX) * factorExpansion + desplazamientoX;
+
+            sf::RectangleShape caja = nodo.caja;
+            caja.setPosition(sf::Vector2f(xCentrado, nodoY));
+
+            // Hover
+            sf::FloatRect bounds = caja.getGlobalBounds();
+            if (bounds.contains(sf::Vector2f(mouseLocalX, mouseLocalY)))
+            {
+                caja.setOutlineColor(sf::Color::Yellow);
+                caja.setOutlineThickness(3.f);
+            }
+
+            m_arbolTexture.draw(caja);
+
+            if (nodo.texto)
+            {
+                sf::Text texto = *nodo.texto;
+                texto.setPosition(sf::Vector2f(xCentrado, nodoY));
+                m_arbolTexture.draw(texto);
+            }
+        }
+
+        m_arbolTexture.display();
+    }
+
+    // ============================================================
+    // DIBUJAR EN PANTALLA
+    // ============================================================
+    window->setView(m_camera);
+
+    m_background.setSize(sf::Vector2f(1280.f, 720.f));
     window->draw(m_background);
 
-    float panelW = winW * 0.7f;
-    float panelH = winH * 0.76f;
-    m_panel.setSize(sf::Vector2f(panelW, panelH));
-    m_panel.setPosition(sf::Vector2f(centerX - panelW / 2.f, winH * 0.12f));
+    // Panel (fondo del recuadro)
     window->draw(m_panel);
 
+    // Árbol (textura recortada al panel)
+    if (m_textureCreada)
+    {
+        window->draw(*m_arbolSprite);
+    }
+
+    // Título
     if (m_title)
     {
-        m_title->setPosition(sf::Vector2f(centerX - panelW / 2.f + 30.f, winH * 0.07f));
+        sf::FloatRect tb = m_title->getLocalBounds();
+        m_title->setOrigin(sf::Vector2f(tb.size.x / 2.f, 0.f));
+        m_title->setPosition(sf::Vector2f(640.f, 15.f));
         window->draw(*m_title);
     }
 
+    // Instrucciones
     if (m_instructionText)
     {
-        m_instructionText->setPosition(sf::Vector2f(centerX - 100.f, winH * 0.94f));
+        sf::FloatRect ib = m_instructionText->getLocalBounds();
+        m_instructionText->setOrigin(sf::Vector2f(ib.size.x / 2.f, 0.f));
+        m_instructionText->setPosition(sf::Vector2f(640.f, 690.f));
         window->draw(*m_instructionText);
-    }
-
-    float nodeW = panelW - 60.f;
-    float nodeX = centerX - panelW / 2.f + 30.f;
-
-    for (size_t i = 0; i < m_nodeBoxes.size(); ++i)
-    {
-        float y = winH * 0.19f - m_scrollOffset + i * 45.f;
-        if (y >= winH * 0.18f && y <= winH * 0.83f)
-        {
-            m_nodeBoxes[i].setSize(sf::Vector2f(nodeW, 35.f));
-            m_nodeBoxes[i].setPosition(sf::Vector2f(nodeX, y));
-            window->draw(m_nodeBoxes[i]);
-            if (m_nodeTexts[i])
-            {
-                m_nodeTexts[i]->setPosition(sf::Vector2f(nodeX + 20.f, y + 8.f));
-                window->draw(*m_nodeTexts[i]);
-            }
-        }
     }
 }
