@@ -10,6 +10,9 @@ public:
     };
     
 private:
+
+
+
     sf::Texture m_sleepTexture;
     sf::Texture m_awakeTexture;
     std::unique_ptr<sf::Sprite> m_sprite;
