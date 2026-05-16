@@ -100,7 +100,7 @@ std::unique_ptr<LevelNode> crearCentinela3Camaras()
     finalMalo->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
     {
         // Asegúrate de que esta ruta de carpeta sea la correcta
-        return std::make_unique<VideoFinalState>(w, g, "assets/videos/Centinela3_FinalMalo", false);
+        return std::make_unique<VideoFinalState>(w, g, "assets/videos/Centinela3_FinalMalo", true);
     };
 
     centinela->left = std::move(finalBueno);
