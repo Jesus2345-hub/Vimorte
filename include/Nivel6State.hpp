@@ -9,7 +9,7 @@
 #include <memory>
 #include <vector>
 #include "MinigameRoosterHunt.hpp"
-#include "MinigameTicTacToe.hpp"
+#include "MiniGameTicTacToe.hpp"
 #include "entities/Joven.hpp"
 #include "entities/Abuelita.hpp"
 
