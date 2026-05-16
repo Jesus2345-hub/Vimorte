@@ -87,15 +87,19 @@ std::unique_ptr<LevelNode> crearCentinela3Camaras()
     };
     centinela->permiteRetrocesoDesdeCentinela = true;
 
+    // Nodo de FINAL BUENO
     auto finalBueno = std::make_unique<LevelNode>("final_bueno_centinela3", "Final Bueno Centinela 3", LevelType::NORMAL, 0);
     finalBueno->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
     {
+        // Asegúrate de que esta ruta de carpeta sea la correcta
         return std::make_unique<VideoFinalState>(w, g, "assets/videos/Centinela3_BuenFinal", true);
     };
 
+    // Nodo de FINAL MALO
     auto finalMalo = std::make_unique<LevelNode>("final_malo_centinela3", "Final Malo Centinela 3", LevelType::NORMAL, 0);
     finalMalo->stateFactory = [](sf::RenderWindow *w, Game *g) -> std::unique_ptr<State>
     {
+        // Asegúrate de que esta ruta de carpeta sea la correcta
         return std::make_unique<VideoFinalState>(w, g, "assets/videos/Centinela3_FinalMalo", false);
     };
 
@@ -104,6 +108,8 @@ std::unique_ptr<LevelNode> crearCentinela3Camaras()
     
     return centinela;
 }
+
+
 
 // Final feliz para nivel 6
 std::unique_ptr<LevelNode> crearFinalFelizNivel6()

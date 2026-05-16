@@ -1,4 +1,4 @@
-#include "MinigameTicTacToe.hpp"
+#include "MiniGameTicTacToe.hpp"
 #include <iostream>
 #include <algorithm>
 #include <cmath>
