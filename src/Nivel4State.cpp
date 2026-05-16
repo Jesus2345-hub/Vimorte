@@ -79,6 +79,12 @@ Nivel4State::Nivel4State(sf::RenderWindow* window, Game* game)
 
     configurarColisiones();
 
+    // Configurar bloque de muro rompible (centinela)
+    configurarBloqueMuro();
+    m_cercaBloqueMuro = false;
+    m_golpeCooldown = false;
+    m_golpeTimer = 0.f;
+
     // Configurar area de dardos
     m_dartsArea = sf::FloatRect(sf::Vector2f(30.f, 40.f), sf::Vector2f(150.f, 150.f));
 
@@ -228,6 +234,114 @@ void Nivel4State::configurarColisiones() {
     m_mapaFisico.emplace_back(sf::Vector2f(47.f, 288.f), sf::Vector2f(182.f, 24.f));
     m_mapaFisico.emplace_back(sf::Vector2f(39.f, 142.f), sf::Vector2f(75.f, 114.f));
 }
+void Nivel4State::configurarBloqueMuro() {
+
+    m_bloqueMuro.area = sf::FloatRect(sf::Vector2f(598.f, 445.f), sf::Vector2f(10.f, 10.f));
+    m_bloqueMuro.golpesRestantes = 5;
+    m_bloqueMuro.muroRoto = false;
+    m_bloqueMuro.mostrandoMensaje = false;
+    m_bloqueMuro.mensajeTimer = 0.f;
+    
+}
+void Nivel4State::verificarInteraccionMuro(float dt) {
+    // Si el muro ya esta roto, no hacer nada
+    if (m_bloqueMuro.muroRoto) return;
+    
+    // Verificar si el jugador esta cerca del muro
+    m_cercaBloqueMuro = m_player.getHurtbox().findIntersection(m_bloqueMuro.area).has_value();
+    
+    // Actualizar temporizador de cooldown usando dt REAL
+    if (m_golpeCooldown) {
+        m_golpeTimer -= dt; 
+        if (m_golpeTimer <= 0.f) {
+            m_golpeCooldown = false;
+        }
+    }
+    
+    // Actualizar mensaje temporal usando dt REAL
+    if (m_bloqueMuro.mostrandoMensaje) {
+        m_bloqueMuro.mensajeTimer -= dt;  
+        if (m_bloqueMuro.mensajeTimer <= 0.f) {
+            m_bloqueMuro.mostrandoMensaje = false;
+        }
+    }
+    
+    // Procesar interacción
+    static bool fPresionado = false;
+    
+    if (m_cercaBloqueMuro && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F)) {
+        if (!fPresionado && !m_golpeCooldown) {
+            fPresionado = true;
+            
+            // Verificar si tiene la herramienta
+            Inventory* inv = m_player.getInventory();
+            bool tieneHerramienta = false;
+            
+            if (inv) {
+                for (int i = 0; i < 20; i++) {
+                    Item* item = inv->getItem(i);
+                    if (item && item->name == "Herramienta") {
+                        tieneHerramienta = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (!tieneHerramienta) {
+                mostrarMensaje("Necesitas una herramienta para romper este muro", 2.f, sf::Color::Yellow);
+                m_golpeCooldown = true;
+                m_golpeTimer = 0.5f;
+            } else {
+                // Aplicar golpe
+                m_bloqueMuro.golpesRestantes--;
+                
+                if (m_bloqueMuro.golpesRestantes > 0) {
+                    std::string mensaje = "Golpe restante: " + std::to_string(m_bloqueMuro.golpesRestantes) + "/5";
+                    mostrarMensaje(mensaje, 1.5f, sf::Color::Green);
+                    
+                    // Mostrar mensaje flotante en el bloque
+                    m_bloqueMuro.mostrandoMensaje = true;
+                    m_bloqueMuro.mensajeTimer = 1.5f;
+                    
+                    std::cout << "Golpe al muro! Restantes: " << m_bloqueMuro.golpesRestantes << std::endl;
+                } else {
+                    // MURO ROTO - Teletransportar al Centinela 2
+                    m_bloqueMuro.muroRoto = true;
+                    mostrarMensaje("MURO ROTO! Has sido transportado...", 2.f, sf::Color::Green);
+                    
+                    std::cout << "MURO ROTO! Teletransportando al Centinela 2..." << std::endl;
+                    
+                    // Teletransportar al Centinela 2 
+                    LevelTree& levelTree = game->getLevelTree();
+                    if (levelTree.jumpToNode("centinela2")) {
+                        std::unique_ptr<State> newState = levelTree.createCurrentState(window, game);
+                        if (newState) {
+                            game->changeState(std::move(newState));
+                        }
+                    }
+                }
+                
+                m_golpeCooldown = true;
+                m_golpeTimer = 0.5f;
+            }
+        }
+    } else {
+        fPresionado = false;
+    }
+}
+
+
+void Nivel4State::dibujarMuro() {
+    if (m_bloqueMuro.muroRoto) return;
+    
+    sf::RectangleShape muro(sf::Vector2f(m_bloqueMuro.area.size.x, m_bloqueMuro.area.size.y));
+    muro.setPosition(sf::Vector2f(m_bloqueMuro.area.position.x, m_bloqueMuro.area.position.y));
+    muro.setFillColor(sf::Color(139, 69, 19, 180));  // Color marrón (madera/piedra)
+    muro.setOutlineThickness(2.f);
+    muro.setOutlineColor(sf::Color::White);
+    window->draw(muro);
+    
+}
 
 void Nivel4State::handleEvent(const sf::Event& event) {
     // Manejar tecla M para tutorial (abrir/cerrar)
@@ -291,7 +405,7 @@ void Nivel4State::handleEvent(const sf::Event& event) {
 }
 
 void Nivel4State::update(float dt) {
-    // Actualizar tamaÃ±o de ventana
+    // Actualizar tamaño de ventana
     sf::Vector2u currentSize = window->getSize();
     if (currentSize != m_lastWindowSize) {
         m_lastWindowSize = currentSize;
@@ -503,6 +617,7 @@ void Nivel4State::update(float dt) {
 
     //  TELETRANSPORTE POST JUEGO 
     verificarTeletransportePostJuego();
+    verificarInteraccionMuro(dt);
 
     //  PAUSA 
     if (!m_mostrarTutorial && !m_mostrarTutorialPorTecla && !m_escapeConsumed) {
@@ -623,6 +738,7 @@ void Nivel4State::draw() {
     }
 
     m_player.draw(*window);
+    // dibujarMuro();
 
     // Dibujar herramienta en el mapa
     if (!m_herramientaRecogida && m_herramientaMapSprite) {
@@ -717,6 +833,38 @@ void Nivel4State::draw() {
         m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 100.f));
         window->draw(*m_textoInteraccion);
     }
+    // Texto de interacción para el MURO ROMPIBLE (CENTINELA)
+    if (m_cercaBloqueMuro && !m_bloqueMuro.muroRoto && m_textoInteraccion && m_fontLoaded) {
+        Inventory* inv = m_player.getInventory();
+        bool tieneHerramienta = false;
+        
+        if (inv) {
+            for (int i = 0; i < 20; i++) {
+                Item* item = inv->getItem(i);
+                if (item && item->name == "Herramienta") {
+                    tieneHerramienta = true;
+                    break;
+                }
+            }
+        }
+        
+        if (tieneHerramienta) {
+            m_textoInteraccion->setString("Presiona F para romper el muro (" + 
+                                        std::to_string(m_bloqueMuro.golpesRestantes) + "/5 golpes restantes)");
+        } else {
+            m_textoInteraccion->setString("Necesitas una herramienta para romper este muro");
+        }
+        
+        // Configurar estilo del texto
+        m_textoInteraccion->setOutlineThickness(1.5f);
+        m_textoInteraccion->setOutlineColor(sf::Color::Black);
+        m_textoInteraccion->setCharacterSize(22);
+        
+        sf::FloatRect textBounds = m_textoInteraccion->getLocalBounds();
+        m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
+        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 100.f));
+        window->draw(*m_textoInteraccion);
+    }
     // Mensaje temporal
     if (m_textoMensaje && m_msjActual.tiempoRestante > 0.0f && !m_textoMensaje->getString().isEmpty()) {
         sf::Vector2u winSize = window->getSize();
@@ -724,7 +872,7 @@ void Nivel4State::draw() {
         window->draw(*m_textoMensaje);
     }
 
-    // Mensaje de victoria (ambos estabilizados)
+    // Mensaje de victoria 
     if (m_mostrandoMensajeVictoria) {
         sf::Vector2u winSize = window->getSize();
         float winW = static_cast<float>(winSize.x);

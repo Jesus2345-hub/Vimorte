@@ -7,6 +7,15 @@
 #include <memory>
 #include <vector>
 
+// BLOQUE DE MURO ROMPIBLE PARA EL CENTINELA
+struct BloqueMuro {
+    sf::FloatRect area;
+    int golpesRestantes;
+    bool muroRoto;
+    bool mostrandoMensaje;
+    float mensajeTimer;
+};
+
 class Nivel4State : public State {
 public:
     Nivel4State(sf::RenderWindow* window, Game* game);
@@ -17,6 +26,15 @@ public:
     void draw() override;
 
 private:
+
+    // LOGICAS PARA COMPLETAR CENTINELA
+    BloqueMuro m_bloqueMuro;
+    bool m_cercaBloqueMuro;
+    bool m_golpeCooldown;  
+    float m_golpeTimer;
+    void configurarBloqueMuro();
+    void verificarInteraccionMuro(float dt);
+    void dibujarMuro();
 
     // HERRAMIENTA PARA RECOGER
     bool m_herramientaRecogida;
