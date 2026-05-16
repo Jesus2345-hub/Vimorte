@@ -512,7 +512,6 @@ void Nivel4State::update(float dt) {
         m_ambosEstabilizados = true;
         m_mostrandoMensajeVictoria = true;
         m_mensajeVictoriaTimer = 3.0f;
-        std::cout << "AMBOS PACIENTES ESTABILIZADOS Ve al ascensor" << std::endl;
     }
 
     // Actualizar timer del mensaje de victoria
@@ -639,7 +638,7 @@ void Nivel4State::verificarSalidaNivel() {
         return;  
     }
     
-    if (m_cercaAscensor && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::E)) {
+    if (m_cercaAscensor && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F)) {
         if (!ePresionado) {
             ePresionado = true;
             // Verificar si ambos pacientes estan estabilizados
@@ -694,17 +693,17 @@ void Nivel4State::verificarTeletransportePostJuego() {
 
     bool cercaDartsTeletransporte = m_player.getHurtbox().findIntersection(m_dartsArea).has_value();
 
-    static bool eTeletransportePresionado = false;
+    static bool fTeletransportePresionado = false;
 
-    if (cercaDartsTeletransporte && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::E)) {
-        if (!eTeletransportePresionado) {
-            eTeletransportePresionado = true;
+    if (cercaDartsTeletransporte && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F)) {
+        if (!fTeletransportePresionado) {
+            fTeletransportePresionado = true;
             sf::Vector2f destinoTeletransporte(100.f, 400.f);
             m_player.setPosition(destinoTeletransporte.x, destinoTeletransporte.y);
             mostrarMensaje("Teletransportado... Ahora ve a ayudar a Andrea", 2.f, sf::Color::Green);
         }
     } else {
-        eTeletransportePresionado = false;
+        fTeletransportePresionado = false;
     }
 }
 
@@ -776,7 +775,7 @@ void Nivel4State::draw() {
     // Texto de interaccion para DARDOS
     if (m_cercaDarts && !m_dartsMinigame.isActive() && m_textoInteraccion && m_fontLoaded) {
         if (m_vitalSignsAndres.isStabilized()) {
-            m_textoInteraccion->setString("Paciente estable. Ve a ayudar a Andrea | Presiona E");
+            m_textoInteraccion->setString("Paciente estable. Ve a ayudar a Andrea | Presiona F");
         } else if (m_vitalSignsAndres.isGameOver()) {
             m_textoInteraccion->setString("Paciente muerto. Presiona F para reintentar");
         } else {
@@ -797,7 +796,7 @@ void Nivel4State::draw() {
     // Texto de interaccion para el ASCENSOR (SALIDA)
     if (m_cercaAscensor && m_textoInteraccion && m_fontLoaded) {
         if (m_ambosEstabilizados) {
-            m_textoInteraccion->setString("Presiona E para subir al siguiente nivel");
+            m_textoInteraccion->setString("Presiona F para ir al siguiente nivel");
         } else {
             if (!m_vitalSignsAndres.isStabilized() && !m_vitalSignsAndrea.isStabilized()) {
                 m_textoInteraccion->setString("Necesitas estabilizar a Andres y Andrea");
@@ -871,7 +870,7 @@ void Nivel4State::draw() {
         fondoMensaje.setPosition(sf::Vector2f(winW * 0.1f, winH * 0.35f));
 
         sf::Text textoVictoria(m_font,
-            "AMBOS PACIENTES ESTABILIZADOS!\nVe al ascensor y presiona E",
+            "AMBOS PACIENTES ESTABILIZADOS!\nVe al ascensor y presiona F",
             30);
         textoVictoria.setFillColor(sf::Color::Green);
         textoVictoria.setOutlineThickness(1.f);
@@ -908,15 +907,15 @@ void Nivel4State::draw() {
         if (m_fontLoaded) {
             sf::Text tutorialText(m_font);
             tutorialText.setString(
-                "Estabilizar Signos Vitales\n"
+                "ESTABILIZAR SIGNOS VITALES\n"
                 "Debes estabilizar a Andres y Andrea para poder salir.\n\n"
                 "ZONA DE ANDRES (DARDOS):\n"
-                "- Acercate a la zona de dardos y presiona R\n"
+                "- Acercate a la zona de dardos y presiona F\n"
                 "- Gana el minijuego para estabilizar a Andres\n\n"
                 "ZONA DE ANDREA (PATRONES):\n"
-                "- Acercate a la zona de patrones y presiona R\n"
+                "- Acercate a la zona de patrones y presiona F\n"
                 "- Completa los patrones para estabilizar a Andrea\n\n"
-                "Una vez ambos estabilizados, ve al ASCENSOR y presiona E\n\n"
+                "Una vez ambos estabilizados, ve al ASCENSOR y presiona F\n\n"
                 "[M] Abrir/Cerrar"
             );
             tutorialText.setCharacterSize(18);

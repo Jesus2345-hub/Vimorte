@@ -49,6 +49,62 @@ Nivel6State::Nivel6State(sf::RenderWindow *window, Game *game)
         m_worldSize = sf::Vector2f(1754.f, 1587.f);
     }
 
+    // Cargar textura de mesa
+    if (m_mesaTexture.loadFromFile("assets/images/niveles/nivel6/mesa.png"))
+    {
+        m_mesaTexture.setSmooth(true);
+
+        sf::Vector2u texSize = m_mesaTexture.getSize();
+        float tamanoMesa = 110.f;
+        float escalaX = tamanoMesa / texSize.x;
+        float escalaY = tamanoMesa / texSize.y;
+        float mitad = tamanoMesa / 2.f;
+
+        // Columna izquierda (X=122)
+        auto mesa1 = std::make_unique<sf::Sprite>(m_mesaTexture);
+        mesa1->setScale(sf::Vector2f(escalaX, escalaY));
+        mesa1->setOrigin(sf::Vector2f(texSize.x / 2.f, texSize.y / 2.f));
+        mesa1->setPosition(sf::Vector2f(122.f, 459.f));
+        m_mesas.push_back(std::move(mesa1));
+        m_mesasBounds.push_back(sf::FloatRect(sf::Vector2f(122.f - mitad, 459.f - mitad), sf::Vector2f(tamanoMesa, tamanoMesa)));
+
+        auto mesa2 = std::make_unique<sf::Sprite>(m_mesaTexture);
+        mesa2->setScale(sf::Vector2f(escalaX, escalaY));
+        mesa2->setOrigin(sf::Vector2f(texSize.x / 2.f, texSize.y / 2.f));
+        mesa2->setPosition(sf::Vector2f(122.f, 654.f));
+        m_mesas.push_back(std::move(mesa2));
+        m_mesasBounds.push_back(sf::FloatRect(sf::Vector2f(122.f - mitad, 654.f - mitad), sf::Vector2f(tamanoMesa, tamanoMesa)));
+
+        auto mesa3 = std::make_unique<sf::Sprite>(m_mesaTexture);
+        mesa3->setScale(sf::Vector2f(escalaX, escalaY));
+        mesa3->setOrigin(sf::Vector2f(texSize.x / 2.f, texSize.y / 2.f));
+        mesa3->setPosition(sf::Vector2f(122.f, 849.f));
+        m_mesas.push_back(std::move(mesa3));
+        m_mesasBounds.push_back(sf::FloatRect(sf::Vector2f(122.f - mitad, 849.f - mitad), sf::Vector2f(tamanoMesa, tamanoMesa)));
+
+        // Columna derecha (X=397)
+        auto mesa4 = std::make_unique<sf::Sprite>(m_mesaTexture);
+        mesa4->setScale(sf::Vector2f(escalaX, escalaY));
+        mesa4->setOrigin(sf::Vector2f(texSize.x / 2.f, texSize.y / 2.f));
+        mesa4->setPosition(sf::Vector2f(397.f, 459.f));
+        m_mesas.push_back(std::move(mesa4));
+        m_mesasBounds.push_back(sf::FloatRect(sf::Vector2f(397.f - mitad, 459.f - mitad), sf::Vector2f(tamanoMesa, tamanoMesa)));
+
+        auto mesa5 = std::make_unique<sf::Sprite>(m_mesaTexture);
+        mesa5->setScale(sf::Vector2f(escalaX, escalaY));
+        mesa5->setOrigin(sf::Vector2f(texSize.x / 2.f, texSize.y / 2.f));
+        mesa5->setPosition(sf::Vector2f(397.f, 654.f));
+        m_mesas.push_back(std::move(mesa5));
+        m_mesasBounds.push_back(sf::FloatRect(sf::Vector2f(397.f - mitad, 654.f - mitad), sf::Vector2f(tamanoMesa, tamanoMesa)));
+
+        auto mesa6 = std::make_unique<sf::Sprite>(m_mesaTexture);
+        mesa6->setScale(sf::Vector2f(escalaX, escalaY));
+        mesa6->setOrigin(sf::Vector2f(texSize.x / 2.f, texSize.y / 2.f));
+        mesa6->setPosition(sf::Vector2f(397.f, 849.f));
+        m_mesas.push_back(std::move(mesa6));
+        m_mesasBounds.push_back(sf::FloatRect(sf::Vector2f(397.f - mitad, 849.f - mitad), sf::Vector2f(tamanoMesa, tamanoMesa)));
+    }
+
     sf::Vector2u windowSize = window->getSize();
     float fixedWidth = 1280.f;
     float fixedHeight = 720.f;
@@ -529,6 +585,15 @@ void Nivel6State::update(float dt)
             break;
         }
     }
+    // Colisión con mesas
+    for (const auto &mesaBound : m_mesasBounds)
+    {
+        if (m_player.getHurtbox().findIntersection(mesaBound).has_value())
+        {
+            m_player.setPosition(posAnterior.x, posAnterior.y);
+            break;
+        }
+    }
     sf::FloatRect gc(sf::Vector2f(m_galloArea.position.x + 5.f, m_galloArea.position.y + 5.f), sf::Vector2f(m_galloArea.size.x - 10.f, m_galloArea.size.y - 10.f));
     if (m_player.getHurtbox().findIntersection(gc).has_value())
         m_player.setPosition(posAnterior.x, posAnterior.y);
@@ -621,6 +686,15 @@ void Nivel6State::draw()
             window->draw(colision);
         }
 
+        // Área del ascensor
+        sf::RectangleShape ascensorDebug;
+        ascensorDebug.setPosition(sf::Vector2f(m_puertaSalidaArea.position.x, m_puertaSalidaArea.position.y));
+        ascensorDebug.setSize(sf::Vector2f(m_puertaSalidaArea.size.x, m_puertaSalidaArea.size.y));
+        ascensorDebug.setFillColor(sf::Color(0, 255, 0, 80));
+        ascensorDebug.setOutlineThickness(2.f);
+        ascensorDebug.setOutlineColor(sf::Color::Green);
+        window->draw(ascensorDebug);
+
         // Hitbox gallo (amarillo)
         sf::FloatRect galloBounds = m_gallo.getBounds();
         sf::RectangleShape galloDebug;
@@ -650,6 +724,24 @@ void Nivel6State::draw()
         abuelitaDebug.setOutlineThickness(2.f);
         abuelitaDebug.setOutlineColor(sf::Color::Magenta);
         window->draw(abuelitaDebug);
+
+        // Hitbox mesas (amarillo)
+        for (const auto &mesaBound : m_mesasBounds)
+        {
+            sf::RectangleShape mesaDebug;
+            mesaDebug.setPosition(sf::Vector2f(mesaBound.position.x, mesaBound.position.y));
+            mesaDebug.setSize(sf::Vector2f(mesaBound.size.x, mesaBound.size.y));
+            mesaDebug.setFillColor(sf::Color(255, 255, 0, 80));
+            mesaDebug.setOutlineThickness(2.f);
+            mesaDebug.setOutlineColor(sf::Color::Yellow);
+            window->draw(mesaDebug);
+        }
+    }
+
+    // Dibujar mesas
+    for (auto &mesa : m_mesas)
+    {
+        window->draw(*mesa);
     }
 
     // Jugador (adelante)
@@ -814,44 +906,71 @@ void Nivel6State::configurarColisiones()
 {
     m_mapaFisico.clear();
 
-    // ===== BORDES DEL MUNDO =====
-    m_mapaFisico.emplace_back(0.f, 0.f, 31.f, m_worldSize.y);           // Izquierda
-    m_mapaFisico.emplace_back(m_worldSize.x, 0.f, 10.f, m_worldSize.y); // Derecha
-    m_mapaFisico.emplace_back(0.f, -10.f, m_worldSize.x, 10.f);         // Arriba
-    m_mapaFisico.emplace_back(0.f, m_worldSize.y, m_worldSize.x, 10.f); // Abajo
+    // Pared Superior (0,0) a (1812,215)
+    m_mapaFisico.emplace_back(0.f, 0.f, 1812.f, 215.f);
 
-    // ===== PARED SUPERIOR (0,0) a (1812,211) =====
-    m_mapaFisico.emplace_back(0.f, 0.f, 1812.f, 211.f);
+    // Borde izquierdo (0,0) a (39,1016)
+    m_mapaFisico.emplace_back(0.f, 0.f, 39.f, 1016.f);
 
-    // ===== PARED IZQUIERDA SALA ASCENSOR (653,0) a (691,347) =====
-    m_mapaFisico.emplace_back(653.f, 0.f, 38.f, 347.f);
+    // Borde inferior (0,1003) a (1812,13)
+    m_mapaFisico.emplace_back(0.f, 1003.f, 1812.f, 13.f);
 
-    // ===== PARED DERECHA SALA ASCENSOR (1237,0) a (1281,347) =====
-    m_mapaFisico.emplace_back(1237.f, 0.f, 44.f, 347.f);
+    // Borde derecho (se mantiene del anterior)
+    m_mapaFisico.emplace_back(m_worldSize.x, 0.f, 10.f, m_worldSize.y);
 
-    // ===== PARED SALA ASCENSOR CON PASILLO (867,351) a (1511,443) =====
-    m_mapaFisico.emplace_back(867.f, 351.f, 644.f, 92.f);
+    // PC (492,215) a (156,43)
+    m_mapaFisico.emplace_back(492.f, 215.f, 156.f, 43.f);
 
-    // ===== PARED SALA ABUELA (1603,351) a (1812,441) =====
-    m_mapaFisico.emplace_back(1603.f, 351.f, 209.f, 90.f);
+    // Pared 1 (648,215) a (236,132)
+    m_mapaFisico.emplace_back(648.f, 215.f, 37.f, 138.f);
 
-    // ===== PARED ASCENSOR-PASILLO (573,349) a (737,439) =====
-    m_mapaFisico.emplace_back(573.f, 349.f, 164.f, 90.f);
+    // Pared 2 (1236,215) a (45,88)
+    m_mapaFisico.emplace_back(1236.f, 215.f, 45.f, 88.f);
 
-    // ===== PARED IZQUIERDA PASILLO (573,349) a (605,725) =====
-    m_mapaFisico.emplace_back(573.f, 349.f, 32.f, 376.f);
+    // Letrero (1169,303) a (215,43)
+    m_mapaFisico.emplace_back(1169.f, 303.f, 215.f, 43.f);
 
-    // ===== PARED PASILLO (577,575) a (1167,717) =====
-    m_mapaFisico.emplace_back(577.f, 575.f, 590.f, 142.f);
+    // Pared 3 (573,346) a (157,99)
+    m_mapaFisico.emplace_back(573.f, 346.f, 157.f, 99.f);
 
-    // ===== PASILLO ABAJO VERTICAL IZQUIERDA (1151,571) a (1171,773) =====
-    m_mapaFisico.emplace_back(1151.f, 571.f, 20.f, 202.f);
+    // Puerta (732,352) a (34,144)
+    m_mapaFisico.emplace_back(732.f, 352.f, 34.f, 144.f);
 
-    // ===== PASILLO ABAJO VERTICAL IZQ PARTE ABAJO (1151,835) a (1171,1016) =====
-    m_mapaFisico.emplace_back(1151.f, 835.f, 20.f, 181.f);
+    // Pared 4 (862,346) a (650,99)
+    m_mapaFisico.emplace_back(862.f, 346.f, 650.f, 99.f);
 
-    // ===== PARED GRANJA (1345,571) a (1811,673) =====
-    m_mapaFisico.emplace_back(1345.f, 571.f, 466.f, 102.f);
+    // Pared 5 (1601,346) a (211,99)
+    m_mapaFisico.emplace_back(1601.f, 346.f, 211.f, 99.f);
+
+    // Pared 6 (573,445) a (28,124)
+    m_mapaFisico.emplace_back(573.f, 445.f, 28.f, 124.f);
+
+    // Pared 7 (573,569) a (596,154)
+    m_mapaFisico.emplace_back(573.f, 569.f, 596.f, 154.f);
+
+    // Pared 8 (1150,692) a (19,87)
+    m_mapaFisico.emplace_back(1150.f, 692.f, 19.f, 87.f);
+
+    // Pared 9 (1344,569) a (468,101)
+    m_mapaFisico.emplace_back(1344.f, 569.f, 468.f, 101.f);
+
+    // Puerta Gallinero (1344,670) a (67,48)
+    m_mapaFisico.emplace_back(1344.f, 670.f, 67.f, 48.f);
+
+    // Tubos (1656,670) a (156,93)
+    m_mapaFisico.emplace_back(1656.f, 670.f, 156.f, 93.f);
+
+    // Bebederos (1440,959) a (222,34)
+    m_mapaFisico.emplace_back(1440.f, 959.f, 222.f, 34.f);
+
+    // Pared Gallinero (1345,992) a (467,24)
+    m_mapaFisico.emplace_back(1345.f, 992.f, 467.f, 24.f);
+
+    // Gris (1325,929) a (21,58)
+    m_mapaFisico.emplace_back(1325.f, 929.f, 21.f, 58.f);
+
+    // Pared final (1150,839) a (19,177)
+    m_mapaFisico.emplace_back(1150.f, 839.f, 19.f, 177.f);
 
     std::cout << "✅ Colisiones del Nivel 6 configuradas: " << m_mapaFisico.size() << " paredes" << std::endl;
 }

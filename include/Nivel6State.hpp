@@ -29,6 +29,11 @@ private:
     sf::Texture m_rifleMapTexture;
     std::unique_ptr<sf::Sprite> m_rifleMapSprite;
 
+    // Mesas
+    sf::Texture m_mesaTexture;
+    std::vector<std::unique_ptr<sf::Sprite>> m_mesas;
+    std::vector<sf::FloatRect> m_mesasBounds;
+
     // Minijuego RoosterHunt
     MinigameRoosterHunt m_roosterHuntMinigame;
 
