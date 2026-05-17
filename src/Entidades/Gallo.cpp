@@ -65,8 +65,6 @@ Gallo::Gallo()
 
     m_tiempoComer = m_tiempoEntreComidas;
 
-    std::cout << "🐔 Gallo creado correctamente" << std::endl;
-
     // Iniciar con textura de caminar
     if (!m_walkTextures.empty())
     {

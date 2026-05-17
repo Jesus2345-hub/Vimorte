@@ -124,7 +124,6 @@ void GameOverState::handleEvent(const sf::Event& event)
         {
             if (m_hoverReintentar)
             {
-                std::cout << "Reiniciando nivel..." << std::endl;
                 LevelNode* nodoActual = game->getLevelTree().getCurrentNode();
                 if (nodoActual)
                 {

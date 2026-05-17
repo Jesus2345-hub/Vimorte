@@ -72,23 +72,15 @@ CaminoFinalState::CaminoFinalState(sf::RenderWindow* window, Game* game,
     // Si esta vacio, significa que es el final lineal del nivel6
     m_nivelPadreCentinela = game->getLevelTree().obtenerNivelPadreDelCentinela();
     
-    std::cout << "Nivel padre del centinela: " 
-              << (m_nivelPadreCentinela.empty() ? "NINGUNO (final lineal)" : m_nivelPadreCentinela) 
-              << std::endl;
        // Paso 1: Reconstruir el camino dependiendo de si es final de centinela o final lineal
     if (m_nivelPadreCentinela.empty())
     {
         // Es el final lineal del nivel6
         // Buscamos el camino desde la raiz hasta el final
-        std::cout << "Reconstruyendo camino para final lineal..." << std::endl;
         reconstruirCaminoDesdeFinal(identificadorFinal);
     }
     else
     {
-        // Es un final de centinela, sabemos exactamente desde que nivel se entro
-        std::cout << "Reconstruyendo todos los caminos posibles hacia: " 
-                  << identificadorFinal << std::endl;
-        std::cout << "Nivel padre usado: " << m_nivelPadreCentinela << std::endl;
         
         // Paso A: Buscar el camino desde la raiz hasta el nivel padre del centinela
         // Este es el camino que el jugador realmente tomo
@@ -117,8 +109,6 @@ CaminoFinalState::CaminoFinalState(sf::RenderWindow* window, Game* game,
         if (nodoNivelPadre != nullptr && nodoNivelPadre->right != nullptr)
         {
             std::string idCentinela = nodoNivelPadre->right->id;
-            std::cout << "Buscando todas las ocurrencias del centinela: " 
-                      << idCentinela << std::endl;
             
             // Ahora buscamos TODOS los niveles que tienen este centinela como hijo derecho
             // Para cada uno, iluminamos el camino desde la raiz hasta ese nivel,
@@ -126,14 +116,9 @@ CaminoFinalState::CaminoFinalState(sf::RenderWindow* window, Game* game,
             std::vector<LevelNode*> todosLosNivelesPadre;
             encontrarTodosLosNivelesConCentinela(m_raiz, idCentinela, todosLosNivelesPadre);
             
-            std::cout << "Se encontraron " << todosLosNivelesPadre.size() 
-                      << " niveles que tienen el centinela " << idCentinela << std::endl;
-            
             // Para cada nivel padre encontrado, iluminar el camino completo
             for (LevelNode* nivelPadre : todosLosNivelesPadre)
             {
-                std::cout << "  Procesando nivel padre: " << nivelPadre->displayName << std::endl;
-                
                 // Buscar el camino desde la raiz hasta este nivel padre
                 std::vector<std::string> rutaAlternativa;
                 bool encontro = buscarCaminoHastaNodo(m_raiz, nivelPadre->id, rutaAlternativa);
@@ -176,12 +161,6 @@ CaminoFinalState::CaminoFinalState(sf::RenderWindow* window, Game* game,
 
     // Calcular el desplazamiento maximo basado en la altura total del arbol
     m_maxScroll = std::max(0.0f, m_arbolTotalY - 350.0f);
-    
-    std::cout << "Arbol visual construido. Nodos creados: " 
-              << m_nodosVisuales.size() << std::endl;
-    std::cout << "Lineas creadas: " << m_lineas.size() << std::endl;
-    std::cout << "Altura total del arbol: " << m_arbolTotalY << std::endl;
-    std::cout << "Scroll maximo: " << m_maxScroll << std::endl;
 }
 // Metodo principal que encuentra el camino desde un final especifico hasta la raiz
 // Utiliza el algoritmo de busqueda en profundidad (DFS) con retroceso
@@ -209,18 +188,6 @@ void CaminoFinalState::reconstruirCaminoDesdeFinal(
         {
             m_conjuntoHashCamino.insert(idNodo);
         }
-        
-        // Mostrar el camino encontrado en consola para depuracion
-        std::cout << "Camino reconstruido exitosamente: ";
-        for (size_t indice = 0; indice < rutaTemporal.size(); indice++)
-        {
-            std::cout << rutaTemporal[indice];
-            if (indice < rutaTemporal.size() - 1)
-            {
-                std::cout << " -> ";
-            }
-        }
-        std::cout << std::endl;
     }
     else
     {

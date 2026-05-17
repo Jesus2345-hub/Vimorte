@@ -42,11 +42,10 @@ Centinela3State::Centinela3State(sf::RenderWindow *window, Game *game)
     {
         archivoMusica.close();
         game->cambiarMusica("assets/sounds/centinela3.mp3");
-        std::cout << "Musica del Centinela 3 cargada" << std::endl;
     }
     else
     {
-        std::cout << "Archivo de musica no encontrado: assets/sounds/centinela3.mp3" << std::endl;
+        std::cerr << "Archivo de musica no encontrado: assets/sounds/centinela3.mp3" << std::endl;
     }
     
     // Cargar los recursos del jugador y establecer su posicion inicial
@@ -105,7 +104,6 @@ Centinela3State::Centinela3State(sf::RenderWindow *window, Game *game)
     };
     
     game->setIsInLevel(true);
-    std::cout << "=== CENTINELA 3 ACTIVADO ===" << std::endl;
 }
 
 // CONFIGURAR COLISIONES DEL MAPA

@@ -18,7 +18,6 @@ Balon::Balon()
     sf::FloatRect bounds = m_sprite->getLocalBounds();
     m_sprite->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
     
-    std::cout << "⚽ Balón creado" << std::endl;
 }
 
 void Balon::setPosition(float x, float y) {

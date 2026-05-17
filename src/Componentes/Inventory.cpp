@@ -239,7 +239,6 @@ void Inventory::selectSlot(int slot)
         {
             m_activeHotbarSlot = slot;
         }
-        std::cout << "Slot seleccionado: " << slot << std::endl; // Debug
     }
 }
 void Inventory::update(float dt)

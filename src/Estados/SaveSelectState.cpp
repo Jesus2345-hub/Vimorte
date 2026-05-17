@@ -68,7 +68,6 @@ SaveSelectState::SaveSelectState(sf::RenderWindow *window, Game *game, bool solo
 
     actualizarUI();
 
-    std::cout << " SaveSelectState inicializado" << std::endl;
 }
 
 void SaveSelectState::actualizarUI()
@@ -138,7 +137,6 @@ void SaveSelectState::seleccionarSlot(int slotId)
     }
     m_selectedSlotText->setString(seleccionText);
 
-    std::cout << "Slot " << (slotId + 1) << " seleccionado" << std::endl;
 }
 
 void SaveSelectState::ejecutarAccionSlot(int slotId)
@@ -162,7 +160,6 @@ void SaveSelectState::iniciarNuevaPartida(int slotId)
         {
             if (saveManager.crearNuevaPartida(slotId, m_nombreInput))
             {
-                std::cout << "Nueva partida creada: " << m_nombreInput << std::endl;
 
                 // Detener musica del menu
                 game->detenerMusica();
@@ -177,7 +174,6 @@ void SaveSelectState::iniciarNuevaPartida(int slotId)
         m_modoNuevaPartida = true;
         m_slotSeleccionado = slotId;
         m_nombreInput = "";
-        std::cout << "Ingrese nombre para nueva partida en slot " << (slotId + 1) << std::endl;
     }
 }
 
@@ -201,11 +197,11 @@ void SaveSelectState::eliminarPartidaSeleccionada()
         m_slotSeleccionadoParaEliminar = -1;
         m_selectedSlotText->setString("Ningun slot seleccionado");
 
-        std::cout << " Partida eliminada del slot " << (slotAEliminar + 1) << std::endl;
+        //std::cout << " Partida eliminada del slot " << (slotAEliminar + 1) << std::endl;
     }
     else
     {
-        std::cout << " No hay un slot valido seleccionado para eliminar" << std::endl;
+        //std::cout << " No hay un slot valido seleccionado para eliminar" << std::endl;
     }
 }
 

@@ -26,7 +26,6 @@ VideoFinalState::VideoFinalState(sf::RenderWindow* window, Game* game,
             sf::Texture texture;
             if (texture.loadFromFile(framePath)) {
                 m_frames.push_back(std::move(texture));
-                std::cout << "Cargado: " << framePath << std::endl;
             }
         }
     }
@@ -49,7 +48,6 @@ VideoFinalState::VideoFinalState(sf::RenderWindow* window, Game* game,
     }
     m_lastWindowSize = window->getSize();
     m_frameClock.restart();
-    std::cout << "Video final iniciado. Frames: " << m_frames.size() << std::endl;
 }
 
 // Constructor para introduccion   
@@ -73,7 +71,6 @@ VideoFinalState::VideoFinalState(sf::RenderWindow* window, Game* game,
             sf::Texture texture;
             if (texture.loadFromFile(framePath)) {
                 m_frames.push_back(std::move(texture));
-                std::cout << "Cargado frame de intro: " << framePath << std::endl;
             }
         }
     }
@@ -97,7 +94,6 @@ VideoFinalState::VideoFinalState(sf::RenderWindow* window, Game* game,
     }
     m_lastWindowSize = window->getSize();
     m_frameClock.restart();
-    std::cout << "Video de introduccion iniciado (" << m_frames.size() << " frames)" << std::endl;
 }
 
 
@@ -161,19 +157,11 @@ void VideoFinalState::update(float dt) {
             // VIDEO TERMINADO
             if (m_isIntro) {
                 // Si es la introduccion del juego, pasar directamente a elegir modo
-                std::cout << "Introduccion terminada. Pasando a eleccion de modo..." << std::endl;
                 game->changeState(std::make_unique<ModoJuegoState>(window, game, m_introNombreJugador, m_introSlotId));
                         } else {
-                std::cout << "Video final terminado. Mostrando el camino recorrido..." << std::endl;
                 
                 // Obtener el identificador del nodo actual (el final alcanzado)
                 std::string identificadorFinal = game->getLevelTree().obtenerIdNodoActual();
-                
-                // Mostrar informacion de depuracion
-                std::cout << "Final alcanzado: " << identificadorFinal << std::endl;
-                std::cout << "Nivel padre del centinela: " 
-                          << game->getLevelTree().obtenerNivelPadreDelCentinela() 
-                          << std::endl;
                 
                 // Crear el estado que muestra el camino recorrido en el arbol
                 auto estadoCamino = std::make_unique<CaminoFinalState>(

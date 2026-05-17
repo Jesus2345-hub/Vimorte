@@ -23,7 +23,6 @@ Joven::Joven()
     sf::FloatRect bounds = m_sprite->getLocalBounds();
     m_sprite->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
     
-    std::cout << "👨‍🎓 Joven creado (dormido)" << std::endl;
 }
 
 void Joven::setPosition(float x, float y) {
@@ -42,8 +41,6 @@ void Joven::despertar() {
     m_estado = Estado::DESPIERTO;
     m_sprite->setTexture(m_awakeTexture);
     m_sprite->setScale(m_escala);
-    
-    std::cout << "👨‍🎓 ¡El joven se ha despertado!" << std::endl;
 }
 
 void Joven::update(float dt) {

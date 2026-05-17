@@ -294,9 +294,9 @@ void PauseState::update(float dt) {
             else if (m_saveHover) {
                 if (game->tienePartidaActiva()) {
                     game->guardarPartidaActual();
-                    std::cout << "Partida guardada exitosamente" << std::endl;
+                    //std::cout << "Partida guardada exitosamente" << std::endl;
                 } else {
-                    std::cout << "No hay partida activa para guardar" << std::endl;
+                    //std::cout << "No hay partida activa para guardar" << std::endl;
                 }
             }
             else if (m_loadHover) {

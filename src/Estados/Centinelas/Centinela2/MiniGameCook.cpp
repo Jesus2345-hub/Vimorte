@@ -167,8 +167,6 @@ void MiniGameCook::actualizarAreaEstante(const std::string& nombre, const sf::Fl
     for (auto& estante : m_estantes) {
         if (estante.nombre == nombre) {
             estante.areaInteraccion = area;
-            std::cout << "DEBUG: Area actualizada para " << nombre << " -> pos: " 
-                      << area.position.x << "," << area.position.y << std::endl;
             break;
         }
     }

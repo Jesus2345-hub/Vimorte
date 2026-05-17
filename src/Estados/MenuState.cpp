@@ -46,7 +46,6 @@ void MenuState::handleEvent(const sf::Event &event)
             {
                 m_adminMode = true;
                 m_adminInput = "";
-                std::cout << "🔐 Modo administrador activado" << std::endl;
             }
         }
     }

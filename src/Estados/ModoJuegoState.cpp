@@ -32,8 +32,6 @@ ModoJuegoState::ModoJuegoState(sf::RenderWindow* window, Game* game,
     m_botonConsecuencias.setFillColor(sf::Color(80, 0, 0, 200));
     m_botonConsecuencias.setOutlineColor(sf::Color::Red);
     m_botonConsecuencias.setOutlineThickness(getScaledValue(3.f));
-    
-    std::cout << "Estado de eleccion de modo creado para: " << m_nombreJugador << std::endl;
 }
 
 void ModoJuegoState::updateScale() {
@@ -178,14 +176,12 @@ void ModoJuegoState::handleEvent(const sf::Event& event) {
                     GameProgressData::ModoJuego::CAMINO_AGRADABLE;
                 game->getSaveManager().guardarProgresoActual();
                 game->changeState(std::make_unique<LobbyState>(window, game));
-                std::cout << "Jugador '" << m_nombreJugador << "' eligio MODO HISTORIA" << std::endl;
             }
             else if (m_hoverConsecuencias) {
                 game->getSaveManager().getCurrentProgress().modoElegido = 
                     GameProgressData::ModoJuego::CAMINO_CON_CONSECUENCIAS;
                 game->getSaveManager().guardarProgresoActual();
                 game->changeState(std::make_unique<LobbyState>(window, game));
-                std::cout << "Jugador '" << m_nombreJugador << "' eligio MODO SUPERVIVENCIA" << std::endl;
             }
         }
     }

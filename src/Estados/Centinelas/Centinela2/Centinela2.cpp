@@ -125,9 +125,6 @@ Centinela2State::Centinela2State(sf::RenderWindow *window, Game *game)
     game->setIsInLevel(true);
     m_mensajeEmergenteActivo = true;
     m_bloqueActualIndex = 0;
-    
-    std::cout << "=== CENTINELA 2 ACTIVADO ===" << std::endl;
-    std::cout << "Objetivo: Cocina 6 platos diferentes antes de que se acabe el tiempo" << std::endl;
 }
 
 void Centinela2State::configurarColisiones()
@@ -1166,7 +1163,6 @@ void Game::adminVolverAlNivelAnterior()
         nivelAnteriorId = "nivel7";
     } else {
         // Si no está mapeado, no hacer nada
-        std::cout << "[ADMIN] No hay mapeo para: " << currentNode->id << std::endl;
         return;
     }
     
@@ -1174,7 +1170,6 @@ void Game::adminVolverAlNivelAnterior()
         auto newState = levelTree.createCurrentState(window.get(), this);
         if (newState) {
             changeState(std::move(newState));
-            std::cout << "[ADMIN] Saltado a nivel anterior: " << nivelAnteriorId << std::endl;
         }
     }
 }
@@ -1191,12 +1186,10 @@ void Centinela2State::cargarGameOver()
     
     // MODO SUPERVIVENCIA: Ir directamente al final malo
     if (modoSupervivencia) {
-        std::cout << "Modo supervivencia - Derrota en Centinela 2. Cargando final malo..." << std::endl;
         cargarFinalMalo();
     } 
     // MODO HISTORIA: Mostrar menú de opciones
     else {
-        std::cout << "Modo historia - Mostrando menú de game over del centinela 2..." << std::endl;
         auto gameOverState = std::make_unique<CentinelaGameOverState>(
             window, game, false, "centinela2"
         );
@@ -1222,7 +1215,6 @@ void Centinela2State::cargarFinalMalo()
 
 void Centinela2State::reiniciarCentinela()
 {
-    std::cout << "Reintentando Centinela 2..." << std::endl;
     
     // Simplemente recrear el mismo estado del centinela
     auto nuevoEstado = std::make_unique<Centinela2State>(window, game);

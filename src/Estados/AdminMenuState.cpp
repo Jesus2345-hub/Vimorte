@@ -180,7 +180,6 @@ void AdminMenuState::handleEvent(const sf::Event &event)
 
                     if (bounds.contains(sf::Vector2f(mouseLocalX, mouseLocalY)))
                     {
-                        std::cout << "[ADMIN] Click en: " << nodo.nodo->displayName << std::endl;
                         game->getLevelTree().jumpToNode(nodo.nodo->id);
                         game->detenerMusica();
 

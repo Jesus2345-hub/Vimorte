@@ -7,15 +7,10 @@
 #include <sstream>
 #include <iomanip>
 
-// ============================================================
-// CONSTRUCTOR
-// ============================================================
 CentinelaConductosState::CentinelaConductosState(sf::RenderWindow *window, Game *game, const std::string &nivelOriginalId)
     : State(window, game), m_tiempoRestante(45.0f), m_tiempoAgotado(false), m_nivelCompletado(false), m_fontLoaded(false), m_mensajeTimer(0.f), m_parpadeoTimer(0.f), m_parpadeoVisible(true), m_finalCargado(false), m_nivelOriginalId(nivelOriginalId)
 {
-    // ============================================================
-    // FONDO
-    // ============================================================
+
     if (m_backgroundTexture.loadFromFile("assets/images/niveles/nivel7/conductos_bg.png"))
     {
         m_backgroundSprite = std::make_unique<sf::Sprite>(m_backgroundTexture);
@@ -99,11 +94,10 @@ CentinelaConductosState::CentinelaConductosState(sf::RenderWindow *window, Game 
     {
         file.close();
         game->cambiarMusica("assets/sounds/centinela1.ogg");
-        std::cout << "🎵 Música del Centinela 1 cargada" << std::endl;
     }
     else
     {
-        std::cout << "Archivo de música no encontrado: assets/sounds/centinela1.ogg" << std::endl;
+        std::cerr << "Archivo de música no encontrado: assets/sounds/centinela1.ogg" << std::endl;
     }
 
     game->setIsInLevel(true);
@@ -142,8 +136,6 @@ void CentinelaConductosState::configurarLaberinto()
     crearPared(191.f, 893.f, 48.f, 107.f);
     crearPared(887.f, 915.f, 30.f, 85.f);
     crearPared(951.f, 171.f, 74.f, 89.f);
-
-    std::cout << "✅ Laberinto creado con " << m_wallBounds.size() << " paredes" << std::endl;
 }
 
 // ============================================================
@@ -230,7 +222,6 @@ void CentinelaConductosState::inicializarHumos()
         m_humos.push_back(std::move(humo));
     }
 
-    std::cout << "✅ " << m_humos.size() << " humos inicializados" << std::endl;
 }
 
 // ============================================================
@@ -458,22 +449,17 @@ void CentinelaConductosState::cargarGameOver()
     // MODO SUPERVIVENCIA: Ir directamente al final malo
     if (modoSupervivencia)
     {
-        std::cout << "Modo supervivencia - Derrota permanente. Cargando final malo..." << std::endl;
         cargarFinalMalo();
     }
     // MODO HISTORIA: Mostrar menú de opciones (reintentar o aceptar final malo)
     else
     {
-        std::cout << "Modo historia - Mostrando menú de game over del centinela..." << std::endl;
         auto gameOverState = std::make_unique<CentinelaGameOverState>(
             window, game, false, m_nivelOriginalId);
         game->changeState(std::move(gameOverState));
     }
 }
 
-// ============================================================
-// ACTUALIZAR
-// ============================================================
 void CentinelaConductosState::update(float dt)
 {
     if (m_finalCargado)
@@ -574,9 +560,6 @@ void CentinelaConductosState::update(float dt)
     }
 }
 
-// ============================================================
-// DIBUJAR
-// ============================================================
 void CentinelaConductosState::draw()
 {
     if (!window)
@@ -691,9 +674,6 @@ void CentinelaConductosState::draw()
     }
 }
 
-// ============================================================
-// CARGAR FINAL BUENO
-// ============================================================
 void CentinelaConductosState::cargarFinalBueno()
 {
     game->detenerMusica();
@@ -710,9 +690,6 @@ void CentinelaConductosState::cargarFinalBueno()
     }
 }
 
-// ============================================================
-// CARGAR FINAL MALO
-// ============================================================
 void CentinelaConductosState::cargarFinalMalo()
 {
     game->detenerMusica();
@@ -728,9 +705,7 @@ void CentinelaConductosState::cargarFinalMalo()
         }
     }
 }
-// ============================================================
-// MANEJAR EVENTOS
-// ============================================================
+
 void CentinelaConductosState::handleEvent(const sf::Event &event)
 {
     if (const auto *keyPressed = event.getIf<sf::Event::KeyPressed>())

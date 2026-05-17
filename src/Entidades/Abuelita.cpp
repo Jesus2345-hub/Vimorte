@@ -20,7 +20,6 @@ Abuelita::Abuelita()
     sf::FloatRect bounds = m_sprite->getLocalBounds();
     m_sprite->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
     
-    std::cout << "👵 Abuelita creada (sin dientes)" << std::endl;
 }
 
 void Abuelita::setPosition(float x, float y) {

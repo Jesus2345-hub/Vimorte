@@ -58,8 +58,6 @@ MuerteCentinelaState::MuerteCentinelaState(sf::RenderWindow* window, Game* game,
     sf::FloatRect btnBounds = m_buttonText->getLocalBounds();
     m_buttonText->setOrigin(sf::Vector2f(btnBounds.size.x / 2.f, btnBounds.size.y / 2.f));
     m_buttonText->setPosition(sf::Vector2f(640.f, 450.f));
-    
-    std::cout << "MuerteCentinelaState creado. Reintentar: " << (m_puedeReintentar ? "SI" : "NO") << std::endl;
 }
 
 void MuerteCentinelaState::handleEvent(const sf::Event& event) {
@@ -75,11 +73,9 @@ void MuerteCentinelaState::handleEvent(const sf::Event& event) {
         if (mouseEvent->button == sf::Mouse::Button::Left && m_buttonHover) {
             if (m_puedeReintentar) {
                 // Modo agradable: reintentar centinela
-                std::cout << "Reintentando centinela..." << std::endl;
                 game->reintentarCentinela();
             } else {
                 // Modo consecuencias: volver al menú
-                std::cout << "Volviendo al menú principal..." << std::endl;
                 game->returnToMenu();
             }
         }

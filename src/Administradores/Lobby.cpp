@@ -52,11 +52,6 @@ LobbyState::LobbyState(sf::RenderWindow *window, Game *game)
         m_textoInteraccion->setOrigin(sf::Vector2f(textBounds.size.x / 2.f, textBounds.size.y / 2.f));
     }
 
-    // Verificar si hay partida activa
-    if (!game->tienePartidaActiva())
-    {
-        std::cout << "No hay partida activa. Se recomienda crear una nueva partida." << std::endl;
-    }
     game->setIsInLevel(true);
 }
 
@@ -115,10 +110,8 @@ void LobbyState::update(float dt)
             {
                 game->getSaveManager().setNivelActual(1, 1); // Nivel 1, Nodo 1
                 game->guardarPartidaActual();
-                std::cout << "💾 Partida guardada automáticamente al entrar al Nivel 1" << std::endl;
             }
 
-            std::cout << "Transición al Nivel 1" << std::endl;
             game->changeState(std::make_unique<Nivel6State>(window, game));
             return;
         }

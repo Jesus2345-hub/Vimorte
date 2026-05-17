@@ -224,8 +224,6 @@ void CentinelaGameOverState::handleEvent(const sf::Event& event)
 
 void CentinelaGameOverState::reiniciarCentinela()
 {
-    std::cout << "Reintentando centinela..." << std::endl;
-    
     // Obtener el nodo actual (el centinela)
     LevelNode* nodoActual = game->getLevelTree().getCurrentNode();
     
@@ -253,8 +251,6 @@ void CentinelaGameOverState::reiniciarCentinela()
 // Aceptar el final malo y continuar con el video de final malo
 void CentinelaGameOverState::aceptarFinalMalo()
 {
-    std::cout << "Aceptando final malo del centinela..." << std::endl;
-    
     // Obtener el nodo actual (el centinela)
     LevelNode* nodoActual = game->getLevelTree().getCurrentNode();
     std::string finalMaloId;
@@ -290,8 +286,6 @@ void CentinelaGameOverState::aceptarFinalMalo()
 
 void CentinelaGameOverState::regresarANivel()
 {
-    std::cout << "Regresando al nivel original: " << m_nivelOriginalId << std::endl;
-    
     if (game->getLevelTree().returnFromCentinela())
     {
         auto nuevoEstado = game->getLevelTree().createCurrentState(window, game);
@@ -331,7 +325,6 @@ void CentinelaGameOverState::regresarANivel()
 
 void CentinelaGameOverState::irMenuPrincipal()
 {
-    std::cout << "Volviendo al menú principal..." << std::endl;
     game->returnToMenu();
 }
 
