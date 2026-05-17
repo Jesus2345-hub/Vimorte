@@ -329,15 +329,17 @@ void Nivel3State::actualizarTextosMinijuegos() {
     
     m_minijuegoCables.setSize(sf::Vector2f(w, h));
     m_minijuegoCables.setPosition(sf::Vector2f(x, y));
-    m_minijuegoCables.recalcularPosiciones();  // Añadir esta línea
+    m_minijuegoCables.recalcularPosiciones();
     
     m_minijuegoMemoria.setSize(sf::Vector2f(w, h));
     m_minijuegoMemoria.setPosition(sf::Vector2f(x, y));
-    // Si MinigameMemoria tiene recalcularPosiciones, llamarlo también
+    // Si MinigameMemoria tiene recalcularPosiciones, agregalo:
+    // m_minijuegoMemoria.recalcularPosiciones();
     
     m_minijuegoPatron.setSize(sf::Vector2f(w, h));
     m_minijuegoPatron.setPosition(sf::Vector2f(x, y));
-    // Si MinigamePatron tiene recalcularPosiciones, llamarlo también
+    // Si MinigamePatron tiene recalcularPosiciones, agregalo:
+    // m_minijuegoPatron.recalcularPosiciones();
 }
 
 // ============================================================
@@ -416,6 +418,27 @@ void Nivel3State::handleEvent(const sf::Event& event) {
 // ACTUALIZAR
 // ============================================================
 void Nivel3State::update(float dt) {
+    // ===== DETECTAR CAMBIO DE TAMAÑO DE VENTANA (F11) - DEBE IR PRIMERO =====
+    sf::Vector2u currentSize = window->getSize();
+    static sf::Vector2u lastSize = currentSize;
+    if (currentSize != lastSize) {
+        lastSize = currentSize;
+        float minijuegoW = currentSize.x * 0.8f;
+        float minijuegoH = currentSize.y * 0.8f;
+        float minijuegoX = (currentSize.x - minijuegoW) / 2.f;
+        float minijuegoY = (currentSize.y - minijuegoH) / 2.f;
+        
+        m_minijuegoCables.setSize(sf::Vector2f(minijuegoW, minijuegoH));
+        m_minijuegoCables.setPosition(sf::Vector2f(minijuegoX, minijuegoY));
+        m_minijuegoCables.recalcularPosiciones();
+        
+        m_minijuegoMemoria.setSize(sf::Vector2f(minijuegoW, minijuegoH));
+        m_minijuegoMemoria.setPosition(sf::Vector2f(minijuegoX, minijuegoY));
+        
+        m_minijuegoPatron.setSize(sf::Vector2f(minijuegoW, minijuegoH));
+        m_minijuegoPatron.setPosition(sf::Vector2f(minijuegoX, minijuegoY));
+    }
+
     // ===== MINIJUEGO DE CABLES ACTIVO =====
     if (m_minijuegoCables.isActive()) {
         actualizarCronometro(dt);
@@ -428,6 +451,8 @@ void Nivel3State::update(float dt) {
         CoordenadasDebug::getInstance().actualizar(window, m_camera, m_player.getPosition());
         return;
     }
+    
+    
     
     // ===== MINIJUEGO DE MEMORIA ACTIVO =====
     if (m_minijuegoMemoria.isActive()) {
@@ -505,11 +530,7 @@ void Nivel3State::update(float dt) {
         }
     }
     
-    sf::Vector2u currentSize = window->getSize();
-    if (currentSize != m_lastWindowSize) {
-        m_lastWindowSize = currentSize;
-        actualizarTextosMinijuegos();
-    }
+  
 
     if (m_textoMensaje && m_msjActual.tiempoRestante > 0.0f) {
         m_msjActual.tiempoRestante -= dt;
