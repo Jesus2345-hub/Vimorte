@@ -100,15 +100,16 @@ private:
     // Efecto de parpadeo cuando queda poco tiempo
     float m_parpadeoTimer;
     bool m_parpadeoVisible;
-
+    std::string m_nivelOriginalId;
     void configurarLaberinto();
     void verificarSalida();
     void actualizarCronometro(float dt);
     void mostrarMensaje(const std::string &texto, float duracion);
+    void cargarGameOver();
 
 public:
-    CentinelaConductosState(sf::RenderWindow *window, Game *game);
-    ~CentinelaConductosState() override = default;
+    
+    CentinelaConductosState(sf::RenderWindow* window, Game* game, const std::string& nivelOriginalId = "");    ~CentinelaConductosState() override = default;
 
     void handleEvent(const sf::Event &event) override;
     void update(float dt) override;

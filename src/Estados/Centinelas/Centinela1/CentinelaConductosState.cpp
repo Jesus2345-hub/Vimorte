@@ -1,6 +1,6 @@
 #include "Estados/Niveles/Centinelas/Centinela1/CentinelaConductosState.hpp"
 #include "Estados/PauseState.hpp"
-#include "Estados/MuerteCentinelaState.hpp"
+#include "Estados/CentinelaGameOverState.hpp"
 #include <iostream>
 #include <cmath>
 #include <algorithm>
@@ -10,8 +10,17 @@
 // ============================================================
 // CONSTRUCTOR
 // ============================================================
-CentinelaConductosState::CentinelaConductosState(sf::RenderWindow *window, Game *game)
-    : State(window, game), m_tiempoRestante(45.0f), m_tiempoAgotado(false), m_nivelCompletado(false), m_fontLoaded(false), m_mensajeTimer(0.f), m_parpadeoTimer(0.f), m_parpadeoVisible(true), m_finalCargado(false)
+CentinelaConductosState::CentinelaConductosState(sf::RenderWindow *window, Game *game, const std::string& nivelOriginalId)
+    : State(window, game)
+    , m_tiempoRestante(45.0f)
+    , m_tiempoAgotado(false)
+    , m_nivelCompletado(false)
+    , m_fontLoaded(false)
+    , m_mensajeTimer(0.f)
+    , m_parpadeoTimer(0.f)
+    , m_parpadeoVisible(true)
+    , m_finalCargado(false)
+    , m_nivelOriginalId(nivelOriginalId)  
 {
     // ============================================================
     // FONDO
@@ -57,7 +66,7 @@ CentinelaConductosState::CentinelaConductosState(sf::RenderWindow *window, Game 
         m_rejillaSalidaSprite->setPosition(sf::Vector2f(1061.f, 120.f));
     }
 
-    // Área de interacción para salir (fuera de la zona de colisión)
+    // Área de interacción para salir
     m_exitBounds = sf::FloatRect(sf::Vector2f(1000.f, 60.f), sf::Vector2f(120.f, 120.f));
 
     // ============================================================
@@ -115,46 +124,20 @@ void CentinelaConductosState::configurarLaberinto()
         m_wallBounds.push_back(wall.getGlobalBounds());
     };
 
-    // Borde superior: (0,0) a (1537,55)
+    // Borde superior
     crearPared(0.f, 0.f, 1537.f, 55.f);
-
-    // Pared superior: (369,55) a (1168,116)
     crearPared(369.f, 55.f, 1168.f, 116.f);
-
-    // Borde inferior: (0,997) a (1537,26)
     crearPared(0.f, 997.f, 1537.f, 26.f);
-
-    // Borde izquierdo
     crearPared(0.f, 0.f, 40.f, 1023.f);
-
-    // Borde derecho
     crearPared(1497.f, 0.f, 40.f, 1023.f);
-
-    // Muro 1: (0,731) a (593,182)
     crearPared(0.f, 731.f, 593.f, 182.f);
-
-    // Muro 2: (0,417) a (141,314)
     crearPared(0.f, 417.f, 141.f, 314.f);
-
-    // Muro central 1: (293,285) a (562,360)
     crearPared(293.f, 285.f, 562.f, 360.f);
-
-    // Muro central 2: (951,260) a (460,385)
     crearPared(951.f, 260.f, 460.f, 385.f);
-
-    // Muro 3: (109,131) a (391,190)
     crearPared(109.f, 131.f, 391.f, 190.f);
-
-    // Muro 4: (673,731) a (827,186)
     crearPared(673.f, 731.f, 827.f, 186.f);
-
-    // Pared izquierda: (191,893) a (48,107)
     crearPared(191.f, 893.f, 48.f, 107.f);
-
-    // Pared derecha: (887,915) a (30,85)
     crearPared(887.f, 915.f, 30.f, 85.f);
-
-    // Pared izquierda de la sala de arriba: (951,171) a (74,89)
     crearPared(951.f, 171.f, 74.f, 89.f);
 
     std::cout << "✅ Laberinto creado con " << m_wallBounds.size() << " paredes" << std::endl;
@@ -167,7 +150,6 @@ void CentinelaConductosState::inicializarHumos()
 {
     m_humos.clear();
 
-    // Posiciones y rotaciones para cada humo
     struct InfoHumo
     {
         sf::Vector2f posicion;
@@ -175,31 +157,28 @@ void CentinelaConductosState::inicializarHumos()
     };
 
     std::vector<InfoHumo> infoHumos = {
-        {{503.f, 687.f}, 180.f},        // Hacia abajo
-        {{547.f, 687.f}, 180.f},        // Hacia abajo
-        {{1069.f, 687.f}, 180.f},       // Hacia abajo
-        {{1113.f, 687.f}, 180.f},       // Hacia abajo
-        {{1319.f, 687.f}, 180.f},       // Hacia abajo
-        {{1363.f, 687.f}, 180.f},       // Hacia abajo
-        {{900.f, 591.f}, 90.f},         // Hacia la derecha
-        {{900.f, 547.f}, 90.f},         // Hacia la derecha
-        {{900.f, 389.f}, 90.f},         // Hacia la derecha
-        {{900.f, 345.f}, 90.f},         // Hacia la derecha
-        {{1461.f, 515.f + 10.f}, 90.f}, // Hacia la derecha
-        {{1461.f, 471.f + 10.f}, 90.f}, // Hacia la derecha
-        {{1461.f, 427.f + 10.f}, 90.f}, // Hacia la derecha
-        {{1461.f, 383.f + 10.f}, 90.f}, // Hacia la derecha
+        {{503.f, 687.f}, 180.f},
+        {{547.f, 687.f}, 180.f},
+        {{1069.f, 687.f}, 180.f},
+        {{1113.f, 687.f}, 180.f},
+        {{1319.f, 687.f}, 180.f},
+        {{1363.f, 687.f}, 180.f},
+        {{900.f, 591.f}, 90.f},
+        {{900.f, 547.f}, 90.f},
+        {{900.f, 389.f}, 90.f},
+        {{900.f, 345.f}, 90.f},
+        {{1461.f, 515.f + 10.f}, 90.f},
+        {{1461.f, 471.f + 10.f}, 90.f},
+        {{1461.f, 427.f + 10.f}, 90.f},
+        {{1461.f, 383.f + 10.f}, 90.f},
         {{1186, 257 - 40}, 0.f},
         {{1230, 257 - 40}, 0.f},
     };
 
-    // Tamaño real de las imágenes
     float anchoImagen = 213.f;
     float altoImagen = 443.f;
-
-    // Escala para que el alto sea 86 y el ancho proporcional
-    float escala = 86.f / altoImagen;           // 86/443 = 0.194
-    float anchoEscalado = anchoImagen * escala; // ~41.3
+    float escala = 86.f / altoImagen;
+    float anchoEscalado = anchoImagen * escala;
     float altoEscalado = 86.f;
 
     for (size_t i = 0; i < infoHumos.size(); i++)
@@ -223,24 +202,20 @@ void CentinelaConductosState::inicializarHumos()
         if (!humo.texturas.empty())
         {
             humo.sprite = std::make_unique<sf::Sprite>(humo.texturas[0]);
-
             for (int j = 0; j < 5; j++)
                 humo.escalas[j] = escala;
-
             humo.sprite->setOrigin(sf::Vector2f(anchoImagen / 2.f, altoImagen / 2.f));
             humo.sprite->setPosition(humo.posicion);
             humo.sprite->setScale(sf::Vector2f(escala, escala));
             humo.sprite->setRotation(sf::degrees(humo.rotacion));
         }
 
-        // Intercambiar ancho/alto si está en horizontal (90° o 270°)
         float anchoHitbox = humo.anchoColision;
         float altoHitbox = humo.altoColision;
-
         if (humo.rotacion == 90.f || humo.rotacion == 270.f)
         {
-            anchoHitbox = humo.altoColision; // Intercambiados
-            altoHitbox = humo.anchoColision; // Intercambiados
+            anchoHitbox = humo.altoColision;
+            altoHitbox = humo.anchoColision;
         }
 
         humo.areaColision = sf::FloatRect(
@@ -249,29 +224,10 @@ void CentinelaConductosState::inicializarHumos()
             sf::Vector2f(anchoHitbox, altoHitbox));
 
         humo.cicloTimer = static_cast<float>(i) * 1.2f;
-
         m_humos.push_back(std::move(humo));
     }
 
     std::cout << "✅ " << m_humos.size() << " humos inicializados" << std::endl;
-}
-
-// ============================================================
-// MANEJAR EVENTOS
-// ============================================================
-void CentinelaConductosState::handleEvent(const sf::Event &event)
-{
-    if (const auto *keyPressed = event.getIf<sf::Event::KeyPressed>())
-    {
-        if (keyPressed->code == sf::Keyboard::Key::Escape)
-        {
-            game->pushState(std::make_unique<PauseState>(window, game));
-        }
-        if (keyPressed->code == sf::Keyboard::Key::F3)
-        {
-            m_debugMode = !m_debugMode;
-        }
-    }
 }
 
 // ============================================================
@@ -402,6 +358,7 @@ bool CentinelaConductosState::verificarColisionHumos()
 
 // ============================================================
 // VERIFICAR SALIDA
+// ============================================================
 void CentinelaConductosState::verificarSalida()
 {
     if (!m_cercaSalida) return;
@@ -443,21 +400,13 @@ void CentinelaConductosState::actualizarCronometro(float dt)
         m_cronometroText->setString(ss.str());
 
         if (m_tiempoRestante > 30.f)
-        {
             m_cronometroText->setFillColor(sf::Color::White);
-        }
         else if (m_tiempoRestante > 15.f)
-        {
             m_cronometroText->setFillColor(sf::Color::Yellow);
-        }
         else if (m_tiempoRestante > 5.f)
-        {
             m_cronometroText->setFillColor(sf::Color(255, 165, 0));
-        }
         else
-        {
             m_cronometroText->setFillColor(sf::Color::Red);
-        }
     }
 
     if (m_tiempoRestante < 10.f)
@@ -484,36 +433,54 @@ void CentinelaConductosState::mostrarMensaje(const std::string &texto, float dur
 }
 
 // ============================================================
+// CARGAR GAME OVER
+// ============================================================
+void CentinelaConductosState::cargarGameOver()
+{
+    window->setView(window->getDefaultView());
+    
+    bool modoSupervivencia = false;
+    
+    if (game->tienePartidaActiva()) {
+        GameProgressData& progress = game->getSaveManager().getCurrentProgress();
+        modoSupervivencia = (progress.modoElegido == GameProgressData::ModoJuego::CAMINO_CON_CONSECUENCIAS);
+    }
+    
+    // MODO SUPERVIVENCIA: Ir directamente al final malo
+    if (modoSupervivencia) {
+        std::cout << "Modo supervivencia - Derrota permanente. Cargando final malo..." << std::endl;
+        cargarFinalMalo();
+    } 
+    // MODO HISTORIA: Mostrar menú de opciones (reintentar o aceptar final malo)
+    else {
+        std::cout << "Modo historia - Mostrando menú de game over del centinela..." << std::endl;
+        auto gameOverState = std::make_unique<CentinelaGameOverState>(
+            window, game, false, m_nivelOriginalId
+        );
+        game->changeState(std::move(gameOverState));
+    }
+}
+
+// ============================================================
 // ACTUALIZAR
 // ============================================================
 void CentinelaConductosState::update(float dt)
 {
-    // Si ya se cargó un final, no actualizar nada más
     if (m_finalCargado) {
         return;
     }
 
-    // ===== VERIFICAR MUERTE POR TIEMPO AGOTADO =====
-    if (m_tiempoAgotado) {
-        m_finalCargado = true;
-        cargarFinalMalo();
+    if (m_tiempoAgotado || verificarColisionHumos()) {
+        if (!m_finalCargado) {
+            m_finalCargado = true;
+            cargarGameOver();  
+        }
         return;
     }
 
-    // ===== VERIFICAR COLISIÓN CON HUMO TÓXICO =====
-    if (verificarColisionHumos()) {
-        m_finalCargado = true;
-        cargarFinalMalo();
-        return;
-    }
-
-    // ===== ACTUALIZAR CRONÓMETRO =====
     actualizarCronometro(dt);
-
-    // ===== ACTUALIZAR HUMOS =====
     actualizarHumos(dt);
 
-    // ===== ACTUALIZAR MENSAJE TEMPORAL =====
     if (m_mensajeTimer > 0.f) {
         m_mensajeTimer -= dt;
         if (m_mensajeTimer <= 0.f && m_mensajeText) {
@@ -521,7 +488,6 @@ void CentinelaConductosState::update(float dt)
         }
     }
 
-    // ===== MOVIMIENTO DEL JUGADOR =====
     sf::Vector2f posAnterior = m_player.getPosition();
 
     sf::Vector2f movimiento(0.f, 0.f);
@@ -546,7 +512,6 @@ void CentinelaConductosState::update(float dt)
     m_player.move(movimiento, dt);
     m_player.update(dt);
 
-    // ===== COLISIONES CON PAREDES =====
     for (const auto& wall : m_wallBounds) {
         if (m_player.getHurtbox().findIntersection(wall).has_value()) {
             m_player.setPosition(posAnterior.x, posAnterior.y);
@@ -554,13 +519,11 @@ void CentinelaConductosState::update(float dt)
         }
     }
 
-    // ===== LÍMITES DEL JUGADOR =====
     sf::Vector2f playerPos = m_player.getPosition();
     playerPos.x = std::clamp(playerPos.x, 35.f, m_worldSize.x - 35.f);
     playerPos.y = std::clamp(playerPos.y, 35.f, m_worldSize.y - 35.f);
     m_player.setPosition(playerPos.x, playerPos.y);
 
-    // ===== CÁMARA SIGUE AL JUGADOR =====
     sf::Vector2f cameraPos = m_player.getPosition();
     float halfWidth = 640.f;
     float halfHeight = 360.f;
@@ -575,14 +538,9 @@ void CentinelaConductosState::update(float dt)
         cameraPos.y = m_worldSize.y - halfHeight;
 
     m_camera.setCenter(cameraPos);
-
-    // ===== VERIFICAR SI ESTÁ CERCA DE LA SALIDA =====
     m_cercaSalida = m_player.getHurtbox().findIntersection(m_exitBounds).has_value();
-
-    // ===== VERIFICAR SALIDA (FINAL BUENO) =====
     verificarSalida();
 
-    // ===== PAUSA =====
     static bool escapeProcesado = false;
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape)) {
         if (!escapeProcesado) {
@@ -599,10 +557,8 @@ void CentinelaConductosState::update(float dt)
 // ============================================================
 void CentinelaConductosState::draw()
 {
-    if (!window)
-        return;
+    if (!window) return;
 
-    // ===== FASE 1: MUNDO CON CÁMARA =====
     window->setView(m_camera);
 
     if (m_backgroundSprite)
@@ -616,7 +572,6 @@ void CentinelaConductosState::draw()
         window->draw(fallback);
     }
 
-    // Colisiones debug (F3)
     if (m_debugMode)
     {
         for (auto &wall : m_walls)
@@ -628,7 +583,6 @@ void CentinelaConductosState::draw()
             window->draw(debugWall);
         }
 
-        // Colisiones de humo (naranja)
         for (auto &humo : m_humos)
         {
             if (humo.activo)
@@ -652,22 +606,11 @@ void CentinelaConductosState::draw()
         }
     }
 
-    // Salida (rejilla)
     if (m_rejillaSalidaSprite)
     {
         window->draw(*m_rejillaSalidaSprite);
     }
-    else
-    {
-        sf::RectangleShape fallbackExit(sf::Vector2f(40.f, 40.f));
-        fallbackExit.setFillColor(sf::Color(0, 255, 0, 100));
-        fallbackExit.setOutlineThickness(2.f);
-        fallbackExit.setOutlineColor(sf::Color::Green);
-        fallbackExit.setPosition(sf::Vector2f(1041.f, 104.f));
-        window->draw(fallbackExit);
-    }
 
-    // Humos tóxicos (debajo del jugador)
     for (auto &humo : m_humos)
     {
         if (humo.frameActual >= 0 && humo.activo && humo.sprite)
@@ -676,16 +619,13 @@ void CentinelaConductosState::draw()
         }
     }
 
-    // Jugador (encima de los humos)
     m_player.draw(*window);
 
-    // ===== FASE 2: UI (vista por defecto) =====
     window->setView(window->getDefaultView());
 
     float winW = static_cast<float>(window->getSize().x);
     float winH = static_cast<float>(window->getSize().y);
 
-    // F para salir por el conducto
     if (m_fontLoaded && m_cercaSalida)
     {
         sf::Text salidaText(m_font, "Presiona F para salir por el conducto", 18);
@@ -698,7 +638,6 @@ void CentinelaConductosState::draw()
         window->draw(salidaText);
     }
 
-    // Título
     if (m_tituloText)
     {
         sf::FloatRect bounds = m_tituloText->getLocalBounds();
@@ -707,14 +646,12 @@ void CentinelaConductosState::draw()
         window->draw(*m_tituloText);
     }
 
-    // Cronómetro
     if (m_cronometroText)
     {
         m_cronometroText->setPosition(sf::Vector2f(20.f, 15.f));
         window->draw(*m_cronometroText);
     }
 
-    // Efecto de parpadeo
     if (m_tiempoRestante < 10.f && !m_parpadeoVisible && !m_nivelCompletado)
     {
         sf::RectangleShape overlay(sf::Vector2f(winW, winH));
@@ -722,7 +659,6 @@ void CentinelaConductosState::draw()
         window->draw(overlay);
     }
 
-    // Mensaje temporal
     if (m_mensajeText && m_mensajeTimer > 0.f && !m_mensajeText->getString().isEmpty())
     {
         sf::FloatRect bounds = m_mensajeText->getLocalBounds();
@@ -730,41 +666,13 @@ void CentinelaConductosState::draw()
         m_mensajeText->setPosition(sf::Vector2f(winW / 2.f, winH / 2.f));
         window->draw(*m_mensajeText);
     }
-
-    // Pantalla final 
-    if (m_nivelCompletado || m_tiempoAgotado)
-    {
-        sf::RectangleShape overlay(sf::Vector2f(winW, winH));
-        overlay.setFillColor(sf::Color(0, 0, 0, 180));
-        window->draw(overlay);
-
-        if (m_fontLoaded)
-        {
-            sf::Text resultadoText(m_font, "", 40);
-            resultadoText.setStyle(sf::Text::Bold);
-
-            if (m_nivelCompletado)
-            {
-                resultadoText.setString("ESCAPASTE\nHas encontrado la salida.");
-                resultadoText.setFillColor(sf::Color::Green);
-            }
-            else
-            {
-                resultadoText.setString("SIN OXIGENO...\nNo lograste escapar.");
-                resultadoText.setFillColor(sf::Color::Red);
-            }
-
-            sf::FloatRect bounds = resultadoText.getLocalBounds();
-            resultadoText.setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
-            resultadoText.setPosition(sf::Vector2f(winW / 2.f, winH / 2.f));
-            window->draw(resultadoText);
-        }
-    }
 }
 
+// ============================================================
+// CARGAR FINAL BUENO
+// ============================================================
 void CentinelaConductosState::cargarFinalBueno()
 {
-    // Restaurar vista antes de cambiar de estado
     window->setView(window->getDefaultView());
     
     LevelTree& levelTree = game->getLevelTree();
@@ -776,9 +684,11 @@ void CentinelaConductosState::cargarFinalBueno()
     }
 }
 
+// ============================================================
+// CARGAR FINAL MALO
+// ============================================================
 void CentinelaConductosState::cargarFinalMalo()
 {
-    // Restaurar vista antes de cambiar de estado
     window->setView(window->getDefaultView());
     
     LevelTree& levelTree = game->getLevelTree();
@@ -786,6 +696,23 @@ void CentinelaConductosState::cargarFinalMalo()
         std::unique_ptr<State> newState = levelTree.createCurrentState(window, game);
         if (newState) {
             game->changeState(std::move(newState));
+        }
+    }
+}
+// ============================================================
+// MANEJAR EVENTOS
+// ============================================================
+void CentinelaConductosState::handleEvent(const sf::Event &event)
+{
+    if (const auto *keyPressed = event.getIf<sf::Event::KeyPressed>())
+    {
+        if (keyPressed->code == sf::Keyboard::Key::Escape)
+        {
+            game->pushState(std::make_unique<PauseState>(window, game));
+        }
+        if (keyPressed->code == sf::Keyboard::Key::F3)
+        {
+            m_debugMode = !m_debugMode;
         }
     }
 }
