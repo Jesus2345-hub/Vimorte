@@ -547,3 +547,18 @@ void MinigameBaloncesto::draw(sf::RenderWindow &window)
         window.draw(*m_messageText);
     }
 }
+
+void MinigameBaloncesto::recargarTexturas()
+{
+    // Forzar recarga de todas las texturas desde archivo
+    // Esto es necesario cuando la ventana se recrea (F11)
+    // porque el contexto de OpenGL se destruye y las texturas se invalidan
+    
+    m_bgTexture.loadFromFile("assets/images/niveles/nivel7/baloncesto_bg.png");
+    m_aroVacioTexture.loadFromFile("assets/images/niveles/nivel7/aro_vacio.png");
+    m_aroEncestandoTexture.loadFromFile("assets/images/niveles/nivel7/aro_encestando.png");
+    m_aroEncestadoTexture.loadFromFile("assets/images/niveles/nivel7/aro_encestado.png");
+    m_pelotaTexture.loadFromFile("assets/images/niveles/nivel7/pelota_basket.png");
+    
+    std::cout << "MinigameBaloncesto: Texturas recargadas" << std::endl;
+}

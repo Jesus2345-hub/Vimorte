@@ -358,12 +358,37 @@ void Nivel6State::verificarSalidaNivel()
 
 void Nivel6State::update(float dt)
 {
+    // ===== DETECTAR CAMBIO DE TAMAÑO DE VENTANA (F11) - DEBE IR PRIMERO =====
+    sf::Vector2u currentSize = window->getSize();
+    static sf::Vector2u lastSize = currentSize;
+    if (currentSize != lastSize)
+    {
+        lastSize = currentSize;
+        float minijuegoW = currentSize.x * 0.8f;
+        float minijuegoH = currentSize.y * 0.85f;
+        float minijuegoX = (currentSize.x - minijuegoW) / 2.f;
+        float minijuegoY = (currentSize.y - minijuegoH) / 2.f;
+        
+        m_roosterHuntMinigame.setSize(sf::Vector2f(minijuegoW, minijuegoH));
+        m_roosterHuntMinigame.setPosition(sf::Vector2f(minijuegoX, minijuegoY));
+        
+        float ttw = currentSize.x * 0.7f;
+        float tth = currentSize.y * 0.8f;
+        float ttx = (currentSize.x - ttw) / 2.f;
+        float tty = (currentSize.y - tth) / 2.f;
+        
+        m_tictactoeMinigame.setSize(sf::Vector2f(ttw, tth));
+        m_tictactoeMinigame.setPosition(sf::Vector2f(ttx, tty));
+    }
+
     if (m_textoMensaje && m_msjActual.tiempoRestante > 0.0f)
     {
         m_msjActual.tiempoRestante -= dt;
         if (m_msjActual.tiempoRestante <= 0.0f)
             m_textoMensaje->setString("");
     }
+
+    
 
     if (m_bloquearR && m_tiempoUltimaR.getElapsedTime().asSeconds() > 0.5f)
     {

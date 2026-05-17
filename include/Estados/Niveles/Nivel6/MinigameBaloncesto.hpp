@@ -97,7 +97,7 @@ public:
     bool isActive() const { return m_isActive; }
     bool isGameWon() const { return m_gameWon; }
     bool isGameLost() const { return m_gameLost; }
-
+    void recargarTexturas();
     void handleEvent(const sf::Event &event, const sf::RenderWindow &window);
     void update(float dt);
     void draw(sf::RenderWindow &window);

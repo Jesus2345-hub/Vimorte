@@ -20,7 +20,7 @@ Nivel7State::Nivel7State(sf::RenderWindow *window, Game *game)
 
     // Cargar jugador
     m_player.loadAssets();
-    m_player.setPosition(800.f, 270.f);
+    m_player.setPosition(800.f, 260.f);
     m_player.setSpeed(300.0f);
 
     // Tutorial
@@ -263,6 +263,72 @@ void Nivel7State::verificarSalidaNivel()
 
 void Nivel7State::update(float dt)
 {
+    // ===== DETECTAR CAMBIO DE TAMAÑO DE VENTANA (F11) - DEBE IR PRIMERO ABSOLUTO =====
+    sf::Vector2u currentSize = window->getSize();
+    static sf::Vector2u lastSize = currentSize;
+       if (currentSize != lastSize)
+    {
+        lastSize = currentSize;
+        
+        // Reconfigurar la camara del nivel con el nuevo tamaño de ventana
+        // Esto arregla que las entidades aparezcan en la parte negra
+        m_camera = sf::View(
+            sf::Vector2f(m_worldSize.x / 2.f, m_worldSize.y / 2.f),
+            sf::Vector2f(1280.f, 720.f)
+        );
+        
+        float minijuegoW = currentSize.x * 0.75f;
+        float minijuegoH = currentSize.y * 0.85f;
+        float minijuegoX = (currentSize.x - minijuegoW) / 2.f;
+        float minijuegoY = (currentSize.y - minijuegoH) / 2.f;
+
+        // Forzar recarga de texturas porque la ventana se recreo
+        // Las texturas de la GPU se invalidan al llamar a window->create()
+        m_baloncestoMinigame.recargarTexturas();
+        
+        m_baloncestoMinigame.setSize(sf::Vector2f(minijuegoW, minijuegoH));
+        m_baloncestoMinigame.setPosition(sf::Vector2f(minijuegoX, minijuegoY));
+    }
+
+    // ===== BALONCESTO ACTIVO =====
+    if (m_baloncestoMinigame.isActive())
+    {
+        m_baloncestoMinigame.update(dt);
+        m_player.update(dt);
+
+        if (m_baloncestoMinigame.isGameWon() && !m_llaveObtenida && !m_baloncestoMinigame.isGameLost())
+        {
+            m_llaveObtenida = true;
+            Inventory *inv = m_player.getInventory();
+            if (inv)
+            {
+                Item llave("Llave", sf::Color(255, 215, 0), "assets/images/items/llave.png");
+                inv->addItem(llave);
+            }
+            mostrarMensaje("Has conseguido la llave! Dirigete al ascensor", 3.f, sf::Color::Green);
+        }
+
+        sf::Vector2f pp = m_player.getPosition();
+        sf::Vector2f cp = pp;
+        float hw = 640.f, hh = 360.f;
+        if (hw * 2 >= m_worldSize.x)
+            cp.x = m_worldSize.x / 2;
+        else
+        {
+            if (cp.x < hw) cp.x = hw;
+            if (cp.x > m_worldSize.x - hw) cp.x = m_worldSize.x - hw;
+        }
+        if (hh * 2 >= m_worldSize.y)
+            cp.y = m_worldSize.y / 2;
+        else
+        {
+            if (cp.y < hh) cp.y = hh;
+            if (cp.y > m_worldSize.y - hh) cp.y = m_worldSize.y - hh;
+        }
+        m_camera.setCenter(cp);
+        return;
+    }
+
     m_lebron.update(dt);
 
     if (m_textoMensaje && m_msjActual.tiempoRestante > 0.0f)
