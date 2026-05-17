@@ -5,16 +5,13 @@
 ![C++](https://img.shields.io/badge/C++-17-purple)
 
 ## 📝 DESCRIPCIÓN
-Vimorte es un juego desarrollado en C++ con SFML 3.0.2.  
-*[Aquí pondremos la descripción próximamente]*
+Vimorte es un videojuego 2D de aventura y puzzles desarrollado en C++ con la librería SFML. El jugador despierta en un laboratorio siniestro sin recuerdos y debe explorar niveles con vista top-down, resolver minijuegos y superar desafíos especiales llamados "Centinelas" para escapar. Lo más destacado de su diseño es que la historia no es lineal: implementa un sistema de progreso basado en un árbol binario de niveles. Esto significa que las decisiones del jugador y los caminos ocultos que descubra alteran el rumbo de la partida, ramificando la narrativa hacia múltiples finales.
 
-## ✨ CARACTERÍSTICAS (PRÓXIMAMENTE)
+## ✨ CARACTERÍSTICAS
 - [ ] Movimiento del jugador
 - [ ] Sistema de colisiones
 - [ ] Niveles
-- [ ] Música y efectos
-
----
+- [ ] Música
 
 ## 🛠️ REQUISITOS DEL SISTEMA
 
