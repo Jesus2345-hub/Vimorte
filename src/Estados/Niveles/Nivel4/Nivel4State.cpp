@@ -22,6 +22,18 @@ Nivel4State::Nivel4State(sf::RenderWindow* window, Game* game)
     m_skipPauseThisFrame(false),
     m_gameOverTriggered(false)
 {
+    // Cargar música del nivel 5
+    std::ifstream file("assets/sounds/nivel4.mp3");
+    if (file.good())
+    {
+        file.close();
+        game->cambiarMusica("assets/sounds/nivel4.mp3");  
+        std::cout << "Musica del Nivel 4 cargada" << std::endl;
+    }
+    else
+    {
+        std::cout << "Archivo de música no encontrado: assets/sounds/nivel4.mp3" << std::endl;
+    }
     m_vitalSignsAndrea.setAnchorRight(true);
     m_vitalSignsAndres.setAnchorRight(false);
 

@@ -27,6 +27,19 @@ Nivel5State::Nivel5State(sf::RenderWindow *window, Game *game)
       m_mensajeFlotante(nullptr),
       m_estrellaUsada(false)
 {
+    // Cargar música del nivel 5
+    std::ifstream file("assets/sounds/nivel5.mp3");
+    if (file.good())
+    {
+        file.close();
+        game->cambiarMusica("assets/sounds/nivel5.mp3");  
+        std::cout << "Musica del Nivel 5 cargada" << std::endl;
+    }
+    else
+    {
+        std::cout << "Archivo de música no encontrado: assets/sounds/nivel5.mp3" << std::endl;
+    }
+
     m_cercaBloqueInteractivo = false;
     m_mensajeEmergenteActivo = false;
     m_bloqueActualIndex = -1;

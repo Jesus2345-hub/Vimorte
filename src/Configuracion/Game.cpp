@@ -29,7 +29,7 @@ Game::Game()
         window = std::make_unique<sf::RenderWindow>(
             sf::VideoMode({1280, 720}),
             "Vimorte",
-            sf::State::Windowed);
+            sf::Style::Titlebar | sf::Style::Close);
         sf::VideoMode desktop = sf::VideoMode::getDesktopMode();
         window->setPosition(sf::Vector2i(
             (desktop.size.x - 1280) / 2,
