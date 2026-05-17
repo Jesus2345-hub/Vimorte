@@ -134,7 +134,7 @@ void MinigameBaloncesto::setSize(const sf::Vector2f &size)
     // BARRA DE INTENSIDAD
     float barraAncho = 35.f * escalaRef;
     float barraAlto = 250.f * escalaRef;
-    m_barraX = m_position.x + m_size.x * 0.05f;
+    m_barraX = m_position.x + m_size.x * 0.20f;
     m_barraY = centroY - barraAlto / 2.f;
     m_barraAlto = barraAlto;
 
@@ -166,7 +166,7 @@ void MinigameBaloncesto::setSize(const sf::Vector2f &size)
 
         int tamClose = static_cast<int>(12 * escalaRef);
         if (tamClose < 9) tamClose = 9;
-        m_closeText = std::make_unique<sf::Text>(m_font, "ESPACIO: Tiro | ESC: Salir", tamClose);
+        m_closeText = std::make_unique<sf::Text>(m_font, "ESPACIO: Tiro | [F] Salir", tamClose);
         m_closeText->setFillColor(sf::Color(150, 150, 150));
 
         m_messageText = std::make_unique<sf::Text>(m_font, "", static_cast<unsigned int>(20 * escalaRef));
@@ -309,11 +309,7 @@ void MinigameBaloncesto::verificarEnceste()
             if (m_score >= m_scoreToWin)
             {
                 m_gameWon = true;
-                if (m_titleText)
-                {
-                    m_titleText->setString("¡VICTORIA!");
-                    m_titleText->setFillColor(sf::Color::Green);
-                }
+                
                 m_cerrando = true;
                 m_tiempoCierre = 1.5f;
             }
@@ -428,11 +424,7 @@ void MinigameBaloncesto::update(float dt)
             if (m_attempts >= m_maxAttempts && m_score < m_scoreToWin)
             {
                 m_gameLost = true;
-                if (m_titleText)
-                {
-                    m_titleText->setString("SIN TIROS");
-                    m_titleText->setFillColor(sf::Color::Red);
-                }
+    
                 m_cerrando = true;
                 m_tiempoCierre = 1.5f;
                 return;
@@ -487,14 +479,6 @@ void MinigameBaloncesto::draw(sf::RenderWindow &window)
     // Tablero
     if (m_bgSprite)
         window.draw(*m_bgSprite);
-
-    // Zona de tiro (rectángulo verde)
-    sf::RectangleShape zonaDebug(sf::Vector2f(m_zonaTiro.size.x, m_zonaTiro.size.y));
-    zonaDebug.setPosition(sf::Vector2f(m_zonaTiro.position.x, m_zonaTiro.position.y));
-    zonaDebug.setFillColor(sf::Color(0, 255, 0, 80));
-    zonaDebug.setOutlineThickness(2.f);
-    zonaDebug.setOutlineColor(sf::Color::Green);
-    window.draw(zonaDebug);
 
     // Barra de intensidad
     if (m_fase == Fase::INTENSIDAD && !m_intensidadFijada)

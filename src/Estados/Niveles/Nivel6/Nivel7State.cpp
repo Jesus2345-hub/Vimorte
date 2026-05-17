@@ -57,7 +57,7 @@ Nivel7State::Nivel7State(sf::RenderWindow *window, Game *game)
     m_lastWindowSize = window->getSize();
 
     // Área de salida (ascensor)
-    m_puertaSalidaArea = sf::FloatRect(sf::Vector2f(604.f, 0.f), sf::Vector2f(36.f, 329.f));
+    m_puertaSalidaArea = sf::FloatRect(sf::Vector2f(798.f, 62.f), sf::Vector2f(182.f, 172.f));
 
     // Colisiones del mapa
     configurarColisiones();
@@ -166,6 +166,19 @@ Nivel7State::Nivel7State(sf::RenderWindow *window, Game *game)
     m_baloncestoMinigame.setSize(sf::Vector2f(bw, bh));
     m_baloncestoMinigame.setPosition(sf::Vector2f((winSize.x - bw) / 2.f, (winSize.y - bh) / 2.f));
 
+    // ===== CARGAR MÚSICA DEL NIVEL 7 =====
+    std::ifstream file("assets/sounds/nivel6.ogg");
+    if (file.good())
+    {
+        file.close();
+        game->cambiarMusica("assets/sounds/nivel6.ogg");
+        std::cout << "🎵 Música del Nivel 6 cargada" << std::endl;
+    }
+    else
+    {
+        std::cout << "⚠️ Archivo de música no encontrado: assets/sounds/nivel6.ogg" << std::endl;
+    }
+
     game->setIsInLevel(true);
     std::cout << "Nivel7State inicializado correctamente" << std::endl;
 }
@@ -174,7 +187,7 @@ void Nivel7State::handleEvent(const sf::Event &event)
 {
     if (const auto *keyPressed = event.getIf<sf::Event::KeyPressed>())
     {
-        if (keyPressed->code == sf::Keyboard::Key::Escape)
+        if (keyPressed->code == sf::Keyboard::Key::M)
         {
             if (m_mostrarTutorial || m_mostrarTutorialPorTecla)
             {
@@ -187,6 +200,11 @@ void Nivel7State::handleEvent(const sf::Event &event)
         {
             m_mostrarTutorialPorTecla = true;
         }
+        // ===== NUEVO: F3 para debug =====
+        if (keyPressed->code == sf::Keyboard::Key::F3)
+        {
+            m_debugMode = !m_debugMode;
+        }
     }
 
     Inventory *inv = m_player.getInventory();
@@ -198,7 +216,7 @@ void Nivel7State::handleEvent(const sf::Event &event)
         m_baloncestoMinigame.handleEvent(event, *window);
         if (event.is<sf::Event::KeyPressed>())
         {
-            if (event.getIf<sf::Event::KeyPressed>()->code == sf::Keyboard::Key::Escape)
+            if (event.getIf<sf::Event::KeyPressed>()->code == sf::Keyboard::Key::F)
             {
                 m_baloncestoMinigame.deactivate();
                 return;
@@ -214,20 +232,25 @@ void Nivel7State::verificarSalidaNivel()
     static bool rPresionado = false;
     if (m_cercaPuertaSalida)
     {
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R))
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F))
         {
             if (!rPresionado)
             {
                 rPresionado = true;
 
-                if (m_llaveObtenida)
+                // ===== VERIFICAR QUE HAYA 3 GOLES =====
+                if (m_goles >= m_golesParaGanar && m_llaveObtenida)
                 {
                     std::cout << "🚪 Saliendo del Nivel 7..." << std::endl;
                     game->avanzarNivel();
                 }
-                else
+                else if (m_goles < m_golesParaGanar)
                 {
-                    mostrarMensaje("Necesitas la llave. Gánale a LeBron en los tiros libres.", 2.f, sf::Color::Red);
+                    mostrarMensaje("Necesitas meter " + std::to_string(m_golesParaGanar - m_goles) + " goles mas", 2.f, sf::Color::Yellow);
+                }
+                else if (!m_llaveObtenida)
+                {
+                    mostrarMensaje("Necesitas la llave. Ganale a LeBron en los tiros libres.", 2.f, sf::Color::Red);
                 }
             }
         }
@@ -252,45 +275,49 @@ void Nivel7State::update(float dt)
     sf::Vector2f posAnterior = m_player.getPosition();
 
     // ========== ACTUALIZAR BALONES ==========
+    // Radio de colisión circular del jugador (25px, subido 5px = 20px hacia arriba)
+    float radioJugador = 25.f;
+    sf::Vector2f jugadorPos = m_player.getPosition();
+    // Centro del círculo de colisión: 5px más arriba que el centro del sprite
+    sf::Vector2f centroColisionJugador(jugadorPos.x, jugadorPos.y + 15.f);
+
     for (size_t i = 0; i < m_balones.size(); i++)
     {
         m_balones[i]->update(dt);
 
-        // Colisión jugador-balón (circular)
-        sf::Vector2f jugadorPos = m_player.getPosition();
         sf::Vector2f balonPos = m_balones[i]->getPosition();
-        float distJugadorBalon = std::sqrt(
-            (jugadorPos.x - balonPos.x) * (jugadorPos.x - balonPos.x) +
-            (jugadorPos.y - balonPos.y) * (jugadorPos.y - balonPos.y));
-
         float radioBalon = m_balones[i]->getRadius();
-        float radioJugador = 25.f;
+        sf::FloatRect balonBounds = m_balones[i]->getBounds();
 
-        if (distJugadorBalon < radioBalon + radioJugador)
+        // ===== COLISIÓN CIRCULAR JUGADOR-BALÓN =====
+        float distJugadorBalon = std::sqrt(
+            (centroColisionJugador.x - balonPos.x) * (centroColisionJugador.x - balonPos.x) +
+            (centroColisionJugador.y - balonPos.y) * (centroColisionJugador.y - balonPos.y));
+
+        if (distJugadorBalon < radioJugador + radioBalon)
         {
-            sf::Vector2f dirBalon = balonPos - jugadorPos;
+            sf::Vector2f dirBalon = balonPos - centroColisionJugador;
             float dist = std::sqrt(dirBalon.x * dirBalon.x + dirBalon.y * dirBalon.y);
-
             if (dist > 0.f)
             {
                 dirBalon /= dist;
-                m_balones[i]->empujar(dirBalon, 250.f);
-                jugadorPos -= dirBalon * 3.f;
+                m_balones[i]->empujar(dirBalon, 300.f);
+
+                // Empujar al jugador en dirección opuesta
+                jugadorPos -= dirBalon * 5.f;
                 m_player.setPosition(jugadorPos.x, jugadorPos.y);
+                centroColisionJugador = sf::Vector2f(jugadorPos.x, jugadorPos.y - 5.f);
             }
         }
 
-        // Colisión balón-paredes
-        sf::FloatRect balonBounds = m_balones[i]->getBounds();
-        sf::Vector2f bPos = m_balones[i]->getPosition();
-
+        // ===== COLISIÓN BALÓN-PAREDES =====
         for (const auto &obj : m_mapaFisico)
         {
             if (balonBounds.findIntersection(obj.getBounds()).has_value())
             {
                 sf::FloatRect pared = obj.getBounds();
-                float centroBalonX = bPos.x;
-                float centroBalonY = bPos.y;
+                float centroBalonX = balonPos.x;
+                float centroBalonY = balonPos.y;
                 float centroParedX = pared.position.x + pared.size.x / 2.f;
                 float centroParedY = pared.position.y + pared.size.y / 2.f;
 
@@ -308,6 +335,48 @@ void Nivel7State::update(float dt)
                     m_balones[i]->empujar(sf::Vector2f(0.f, dirY), 200.f);
                 }
                 break;
+            }
+        }
+
+        // ===== COLISIÓN BALÓN-LEBRON =====
+        sf::FloatRect lebronBounds = m_lebron.getBounds();
+        if (balonBounds.findIntersection(lebronBounds).has_value())
+        {
+            sf::Vector2f centroLebron(lebronBounds.position.x + lebronBounds.size.x / 2.f,
+                                      lebronBounds.position.y + lebronBounds.size.y / 2.f);
+            sf::Vector2f dir = balonPos - centroLebron;
+            float dist = std::sqrt(dir.x * dir.x + dir.y * dir.y);
+            if (dist > 0.f)
+            {
+                dir /= dist;
+                m_balones[i]->empujar(dir, 250.f);
+            }
+        }
+
+        // ===== COLISIÓN ENTRE BALONES =====
+        for (size_t j = i + 1; j < m_balones.size(); j++)
+        {
+            sf::Vector2f balonPosJ = m_balones[j]->getPosition();
+            float radioBalonJ = m_balones[j]->getRadius();
+
+            sf::Vector2f delta = balonPosJ - balonPos;
+            float distancia = std::sqrt(delta.x * delta.x + delta.y * delta.y);
+            float minDistancia = radioBalon + radioBalonJ;
+
+            if (distancia < minDistancia)
+            {
+                // Separar balones
+                sf::Vector2f normal = delta / distancia;
+                float overlap = minDistancia - distancia;
+                sf::Vector2f separacion = normal * overlap * 0.5f;
+
+                m_balones[i]->setPosition(balonPos.x - separacion.x, balonPos.y - separacion.y);
+                m_balones[j]->setPosition(balonPosJ.x + separacion.x, balonPosJ.y + separacion.y);
+
+                // Intercambiar velocidades (rebote elástico)
+                sf::Vector2f tempVel = m_balones[i]->getVelocity();
+                m_balones[i]->setVelocity(m_balones[j]->getVelocity() * 0.9f);
+                m_balones[j]->setVelocity(tempVel * 0.9f);
             }
         }
 
@@ -330,7 +399,7 @@ void Nivel7State::update(float dt)
     {
         m_cercaBalonBasket = m_player.getHurtbox().findIntersection(m_balonBasketArea).has_value();
         static bool rBalonPresionado = false;
-        if (m_cercaBalonBasket && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R))
+        if (m_cercaBalonBasket && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F))
         {
             if (!rBalonPresionado)
             {
@@ -362,7 +431,7 @@ void Nivel7State::update(float dt)
     if (m_tieneBalonBasket && m_cercaLebron && !m_llaveObtenida && !m_baloncestoMinigame.isActive())
     {
         static bool rLebronPresionado = false;
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R))
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F))
         {
             if (!rLebronPresionado)
             {
@@ -435,7 +504,7 @@ void Nivel7State::update(float dt)
     {
         m_cercaDestornillador = m_player.getHurtbox().findIntersection(m_destornilladorArea).has_value();
         static bool rDestornilladorPresionado = false;
-        if (m_cercaDestornillador && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R))
+        if (m_cercaDestornillador && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F))
         {
             if (!rDestornilladorPresionado)
             {
@@ -464,12 +533,13 @@ void Nivel7State::update(float dt)
     if (m_tieneDestornillador && m_cercaEntradaCentinela)
     {
         static bool rCentinelaPresionado = false;
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R))
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F))
         {
             if (!rCentinelaPresionado)
             {
                 rCentinelaPresionado = true;
                 mostrarMensaje("Entrando al centinela...", 2.f, sf::Color::Yellow);
+                game->detenerMusica();
                 game->entrarCentinela();
                 return;
             }
@@ -578,6 +648,64 @@ void Nivel7State::draw()
         window->draw(fb);
     }
 
+    // ===== DIBUJAR DEBUG (F3) =====
+    if (m_debugMode)
+    {
+        // 1. Colisiones del mapa (rojo)
+        for (const auto &obj : m_mapaFisico)
+        {
+            sf::RectangleShape colision;
+            colision.setPosition(obj.getBounds().position);
+            colision.setSize(obj.getBounds().size);
+            colision.setFillColor(sf::Color(255, 0, 0, 100));
+            colision.setOutlineThickness(2.f);
+            colision.setOutlineColor(sf::Color::Red);
+            window->draw(colision);
+        }
+
+        // 2. Círculo de colisión del JUGADOR (azul)
+        sf::Vector2f jugadorPos = m_player.getPosition();
+        float radioJugador = 25.f;
+        sf::CircleShape jugadorCollisionCircle(radioJugador);
+        jugadorCollisionCircle.setPosition(sf::Vector2f(jugadorPos.x, jugadorPos.y + 15.f));
+        jugadorCollisionCircle.setOrigin(sf::Vector2f(radioJugador, radioJugador));
+        jugadorCollisionCircle.setFillColor(sf::Color(0, 0, 255, 80));
+        jugadorCollisionCircle.setOutlineThickness(2.f);
+        jugadorCollisionCircle.setOutlineColor(sf::Color::Blue);
+        window->draw(jugadorCollisionCircle);
+
+        // 3. Radio de colisión circular de los BALONES (cyan)
+        for (size_t i = 0; i < m_balones.size(); i++)
+        {
+            sf::CircleShape balonDebug(m_balones[i]->getRadius());
+            balonDebug.setPosition(m_balones[i]->getPosition());
+            balonDebug.setOrigin(sf::Vector2f(m_balones[i]->getRadius(), m_balones[i]->getRadius()));
+            balonDebug.setFillColor(sf::Color(0, 255, 255, 80));
+            balonDebug.setOutlineThickness(1.5f);
+            balonDebug.setOutlineColor(sf::Color::Cyan);
+            window->draw(balonDebug);
+        }
+
+        // 4. Hitbox de LeBron (magenta)
+        sf::FloatRect lebronBounds = m_lebron.getBounds();
+        sf::RectangleShape lebronDebug;
+        lebronDebug.setPosition(sf::Vector2f(lebronBounds.position.x, lebronBounds.position.y));
+        lebronDebug.setSize(sf::Vector2f(lebronBounds.size.x, lebronBounds.size.y));
+        lebronDebug.setFillColor(sf::Color(255, 0, 255, 80));
+        lebronDebug.setOutlineThickness(2.f);
+        lebronDebug.setOutlineColor(sf::Color::Magenta);
+        window->draw(lebronDebug);
+
+        // 5. Área del ASCENSOR (verde)
+        sf::RectangleShape ascensorDebug;
+        ascensorDebug.setPosition(sf::Vector2f(m_puertaSalidaArea.position.x, m_puertaSalidaArea.position.y));
+        ascensorDebug.setSize(sf::Vector2f(m_puertaSalidaArea.size.x, m_puertaSalidaArea.size.y));
+        ascensorDebug.setFillColor(sf::Color(0, 255, 0, 80));
+        ascensorDebug.setOutlineThickness(2.f);
+        ascensorDebug.setOutlineColor(sf::Color::Green);
+        window->draw(ascensorDebug);
+    }
+
     // Dibujar balones (detrás del jugador)
     for (auto &balon : m_balones)
     {
@@ -592,48 +720,11 @@ void Nivel7State::draw()
 
     m_lebron.draw(*window);
 
-    // Texto para jugar con LeBron (tiene balón, cerca, sin llave)
-    if (m_tieneBalonBasket && m_cercaLebron && !m_llaveObtenida && !m_baloncestoMinigame.isActive() && m_textoInteraccion && m_fontLoaded)
-    {
-        m_textoInteraccion->setString("Presiona R para jugar tiros libres con LeBron");
-        sf::FloatRect b = m_textoInteraccion->getLocalBounds();
-        m_textoInteraccion->setOrigin(sf::Vector2f(b.size.x / 2.f, b.size.y / 2.f));
-        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
-        window->draw(*m_textoInteraccion);
-    }
-
-    // Textos UI
-    if (m_tieneBalonBasket && m_cercaLebron && !m_llaveObtenida && !m_baloncestoMinigame.isActive())
-    {
-        // "Presiona R para jugar"
-    }
-    if (!m_tieneBalonBasket && m_cercaLebron)
-    {
-        // "Quiero jugar baloncesto..."
-    }
-
     // Minijuego
     if (m_baloncestoMinigame.isActive())
     {
         window->setView(window->getDefaultView());
         m_baloncestoMinigame.draw(*window);
-    }
-
-    // Texto de salida
-    if (m_cercaPuertaSalida && m_textoInteraccion && m_fontLoaded)
-    {
-        if (m_llaveObtenida)
-        {
-            m_textoInteraccion->setString("Presiona R para salir del nivel");
-        }
-        else
-        {
-            m_textoInteraccion->setString("Necesitas conseguir la llave. Busca a LeBron.");
-        }
-        sf::FloatRect b = m_textoInteraccion->getLocalBounds();
-        m_textoInteraccion->setOrigin(sf::Vector2f(b.size.x / 2.f, b.size.y / 2.f));
-        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
-        window->draw(*m_textoInteraccion);
     }
 
     // Destornillador en el mapa
@@ -651,80 +742,110 @@ void Nivel7State::draw()
     // Jugador (adelante)
     m_player.draw(*window);
 
-    // // DEBUG: Dibujar colisiones
-    // for (const auto &obj : m_mapaFisico)
-    // {
-    //     sf::RectangleShape colision;
-    //     colision.setPosition(sf::Vector2f(obj.getBounds().position.x, obj.getBounds().position.y));
-    //     colision.setSize(sf::Vector2f(obj.getBounds().size.x, obj.getBounds().size.y));
-    //     colision.setFillColor(sf::Color(255, 0, 0, 80));
-    //     colision.setOutlineThickness(1.f);
-    //     colision.setOutlineColor(sf::Color::Red);
-    //     window->draw(colision);
-    // }
-
-    // DEBUG: Dibujar área del arco
-    // sf::RectangleShape arcoDebug(sf::Vector2f(m_arcoArea.size.x, m_arcoArea.size.y));
-    // arcoDebug.setPosition(sf::Vector2f(m_arcoArea.position.x, m_arcoArea.position.y));
-    // arcoDebug.setFillColor(sf::Color(255, 255, 0, 80));
-    // arcoDebug.setOutlineThickness(2.f);
-    // arcoDebug.setOutlineColor(sf::Color::Yellow);
-    // window->draw(arcoDebug);
-
-    // DEBUG: Dibujar colisiones circulares de los balones
-    // for (size_t i = 0; i < m_balones.size(); i++)
-    // {
-    //     sf::CircleShape balonDebug(m_balones[i]->getRadius());
-    //     balonDebug.setPosition(m_balones[i]->getPosition());
-    //     balonDebug.setOrigin(sf::Vector2f(m_balones[i]->getRadius(), m_balones[i]->getRadius()));
-    //     balonDebug.setFillColor(sf::Color(0, 255, 0, 80));
-    //     balonDebug.setOutlineThickness(1.f);
-    //     balonDebug.setOutlineColor(sf::Color::Green);
-    //     window->draw(balonDebug);
-    // }
-
-    // DEBUG: Dibujar colisión circular del jugador
-    // sf::CircleShape jugadorDebug(25.f);
-    // sf::Vector2f posJugador = m_player.getPosition();
-    // jugadorDebug.setPosition(sf::Vector2f(posJugador.x, posJugador.y + 30.f));
-    // jugadorDebug.setOrigin(sf::Vector2f(25.f, 25.f));
-    // jugadorDebug.setFillColor(sf::Color(0, 0, 255, 80));
-    // jugadorDebug.setOutlineThickness(1.f);
-    // jugadorDebug.setOutlineColor(sf::Color::Blue);
-    // window->draw(jugadorDebug);
-
     // ===== FASE 2: UI =====
     window->setView(window->getDefaultView());
 
-    // Texto de goles
+    // Texto de goles (esquina superior)
     if (m_fontLoaded && m_textoInteraccion)
     {
         std::string textoGoles = "Goles: " + std::to_string(m_goles) + "/" + std::to_string(m_golesParaGanar);
         m_textoInteraccion->setString(textoGoles);
+        m_textoInteraccion->setFillColor(sf::Color::Yellow);
+        m_textoInteraccion->setOutlineThickness(1.5f);
+        m_textoInteraccion->setOutlineColor(sf::Color::Black);
         sf::FloatRect b = m_textoInteraccion->getLocalBounds();
         m_textoInteraccion->setOrigin(sf::Vector2f(b.size.x / 2.f, b.size.y / 2.f));
         m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, 30.f));
         window->draw(*m_textoInteraccion);
     }
 
-    // Texto de salida
-    if (m_cercaPuertaSalida && m_textoInteraccion && m_fontLoaded)
+    // ===== TEXTOS DE INTERACCIÓN CENTRALES =====
+    if (m_fontLoaded && m_textoInteraccion)
     {
-        if (m_goles >= m_golesParaGanar)
+        float winW = static_cast<float>(window->getSize().x);
+        float winH = static_cast<float>(window->getSize().y);
+        std::string textoActual = "";
+        bool mostrarTexto = true;
+        
+        // 1. PRIORIDAD: Ascensor (salida)
+        if (m_cercaPuertaSalida)
         {
-            m_textoInteraccion->setString("Presiona R para salir del nivel");
+            if (m_llaveObtenida)
+            {
+                textoActual = "Presiona F para salir del nivel";
+            }
+            else
+            {
+                textoActual = "Necesitas la llave. Ganale a LeBron en los tiros libres";
+            }
+        }
+        // 2. LeBron (si está cerca y NO está en el ascensor)
+        else if (m_cercaLebron && !m_llaveObtenida)
+        {
+            if (m_tieneBalonBasket)
+            {
+                textoActual = "Presiona F para jugar tiros libres con LeBron";
+            }
+            else
+            {
+                textoActual = "Necesitas un balon de baloncesto.Buscalo en la cancha";
+            }
+        }
+        // 3. Si ya tiene la llave y está cerca de LeBron
+        else if (m_cercaLebron && m_llaveObtenida)
+        {
+            textoActual = "Ya tienes la llave. Dirigete al ascensor";
         }
         else
         {
-            m_textoInteraccion->setString("Mete " + std::to_string(m_golesParaGanar - m_goles) + " goles mas para salir");
+            mostrarTexto = false;
         }
+        
+        // Dibujar el mensaje centrado si hay texto
+        if (mostrarTexto && !textoActual.empty())
+        {
+            m_textoInteraccion->setString(textoActual);
+            m_textoInteraccion->setFillColor(sf::Color::Yellow);
+            m_textoInteraccion->setOutlineThickness(1.5f);
+            m_textoInteraccion->setOutlineColor(sf::Color::Black);
+            
+            sf::FloatRect bounds = m_textoInteraccion->getLocalBounds();
+            m_textoInteraccion->setOrigin(sf::Vector2f(bounds.size.x / 2.f, bounds.size.y / 2.f));
+            
+            // SUBIR el mensaje cuando está cerca de LeBron
+            m_textoInteraccion->setPosition(sf::Vector2f(winW / 2.f, winH - 75.f));
+            
+            window->draw(*m_textoInteraccion);
+        }
+    }
+
+    // ===== TEXTO DESTORNILLADOR =====
+    if (!m_tieneDestornillador && m_cercaDestornillador && m_textoInteraccion && m_fontLoaded)
+    {
+        m_textoInteraccion->setString("Presiona F para recoger el destornillador");
+        m_textoInteraccion->setFillColor(sf::Color::Yellow);
+        m_textoInteraccion->setOutlineThickness(1.5f);
+        m_textoInteraccion->setOutlineColor(sf::Color::Black);
         sf::FloatRect b = m_textoInteraccion->getLocalBounds();
         m_textoInteraccion->setOrigin(sf::Vector2f(b.size.x / 2.f, b.size.y / 2.f));
-        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
+        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 75.f));
         window->draw(*m_textoInteraccion);
     }
 
-    // Tutorial
+    // ===== TEXTO ENTRADA CENTINELA =====
+    if (m_tieneDestornillador && m_cercaEntradaCentinela && m_textoInteraccion && m_fontLoaded)
+    {
+        m_textoInteraccion->setString("Presiona F para abrir el ducto");
+        m_textoInteraccion->setFillColor(sf::Color::Yellow);
+        m_textoInteraccion->setOutlineThickness(1.5f);
+        m_textoInteraccion->setOutlineColor(sf::Color::Black);
+        sf::FloatRect b = m_textoInteraccion->getLocalBounds();
+        m_textoInteraccion->setOrigin(sf::Vector2f(b.size.x / 2.f, b.size.y / 2.f));
+        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 75.f));
+        window->draw(*m_textoInteraccion);
+    }
+
+    // ===== TUTORIAL =====
     if (m_mostrarTutorial || m_mostrarTutorialPorTecla)
     {
         sf::RectangleShape overlay(sf::Vector2f(window->getSize().x, window->getSize().y));
@@ -733,7 +854,7 @@ void Nivel7State::draw()
         if (m_fontLoaded)
         {
             sf::Text tt(m_font);
-            tt.setString("NIVEL 7 - FUTBOL\n\nLleva los 3 balones al arco para poder salir.\n\n[ESC] Cerrar | [M] Ayuda");
+            tt.setString("NIVEL 7 - FUTBOL\n\nLleva los 3 balones al arco para poder salir.\n\n[M] Cerrar/Ayuda");
             tt.setCharacterSize(20);
             tt.setFillColor(sf::Color::White);
             sf::FloatRect b = tt.getLocalBounds();
@@ -741,26 +862,6 @@ void Nivel7State::draw()
             tt.setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y / 2.f));
             window->draw(tt);
         }
-    }
-
-    // Texto destornillador
-    if (!m_tieneDestornillador && m_cercaDestornillador && m_textoInteraccion && m_fontLoaded)
-    {
-        m_textoInteraccion->setString("Presiona R para recoger el destornillador");
-        sf::FloatRect b = m_textoInteraccion->getLocalBounds();
-        m_textoInteraccion->setOrigin(sf::Vector2f(b.size.x / 2.f, b.size.y / 2.f));
-        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
-        window->draw(*m_textoInteraccion);
-    }
-
-    // Texto entrada centinela
-    if (m_tieneDestornillador && m_cercaEntradaCentinela && m_textoInteraccion && m_fontLoaded)
-    {
-        m_textoInteraccion->setString("Presiona R para abrir el ducto (Centinela)");
-        sf::FloatRect b = m_textoInteraccion->getLocalBounds();
-        m_textoInteraccion->setOrigin(sf::Vector2f(b.size.x / 2.f, b.size.y / 2.f));
-        m_textoInteraccion->setPosition(sf::Vector2f(window->getSize().x / 2.f, window->getSize().y - 70.f));
-        window->draw(*m_textoInteraccion);
     }
 
     Inventory *inv = m_player.getInventory();
@@ -772,40 +873,82 @@ void Nivel7State::configurarColisiones()
 {
     m_mapaFisico.clear();
 
-    // Bordes del mundo
-    m_mapaFisico.emplace_back(-10.f, 0.f, 10.f, m_worldSize.y);
-    m_mapaFisico.emplace_back(m_worldSize.x, 0.f, 10.f, m_worldSize.y);
-    m_mapaFisico.emplace_back(0.f, -10.f, m_worldSize.x, 10.f);
-    m_mapaFisico.emplace_back(0.f, m_worldSize.y, m_worldSize.x, 10.f);
+    // ===== BORDES EXTERIORES =====
+    // Borde izquierdo (0,0) a (33,941)
+    m_mapaFisico.emplace_back(0.f, 0.f, 33.f, 941.f);
 
-    // Borde izquierdo: (0,0) a (35,941)
-    m_mapaFisico.emplace_back(0.f, 0.f, 35.f, 941.f);
+    // Borde inferior (0,935) a (1672,941)
+    m_mapaFisico.emplace_back(0.f, 935.f, 1672.f, 6.f);
 
-    // Pared superior: (0,0) a (1186,207)
-    m_mapaFisico.emplace_back(0.f, 0.f, 1186.f, 207.f);
+    // Borde derecho (1658,184) a (1672,941)
+    m_mapaFisico.emplace_back(1658.f, 184.f, 14.f, 757.f);
 
-    // Pared ascensor izquierda: (604,0) a (640,329)
-    m_mapaFisico.emplace_back(604.f, 0.f, 36.f, 329.f);
+    // ===== PARED SUPERIOR (CORREGIDA) =====
+    // Pared Superior (0,0) a (1150,206)
+    m_mapaFisico.emplace_back(0.f, 0.f, 1150.f, 206.f);
 
-    // Pared ascensor-pasillo (parte izquierda): (604,329) a (689,419)
-    m_mapaFisico.emplace_back(604.f, 329.f, 85.f, 90.f);
+    // Pared2 (1149,0) a (1186,288)
+    m_mapaFisico.emplace_back(1149.f, 0.f, 37.f, 288.f);
 
-    // Pared ascensor-pasillo (parte derecha): (801,329) a (1267,419)
-    m_mapaFisico.emplace_back(801.f, 329.f, 466.f, 90.f);
+    // Pared5 (1186,0) a (1672,184)
+    m_mapaFisico.emplace_back(1186.f, 0.f, 486.f, 184.f);
 
-    // Pared pasillo: (600,536) a (1088,673)
-    m_mapaFisico.emplace_back(600.f, 536.f, 488.f, 137.f);
+    // ===== LETREROS Y TABLEROS =====
+    // Letrero (1082,288) a (1290,357)
+    m_mapaFisico.emplace_back(1082.f, 288.f, 208.f, 69.f);
 
-    // Pared pasillo vertical: (1065,552) a (1088,941)
-    m_mapaFisico.emplace_back(1065.f, 552.f, 23.f, 389.f);
+    // Tablero (1398,182) a (1491,203)
+    m_mapaFisico.emplace_back(1398.f, 182.f, 93.f, 21.f);
 
-    // Pared Habitación salida-centinela: (1247,611) a (1672,742)
-    m_mapaFisico.emplace_back(1247.f, 611.f, 425.f, 131.f);
+    // ===== TUBOS =====
+    // Tubo izquierdo (190,173) a (203,275)
+    m_mapaFisico.emplace_back(190.f, 173.f, 13.f, 102.f);
 
-    // Pared Basket-Pasillo: (1247,515) a (1267,609)
-    m_mapaFisico.emplace_back(1247.f, 515.f, 20.f, 94.f);
+    // Tubo derecho (418,181) a (432,275)
+    m_mapaFisico.emplace_back(418.f, 181.f, 14.f, 94.f);
 
-    std::cout << "✅ Colisiones del Nivel 7 configuradas: " << m_mapaFisico.size() << " paredes" << std::endl;
+    // ===== BANCAS (ASIENTOS) =====
+    // Banca 1 (559,265) a (591,378)
+    m_mapaFisico.emplace_back(559.f, 265.f, 32.f, 113.f);
+
+    // Banca 2 (541,544) a (599,658)
+    m_mapaFisico.emplace_back(541.f, 544.f, 58.f, 114.f);
+
+    // Banca 3 (607,676) a (734,710)
+    m_mapaFisico.emplace_back(607.f, 676.f, 127.f, 34.f);
+
+    // Banca 4 (770,676) a (899,710)
+    m_mapaFisico.emplace_back(770.f, 676.f, 129.f, 34.f);
+
+    // Banca 5 (927,676) a (1054,710)
+    m_mapaFisico.emplace_back(927.f, 676.f, 127.f, 34.f);
+
+    // ===== PAREDES INTERNAS =====
+    // Pared1 (591,206) a (638,328)
+    m_mapaFisico.emplace_back(591.f, 206.f, 47.f, 122.f);
+
+    // Pared3 (591,328) a (690,420)
+    m_mapaFisico.emplace_back(591.f, 328.f, 99.f, 92.f);
+
+    // Pared4 (799,328) a (1267,420)
+    m_mapaFisico.emplace_back(799.f, 328.f, 468.f, 92.f);
+
+    // Murito (599,515) a (623,536)
+    m_mapaFisico.emplace_back(599.f, 515.f, 24.f, 21.f);
+
+    // Pared 6 (599,536) a (1088,673)
+    m_mapaFisico.emplace_back(599.f, 536.f, 489.f, 137.f);
+
+    // Pared 7 (1067,673) a (1088,941)
+    m_mapaFisico.emplace_back(1067.f, 673.f, 21.f, 268.f);
+
+    // Pared 8 (1247,515) a (1269,609)
+    m_mapaFisico.emplace_back(1247.f, 515.f, 22.f, 94.f);
+
+    // Pared 9 (1247,609) a (1672,742)
+    m_mapaFisico.emplace_back(1247.f, 609.f, 425.f, 133.f);
+
+    std::cout << "✅ Colisiones del Nivel 7 actualizadas: " << m_mapaFisico.size() << " paredes" << std::endl;
 }
 
 void Nivel7State::mostrarMensaje(const std::string &texto, float duracion, sf::Color color)
