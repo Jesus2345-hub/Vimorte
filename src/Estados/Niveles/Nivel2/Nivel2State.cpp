@@ -177,27 +177,27 @@ void Nivel2State::configurarColisiones() {
 void Nivel2State::handleEvent(const sf::Event& event) {
     // ----- TECLAS GLOBALES -----
     if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>()) {
-        // ESC: Cerrar tutorial o salir de minijuegos
-        if (keyPressed->code == sf::Keyboard::Key::Escape) {
-            if (m_mostrarTutorial || m_mostrarTutorialPorTecla) {
-                m_mostrarTutorial = false;
-                m_mostrarTutorialPorTecla = false;
-                m_escapeConsumed = true;
-                return;
-            }
-        }
-        
-        // M: Mostrar tutorial manualmente
+        // M: Abrir/Cerrar tutorial (toggle)
         if (keyPressed->code == sf::Keyboard::Key::M) {
             if (game->tienePartidaActiva()) {
                 const auto& items = game->getSaveManager().getCurrentProgress().itemsRecolectados;
                 auto it = std::find(items.begin(), items.end(), "TutorialNivel2Visto");
-                m_mostrarTutorialPorTecla = (it != items.end());
-                if (!m_mostrarTutorialPorTecla) m_mostrarTutorial = true;
+                if (it != items.end()) {
+                    // Si ya vio el tutorial automático, usar toggle manual
+                    m_mostrarTutorialPorTecla = !m_mostrarTutorialPorTecla;
+                    m_mostrarTutorial = false;
+                } else {
+                    // Primera vez - mostrar tutorial automático
+                    m_mostrarTutorial = !m_mostrarTutorial;
+                }
             } else {
-                m_mostrarTutorialPorTecla = true;
+                m_mostrarTutorialPorTecla = !m_mostrarTutorialPorTecla;
             }
+            return;
         }
+        
+        // ESC: Solo para pausa (ya no cierra tutorial)
+        // El tutorial ahora se cierra con M
         
         // F3: Activar/desactivar coordenadas de debug
         if (keyPressed->code == sf::Keyboard::Key::F3) {
@@ -206,7 +206,7 @@ void Nivel2State::handleEvent(const sf::Event& event) {
     }
     
     // ----- EVENTOS DEL MINIJUEGO BARTENDER -----
-        if (m_bartenderMinigame.isActive()) {
+    if (m_bartenderMinigame.isActive()) {
         m_bartenderMinigame.handleEvent(event, *window);
         if (const auto* keyEvent = event.getIf<sf::Event::KeyPressed>()) {
             if (keyEvent->code == sf::Keyboard::Key::F) {
@@ -218,7 +218,7 @@ void Nivel2State::handleEvent(const sf::Event& event) {
     }
     
     // ----- EVENTOS DEL MINIJUEGO RULETA -----
-        if (m_ruletaMinigame.isActive()) {
+    if (m_ruletaMinigame.isActive()) {
         m_ruletaMinigame.handleEvent(event, *window);
         if (const auto* keyEvent = event.getIf<sf::Event::KeyPressed>()) {
             if (keyEvent->code == sf::Keyboard::Key::F) {
@@ -337,18 +337,24 @@ void Nivel2State::update(float dt) {
         return;
     }
     
-    // ----- ACTIVAR RULETA (TECLA R CERCA DE LA MESA) -----
-    static bool rRuletaPresionado = false;
-    if (m_cercaRuleta && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R)) {
-        if (!rRuletaPresionado) { rRuletaPresionado = true; m_ruletaMinigame.activate(); }
-    } else { rRuletaPresionado = false; }
-    
-    // ----- ACTIVAR BARTENDER (TECLA R CERCA DE LA BARRA) -----
-    static bool rBartenderPresionado = false;
-    if (m_cercaBar && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R)) {
-        if (!rBartenderPresionado) { rBartenderPresionado = true; m_bartenderMinigame.activate(); }
-    } else { rBartenderPresionado = false; }
-    
+    // ----- ACTIVAR RULETA (TECLA F CERCA DE LA MESA) -----
+    static bool fRuletaPresionado = false;
+    if (m_cercaRuleta && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F)) {
+        if (!fRuletaPresionado) { 
+            fRuletaPresionado = true; 
+            m_ruletaMinigame.activate(); 
+        }
+    } else { fRuletaPresionado = false; }
+
+    // ----- ACTIVAR BARTENDER (TECLA F CERCA DE LA BARRA) -----
+    static bool fBartenderPresionado = false;
+    if (m_cercaBar && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F)) {
+        if (!fBartenderPresionado) { 
+            fBartenderPresionado = true; 
+            m_bartenderMinigame.activate(); 
+        }
+    } else { fBartenderPresionado = false; }
+
     // ----- COMPRAR LLAVE (TECLA E CERCA DEL VENDEDOR) -----
        static bool ePresionadoVendedor = false;
     if (m_cercaVendedor && !m_tieneLlave && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F)) {
@@ -400,7 +406,7 @@ void Nivel2State::update(float dt) {
     m_cercaCristal = m_player.getHurtbox().findIntersection(m_areaCristal).has_value();
     
     static bool clickPiedraPresionado = false;
-    if (m_cercaCristal && m_tienePalo && !m_paloLanzado && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Q)) {
+    if (m_cercaCristal && m_tienePalo && !m_paloLanzado && sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R)) {
         if (!clickPiedraPresionado) {
             clickPiedraPresionado = true;
             
@@ -610,7 +616,7 @@ void Nivel2State::draw() {
         
         // Texto para el cristal (lanzar palo) - ARRIBA
         if (m_cercaCristal && m_tienePalo && !m_paloLanzado)
-            drawTextTop("Presiona Q para lanzar el palo al cristal", sf::Color::Yellow);
+            drawTextTop("Presiona R para lanzar el palo al cristal", sf::Color::Yellow);
         // Texto para la grieta abierta - ARRIBA
         if (m_grietaAbierta && m_cercaGrieta)
             drawTextTop("Una grieta misteriosa se ha abierto en la pared", sf::Color::Yellow);
@@ -634,11 +640,11 @@ void Nivel2State::draw() {
         
         // Texto para la ruleta
         if (m_cercaRuleta && !m_ruletaMinigame.isActive() && !m_bartenderMinigame.isActive())
-            drawText("Presiona R para jugar a la ruleta");
+            drawText("Presiona F para jugar a la ruleta");
         
         // Texto para el bartender
         if (m_cercaBar && !m_bartenderMinigame.isActive() && !m_ruletaMinigame.isActive())
-            drawText("Presiona R para trabajar de bartender");
+            drawText("Presiona F para trabajar de bartender");
         
         // Texto para el vendedor de llaves
         if (m_cercaVendedor && !m_tieneLlave)
@@ -677,12 +683,12 @@ void Nivel2State::draw() {
         if (m_fontLoaded) {
             sf::Text tutorialText(m_font);
             tutorialText.setString(
-                "BIENVENIDO AL CASINO VIMORTE\n\n"
+                "CASINO VIMORTE\n\n"
                 "Necesitas $100 para comprar la llave y escapar.\n\n"
                 "FORMAS DE GANAR DINERO:\n"
                 "- Trabaja de bartender ($1 por bebida)\n"
                 "- Juega a la ruleta (apuesta y multiplica)\n\n"
-                "[ESC] Cerrar | [M] ayuda | [F3] Coordenadas"
+                "[M] ayuda/Cerrar"
             );
             tutorialText.setCharacterSize(20);
             tutorialText.setFillColor(sf::Color::White);

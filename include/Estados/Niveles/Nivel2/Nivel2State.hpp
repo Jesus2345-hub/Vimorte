@@ -22,6 +22,7 @@ public:
     void actualizarPosicionRuleta();
 
 private:
+
     Player m_player;
     sf::Texture m_backgroundTexture;
     std::unique_ptr<sf::Sprite> m_background;

@@ -1,6 +1,7 @@
 #include "Estados/Niveles/Nivel3/Nivel3State.hpp"
 #include "Estados/PauseState.hpp"
 #include "Configuracion/Game.hpp"
+#include "Estados/GameOverState.hpp"
 #include "Configuracion/CoordenadasDebug.hpp"
 #include <iostream>
 #include <cmath>
@@ -168,7 +169,7 @@ Nivel3State::Nivel3State(sf::RenderWindow* window, Game* game)
 
     game->setIsInLevel(true);
     
-    mostrarMensaje("DESACTIVA LA BOMBA! Tienes 3 minutos!", 4.0f, sf::Color::Red);
+    mostrarMensaje("DESACTIVA LA BOMBA! Tienes 3 minutos! (Presiona F en la bomba)", 4.0f, sf::Color::Red);
 }
 
 // ============================================================
@@ -268,17 +269,27 @@ void Nivel3State::explotarBomba() {
     sf::Vector2f posicionJugador = m_player.getPosition();
     bool jugadorEnAreaExplosion = m_areaExplosion.contains(posicionJugador);
     
-    if (jugadorEnAreaExplosion) {
-        // JUGADOR MUERE - Estaba demasiado cerca de la bomba
+    if (jugadorEnAreaExplosion || m_tiempoRestante <= 0.0f) {  // MODIFICADO: Tambien muere si se acabo el tiempo
+        // JUGADOR MUERE - Estaba demasiado cerca de la bomba O SE ACABO EL TIEMPO
         m_jugadorMuerto = true;
         m_tiempoMuerte = 3.0f;
         
         if (m_textoBomba) {
-            m_textoBomba->setString("HAS MUERTO");
+            if (m_tiempoRestante <= 0.0f) {
+                m_textoBomba->setString("TIEMPO AGOTADO");
+            } else {
+                m_textoBomba->setString("HAS MUERTO");
+            }
             m_textoBomba->setFillColor(sf::Color::Red);
         }
-        mostrarMensaje("Estabas demasiado cerca! La explosion te ha matado.", 3.0f, sf::Color::Red);
-        std::cout << "Jugador en area de explosion. MUERTE." << std::endl;
+        
+        if (m_tiempoRestante <= 0.0f) {
+            mostrarMensaje("Se acabo el tiempo! La bomba ha explotado.", 3.0f, sf::Color::Red);
+            std::cout << "Tiempo agotado. MUERTE." << std::endl;
+        } else {
+            mostrarMensaje("Estabas demasiado cerca! La explosion te ha matado.", 3.0f, sf::Color::Red);
+            std::cout << "Jugador en area de explosion. MUERTE." << std::endl;
+        }
     } else {
         // JUGADOR SOBREVIVE - Estaba lejos de la bomba
         m_jugadorMuerto = false;
@@ -290,7 +301,7 @@ void Nivel3State::explotarBomba() {
         mostrarMensaje("La bomba exploto! Pero estabas a salvo. Se ha abierto una grieta.", 4.0f, sf::Color::Yellow);
         std::cout << "Jugador fuera de area de explosion. SOBREVIVE. Grieta abierta." << std::endl;
     }
-}
+}   
 
 // ============================================================
 // ACTUALIZAR TAMAÑO DE MINIJUEGOS
@@ -323,9 +334,8 @@ void Nivel3State::handleEvent(const sf::Event& event) {
     if (m_minijuegoCables.isActive()) {
         m_minijuegoCables.handleEvent(event, *window);
         if (const auto* keyEvent = event.getIf<sf::Event::KeyPressed>()) {
-            if (keyEvent->code == sf::Keyboard::Key::Escape) {
+            if (keyEvent->code == sf::Keyboard::Key::F) {  // CAMBIADO: salir con F
                 m_minijuegoCables.deactivate();
-                m_escapeConsumed = true;
                 return;
             }
         }
@@ -336,9 +346,8 @@ void Nivel3State::handleEvent(const sf::Event& event) {
     if (m_minijuegoMemoria.isActive()) {
         m_minijuegoMemoria.handleEvent(event, *window);
         if (const auto* keyEvent = event.getIf<sf::Event::KeyPressed>()) {
-            if (keyEvent->code == sf::Keyboard::Key::Escape) {
+            if (keyEvent->code == sf::Keyboard::Key::F) {  // CAMBIADO: salir con F
                 m_minijuegoMemoria.deactivate();
-                m_escapeConsumed = true;
                 return;
             }
         }
@@ -349,9 +358,8 @@ void Nivel3State::handleEvent(const sf::Event& event) {
     if (m_minijuegoPatron.isActive()) {
         m_minijuegoPatron.handleEvent(event, *window);
         if (const auto* keyEvent = event.getIf<sf::Event::KeyPressed>()) {
-            if (keyEvent->code == sf::Keyboard::Key::Escape) {
+            if (keyEvent->code == sf::Keyboard::Key::F) {  // CAMBIADO: salir con F
                 m_minijuegoPatron.deactivate();
-                m_escapeConsumed = true;
                 return;
             }
         }
@@ -360,25 +368,26 @@ void Nivel3State::handleEvent(const sf::Event& event) {
     
     // ===== TECLAS GLOBALES =====
     if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>()) {
-        if (keyPressed->code == sf::Keyboard::Key::Escape) {
-            if (m_mostrarTutorial || m_mostrarTutorialPorTecla) {
-                m_mostrarTutorial = false;
-                m_mostrarTutorialPorTecla = false;
-                m_escapeConsumed = true;
-                return;
-            }
-        }
-        
+        // M: Abrir/Cerrar tutorial (toggle) - CAMBIADO: ya no usa Escape
         if (keyPressed->code == sf::Keyboard::Key::M) {
             if (game->tienePartidaActiva()) {
                 const auto& items = game->getSaveManager().getCurrentProgress().itemsRecolectados;
                 auto it = std::find(items.begin(), items.end(), "TutorialNivel3Visto");
-                m_mostrarTutorialPorTecla = (it != items.end());
-                if (!m_mostrarTutorialPorTecla) m_mostrarTutorial = true;
+                if (it != items.end()) {
+                    // Si ya vio el tutorial automático, usar toggle manual
+                    m_mostrarTutorialPorTecla = !m_mostrarTutorialPorTecla;
+                    m_mostrarTutorial = false;
+                } else {
+                    // Primera vez - mostrar tutorial automático
+                    m_mostrarTutorial = !m_mostrarTutorial;
+                }
             } else {
-                m_mostrarTutorialPorTecla = true;
+                m_mostrarTutorialPorTecla = !m_mostrarTutorialPorTecla;
             }
+            return;
         }
+        
+        // ESC: Solo para pausa (ya no cierra tutorial)
         
         if (keyPressed->code == sf::Keyboard::Key::F3) {
             CoordenadasDebug::getInstance().toggleVisible();
@@ -389,7 +398,6 @@ void Nivel3State::handleEvent(const sf::Event& event) {
     Inventory* inv = m_player.getInventory();
     if (inv) inv->handleEvent(event, *window);
 }
-
 // ============================================================
 // ACTUALIZAR
 // ============================================================
@@ -453,11 +461,8 @@ void Nivel3State::update(float dt) {
             m_tiempoMuerte -= dt;
             if (m_tiempoMuerte <= 0.0f) {
                 window->setView(window->getDefaultView());
-                LevelTree& arbolNiveles = game->getLevelTree();
-                if (arbolNiveles.jumpToNode("final_malo_centinela3")) {
-                    std::unique_ptr<State> nuevoEstado = arbolNiveles.createCurrentState(window, game);
-                    if (nuevoEstado) game->changeState(std::move(nuevoEstado));
-                }
+                // CAMBIADO: Ir a GameOverState en lugar del final malo
+                game->pushState(std::make_unique<GameOverState>(window, game));
                 return;
             }
         }
@@ -666,9 +671,9 @@ void Nivel3State::draw() {
         };
         
         dibujarArea(m_bombaArea, sf::Color(255, 100, 0));
-        dibujarArea(m_pista1Area, sf::Color::Cyan);
-        dibujarArea(m_pista2Area, sf::Color::Cyan);
-        dibujarArea(m_puertaSalidaArea, sf::Color::Green);
+        dibujarArea(m_pista1Area, sf::Color::White);
+        dibujarArea(m_pista2Area, sf::Color::White);
+        dibujarArea(m_puertaSalidaArea, sf::Color::White);
         
         // Area de explosion (rojo)
         sf::RectangleShape areaExpRect;
@@ -737,15 +742,15 @@ void Nivel3State::draw() {
         };
         
         if (m_cercaBomba && !m_bombaDesactivada && !m_bombaExploto)
-            drawText("Presiona F para desactivar la bomba", sf::Color::Yellow);
+            drawText("Presiona F para desactivar la bomba", sf::Color::White);
         if (m_cercaBomba && m_bombaDesactivada)
             drawText("Bomba desactivada. Dirigete a la salida.", sf::Color::Green);
         if (m_cercaPista1 && !m_pista1Encontrada)
-            drawText("Presiona F para buscar pista", sf::Color::Cyan);
+            drawText("Presiona F para buscar pista", sf::Color::White);
         if (m_cercaPista1 && m_pista1Encontrada)
             drawText("Pista 1 encontrada: " + m_pista1Texto, sf::Color::Cyan);
         if (m_cercaPista2 && !m_pista2Encontrada)
-            drawText("Presiona F para buscar pista", sf::Color::Green);
+            drawText("Presiona F para buscar pista", sf::Color::White);
         if (m_cercaPista2 && m_pista2Encontrada)
             drawText("Pista 2 encontrada: " + m_pista2Texto, sf::Color::Green);
         if (m_cercaPuertaSalida && m_bombaDesactivada)
@@ -794,8 +799,8 @@ void Nivel3State::draw() {
                 "- Acercate a la bomba y presiona F\n"
                 "- Corta los cables en el orden correcto\n"
                 "- Escapa antes de que explote\n\n"
-                "[ESC] Cerrar | [M] Ayuda | [F3] Coordenadas\n"
-                "[F] Interactuar | [E] Inventario"
+                "[M] Ayuda/Cerrar\n"
+               
             );
             tutorialText.setCharacterSize(20);
             tutorialText.setFillColor(sf::Color::White);

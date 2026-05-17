@@ -16,9 +16,6 @@ GameOverState::GameOverState(sf::RenderWindow* window, Game* game)
     m_fondo.setSize(sf::Vector2f(1280.f, 720.f));
     m_fondo.setFillColor(sf::Color::Black);
     
-    // ============================================
-    // TÍTULO "GAME OVER" CON EFECTO
-    // ============================================
     m_titulo = std::make_unique<sf::Text>(m_fuente, "GAME OVER", 90);
     m_titulo->setFillColor(sf::Color::Red);
     m_titulo->setStyle(sf::Text::Style::Bold);
@@ -26,31 +23,31 @@ GameOverState::GameOverState(sf::RenderWindow* window, Game* game)
     m_titulo->setOrigin({tb.size.x / 2.f, tb.size.y / 2.f});
     m_titulo->setPosition({640.f, 180.f});
     
-    // Sombra del título (efecto 3D)
+    // Sombra del título 
     m_tituloSombra = std::make_unique<sf::Text>(m_fuente, "GAME OVER", 90);
     m_tituloSombra->setFillColor(sf::Color(100, 0, 0));
     m_tituloSombra->setStyle(sf::Text::Style::Bold);
     m_tituloSombra->setOrigin({tb.size.x / 2.f, tb.size.y / 2.f});
     m_tituloSombra->setPosition({642.f, 182.f});
     
-    // ============================================
+    
     // SUBTÍTULO
-    // ============================================
+    
     m_subtitulo = std::make_unique<sf::Text>(m_fuente, "Has perdido el nivel", 28);
     m_subtitulo->setFillColor(sf::Color(200, 200, 200));
     sf::FloatRect stb = m_subtitulo->getLocalBounds();
     m_subtitulo->setOrigin({stb.size.x / 2.f, stb.size.y / 2.f});
     m_subtitulo->setPosition({640.f, 260.f});
     
-    // ============================================
+    
     // BOTÓN REINTENTAR (con diseño moderno)
-    // ============================================
+    
     m_reintentarText = std::make_unique<sf::Text>(m_fuente, "REINTENTAR", 38);
     m_reintentarText->setFillColor(sf::Color::White);
     m_reintentarText->setStyle(sf::Text::Style::Bold);
     
     m_botonReintentar.setSize(sf::Vector2f(350.f, 80.f));
-    m_botonReintentar.setFillColor(sf::Color(220, 50, 50));  // Rojo más vibrante
+    m_botonReintentar.setFillColor(sf::Color(220, 50, 50)); 
     m_botonReintentar.setOutlineThickness(3.f);
     m_botonReintentar.setOutlineColor(sf::Color::White);
     m_botonReintentar.setOrigin({175.f, 40.f});
@@ -60,15 +57,15 @@ GameOverState::GameOverState(sf::RenderWindow* window, Game* game)
     m_reintentarText->setOrigin({br.size.x / 2.f, br.size.y / 2.f});
     m_reintentarText->setPosition({640.f, 360.f});
     
-    // ============================================
+    
     // BOTÓN MENÚ PRINCIPAL (con diseño moderno)
-    // ============================================
+    
     m_menuText = std::make_unique<sf::Text>(m_fuente, "MENU PRINCIPAL", 38);
     m_menuText->setFillColor(sf::Color::White);
     m_menuText->setStyle(sf::Text::Style::Bold);
     
     m_botonMenu.setSize(sf::Vector2f(350.f, 80.f));
-    m_botonMenu.setFillColor(sf::Color(60, 60, 100));  // Azul grisáceo
+    m_botonMenu.setFillColor(sf::Color(60, 60, 100));  
     m_botonMenu.setOutlineThickness(3.f);
     m_botonMenu.setOutlineColor(sf::Color::White);
     m_botonMenu.setOrigin({175.f, 40.f});
@@ -78,9 +75,9 @@ GameOverState::GameOverState(sf::RenderWindow* window, Game* game)
     m_menuText->setOrigin({bm.size.x / 2.f, bm.size.y / 2.f});
     m_menuText->setPosition({640.f, 470.f});
     
-    // ============================================
+    
     // EFECTO DE BRILLO EN BOTONES (animación)
-    // ============================================
+    
     m_brilloReintentar = 0.f;
     m_brilloMenu = 0.f;
     m_tiempoAnimacion = 0.f;

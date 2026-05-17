@@ -458,14 +458,14 @@ void Nivel4State::update(float dt) {
             m_vitalSignsAndres.clearJustDied();
             m_mostrandoMuerte = true;
             m_muerteTimer = 3.0f;
-            m_mensajeMuerte = "¡HAS MATADO A ANDRES!\nFallo en el minijuego de dardos";
+            m_mensajeMuerte = "HAS MATADO A ANDRES!\nFallo en el minijuego de dardos";
             m_gameOverTriggered = true;
         }
         else if (m_vitalSignsAndrea.justDied()) {
             m_vitalSignsAndrea.clearJustDied();
             m_mostrandoMuerte = true;
             m_muerteTimer = 3.0f;
-            m_mensajeMuerte = "¡HAS MATADO A ANDREA!\nFallo en el minijuego de patrones";
+            m_mensajeMuerte = "HAS MATADO A ANDREA!\nFallo en el minijuego de patrones";
             m_gameOverTriggered = true;
         }
     }
