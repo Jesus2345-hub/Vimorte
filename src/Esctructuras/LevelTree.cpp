@@ -193,9 +193,6 @@ void LevelTree::buildTree()
 
     currentNode = root.get();
     visitedNodes.push_back(currentNode->id);
-
-    std::cout << "Arbol de niveles construido. Raiz: " << root->displayName << std::endl;
-    std::cout << "Centinelas: C1(nivel1), C2(nivel4,nivel5), C3Camaras(nivel2,nivel3)" << std::endl;
 }
 
 
@@ -205,7 +202,6 @@ bool LevelTree::goToNextLevel()
         return false;
     if (currentNode->hasCentinela() && !currentNode->right->permiteRetrocesoDesdeCentinela)
     {
-        std::cout << "Debes completar el centinela antes de continuar" << std::endl;
         return false;
     }
     if (currentNode->hasNextLevel())
@@ -214,10 +210,8 @@ bool LevelTree::goToNextLevel()
         currentNode = currentNode->left.get();
         visitedNodes.push_back(currentNode->id);
         inCentinelaPath = false;
-        std::cout << "Avanzando a: " << currentNode->displayName << std::endl;
         return true;
     }
-    std::cout << "Has completado todos los niveles!" << std::endl;
     return false;
 }
 
@@ -237,12 +231,9 @@ bool LevelTree::goToCentinela()
         currentNode = currentNode->right.get();
         visitedNodes.push_back(currentNode->id);
         inCentinelaPath = true;
-        std::cout << " Entrando a centinela: " << currentNode->displayName;
-        std::cout << " desde: " << nivelPadreDelCentinela << std::endl;
         return true;
     }
 
-    std::cout << " Este nivel no tiene centinela" << std::endl;
     return false;
 }
 
@@ -250,7 +241,6 @@ bool LevelTree::returnFromCentinela()
 {
     if (!inCentinelaPath)
     {
-        std::cout << "No estas en un centinela" << std::endl;
         return false;
     }
     if (!navigationHistory.empty())
@@ -263,7 +253,6 @@ bool LevelTree::returnFromCentinela()
         // Limpiar el nivel padre del centinela porque ya salimos
         nivelPadreDelCentinela = "";
         
-        std::cout << "Volviendo a: " << currentNode->displayName << std::endl;
         return true;
     }
     return false;
@@ -288,10 +277,8 @@ bool LevelTree::jumpToNode(const std::string &nodeId)
             nivelPadreDelCentinela = "";
         }
         
-        std::cout << "[ADMIN] Saltando a: " << currentNode->displayName << std::endl;
         return true;
     }
-    std::cout << "Nodo no encontrado: " << nodeId << std::endl;
     return false;
 }
 
@@ -339,7 +326,6 @@ bool LevelTree::restorePath(const std::string &path)
     currentNode = target;
     visitedNodes = ids;
     inCentinelaPath = (currentNode->type == LevelType::CENTINELA);
-    std::cout << "Ruta restaurada hasta: " << currentNode->displayName << std::endl;
     return true;
 }
 
@@ -376,7 +362,6 @@ void LevelTree::resetToRoot()
     if (currentNode)
         visitedNodes.push_back(currentNode->id);
     inCentinelaPath = false;
-    std::cout << " Árbol reiniciado a la raíz: " << currentNode->displayName << std::endl;
 }
 
 // Retorna el identificador del nodo actual donde se encuentra el jugador

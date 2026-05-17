@@ -3,7 +3,6 @@
 #include <sstream>
 #include <iostream>
 
-// ===== GameProgressData =====
 bool GameProgressData::guardarEnArchivo(int slotId) {
     std::string archivo = "saves/slot_" + std::to_string(slotId) + ".csv";
     std::ofstream file(archivo);
@@ -31,7 +30,6 @@ bool GameProgressData::guardarEnArchivo(int slotId) {
         file << item << "\n";
     }
     
-    std::cout << "✅ Progreso guardado en slot " << slotId << std::endl;
     return true;
 }
 
@@ -84,13 +82,9 @@ bool GameProgressData::cargarDesdeArchivo(int slotId) {
             itemsRecolectados.push_back(linea);
         }
     }
-    
-    std::cout << "✅ Progreso cargado desde slot " << slotId << " (Nivel " << nivelActualId << ")" << std::endl;
-    std::cout << "   Modo de juego: " << static_cast<int>(modoElegido) << std::endl;
     return true;
 }
 
-// ===== GameSaveManager =====
 GameSaveManager::GameSaveManager() : currentSlotId(-1) {
     // Constructor implementado
 }
@@ -111,7 +105,6 @@ bool GameSaveManager::crearNuevaPartida(int slotId, const std::string& nombre) {
     currentProgress.rutaActual = "nivel1";  // Ruta inicial
     currentProgress.modoElegido = GameProgressData::ModoJuego::NO_ELEGIDO;
     
-    std::cout << "✅ Nueva partida creada: '" << nombre << "' en slot " << slotId << std::endl;
     return guardarProgresoActual();
 }
 
@@ -122,7 +115,6 @@ bool GameSaveManager::cargarPartida(int slotId) {
     }
     
     currentSlotId = slotId;
-    std::cout << "✅ Partida cargada: '" << currentProgress.nombreJugador << "' desde slot " << slotId << std::endl;
     return true;
 }
 
@@ -149,8 +141,6 @@ bool GameSaveManager::eliminarPartida(int slotId) {
         currentSlotId = -1;
         currentProgress = GameProgressData();
     }
-    
-    std::cout << "🗑️ Partida eliminada del slot " << slotId << std::endl;
     return indexManager.eliminarPartida(slotId);
 }
 
@@ -169,7 +159,6 @@ void GameSaveManager::setCentinelaDisponible(bool disponible, int centinelaId) {
 void GameSaveManager::addItemRecolectado(const std::string& itemName) {
     currentProgress.itemsRecolectados.push_back(itemName);
     guardarProgresoActual();
-    std::cout << "📦 Item guardado: " << itemName << std::endl;
 }
 
 void GameSaveManager::addTiempoJugado(float dt) {
