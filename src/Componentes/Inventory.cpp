@@ -68,21 +68,6 @@ Inventory::Inventory() : m_selectedSlot(-1), m_activeHotbarSlot(0), m_isOpen(fal
         "assets/images/niveles/nivel7/balon_basket.png",
         "assets/images/items/destornillador.png"
     };
-
-    for (size_t i = 0; i < itemNames.size(); i++)
-    {
-        sf::Texture tex;
-        if (tex.loadFromFile(itemFiles[i]))
-        {
-            tex.setSmooth(true);
-            m_itemTextures[itemNames[i]] = tex;
-            std::cout << "✅ Textura cargada: " << itemNames[i] << std::endl;
-        }
-        else
-        {
-            std::cerr << "❌ Error cargando: " << itemFiles[i] << std::endl;
-        }
-    }
 }
 
 void Inventory::clear()
