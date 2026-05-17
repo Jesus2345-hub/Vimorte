@@ -1,6 +1,7 @@
 #include "Estados/VideoFinalState.hpp"
 #include "Configuracion/Game.hpp"
 #include "Estados/ModoJuegoState.hpp"
+#include "Estados/CaminoFinalState.hpp"     // Esta linea es nueva
 #include "Estructuras/LevelTree.hpp"
 #include <iostream>
 #include <filesystem>
@@ -159,11 +160,30 @@ void VideoFinalState::update(float dt) {
         if (m_currentFrame >= static_cast<int>(m_frames.size())) {
             // VIDEO TERMINADO
             if (m_isIntro) {
+                // Si es la introduccion del juego, pasar directamente a elegir modo
                 std::cout << "Introduccion terminada. Pasando a eleccion de modo..." << std::endl;
                 game->changeState(std::make_unique<ModoJuegoState>(window, game, m_introNombreJugador, m_introSlotId));
-            } else {
-                std::cout << "Video final terminado. Volviendo al menu..." << std::endl;
-                game->returnToMenu();
+                        } else {
+                std::cout << "Video final terminado. Mostrando el camino recorrido..." << std::endl;
+                
+                // Obtener el identificador del nodo actual (el final alcanzado)
+                std::string identificadorFinal = game->getLevelTree().obtenerIdNodoActual();
+                
+                // Mostrar informacion de depuracion
+                std::cout << "Final alcanzado: " << identificadorFinal << std::endl;
+                std::cout << "Nivel padre del centinela: " 
+                          << game->getLevelTree().obtenerNivelPadreDelCentinela() 
+                          << std::endl;
+                
+                // Crear el estado que muestra el camino recorrido en el arbol
+                auto estadoCamino = std::make_unique<CaminoFinalState>(
+                    window, 
+                    game, 
+                    identificadorFinal
+                );
+                
+                // Cambiar al estado del camino
+                game->changeState(std::move(estadoCamino));
             }
             return;
         }
