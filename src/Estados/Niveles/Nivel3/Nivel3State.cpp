@@ -21,6 +21,20 @@ Nivel3State::Nivel3State(sf::RenderWindow* window, Game* game)
     , m_cablesCorrectos(0)
     , m_fontLoaded(false)
 {
+
+    // Cargar musica del nivel 3
+    std::ifstream archivoMusica("assets/sounds/nivel3.mp3");
+    if (archivoMusica.good())
+    {
+        archivoMusica.close();
+        game->cambiarMusica("assets/sounds/nivel3.mp3");
+        std::cout << "Musica del Nivel 3 cargada" << std::endl;
+    }
+    else
+    {
+        std::cout << "Archivo de musica no encontrado: assets/sounds/nivel3.mp3" << std::endl;
+    }
+
     m_msjActual.texto = "";
     m_msjActual.tiempoRestante = 0.0f;
     m_msjActual.color = sf::Color::Yellow;

@@ -15,6 +15,19 @@ Nivel2State::Nivel2State(sf::RenderWindow* window, Game* game)
     , m_tieneLlave(false)    // No tiene la llave al empezar
     , m_fontLoaded(false)    // Fuente no cargada aún
 {
+
+    // Cargar musica del nivel 2
+    std::ifstream archivoMusica("assets/sounds/nivel2.mp3");
+    if (archivoMusica.good())
+    {
+        archivoMusica.close();
+        game->cambiarMusica("assets/sounds/nivel2.mp3");
+        std::cout << "Musica del Nivel 2 cargada" << std::endl;
+    }
+    else
+    {
+        std::cout << "Archivo de musica no encontrado: assets/sounds/nivel2.mp3" << std::endl;
+    }
     // ----- MENSAJE TEMPORAL (para mostrar feedback al jugador) -----
     m_msjActual.texto = "";
     m_msjActual.tiempoRestante = 0.0f;

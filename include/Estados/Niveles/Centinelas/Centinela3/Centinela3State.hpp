@@ -12,6 +12,7 @@
 #include <array>
 #include <cmath>
 #include <random>
+#include <fstream>
 
 // Estructura que guarda los datos de una camara de vigilancia
 struct CamaraVigilancia {

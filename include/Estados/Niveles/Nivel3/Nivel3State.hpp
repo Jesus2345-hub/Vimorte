@@ -11,6 +11,7 @@
 #include <SFML/Graphics.hpp>
 #include <vector>
 #include <memory>
+#include <fstream>
 
 class Nivel3State : public State {
 public:

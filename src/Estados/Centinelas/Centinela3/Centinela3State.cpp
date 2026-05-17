@@ -35,6 +35,20 @@ Centinela3State::Centinela3State(sf::RenderWindow *window, Game *game)
       m_intensidadAlarma(0.0f),
       m_panelAyudaActivo(true)
 {
+
+       // Cargar musica del centinela 3
+    std::ifstream archivoMusica("assets/sounds/centinela3.mp3");
+    if (archivoMusica.good())
+    {
+        archivoMusica.close();
+        game->cambiarMusica("assets/sounds/centinela3.mp3");
+        std::cout << "Musica del Centinela 3 cargada" << std::endl;
+    }
+    else
+    {
+        std::cout << "Archivo de musica no encontrado: assets/sounds/centinela3.mp3" << std::endl;
+    }
+    
     // Cargar los recursos del jugador y establecer su posicion inicial
     m_player.loadAssets();
     m_player.setPosition(255.f, 240.f);

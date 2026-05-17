@@ -102,4 +102,11 @@ private:
         // Identificador del nivel desde el cual se entro al centinela
     // Si esta vacio, significa que es el final lineal del nivel6
     std::string m_nivelPadreCentinela;
+
+        // Busca recursivamente todos los nodos que tienen un centinela especifico como hijo derecho
+    // Util para mostrar todos los caminos posibles hacia un mismo final
+    void encontrarTodosLosNivelesConCentinela(
+        LevelNode* nodoActual,
+        const std::string& idCentinela,
+        std::vector<LevelNode*>& resultados);
 };

@@ -10,6 +10,7 @@
 #include <SFML/Graphics.hpp>
 #include <vector>
 #include <memory>
+#include <fstream>
 
 class Nivel2State : public State {
 public:

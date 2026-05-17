@@ -42,7 +42,7 @@ CaminoFinalState::CaminoFinalState(sf::RenderWindow* window, Game* game,
     m_panel.setOutlineColor(sf::Color(255, 215, 0));  // Borde dorado
 
     // Titulo principal que aparece en la parte superior
-    m_title = std::make_unique<sf::Text>(m_font, "TU CAMINO HASTA EL FINAL", 36);
+    m_title = std::make_unique<sf::Text>(m_font, "CAMINOS PARA LLEGAR HASTA ESE FINAL", 36);
     m_title->setFillColor(sf::Color(255, 215, 0));  // Color dorado
     m_title->setStyle(sf::Text::Bold);
 
@@ -86,10 +86,12 @@ CaminoFinalState::CaminoFinalState(sf::RenderWindow* window, Game* game,
     else
     {
         // Es un final de centinela, sabemos exactamente desde que nivel se entro
-        std::cout << "Reconstruyendo camino para final de centinela desde: " 
-                  << m_nivelPadreCentinela << std::endl;
+        std::cout << "Reconstruyendo todos los caminos posibles hacia: " 
+                  << identificadorFinal << std::endl;
+        std::cout << "Nivel padre usado: " << m_nivelPadreCentinela << std::endl;
         
         // Paso A: Buscar el camino desde la raiz hasta el nivel padre del centinela
+        // Este es el camino que el jugador realmente tomo
         std::vector<std::string> rutaHastaNivelPadre;
         bool encontroNivelPadre = buscarCaminoHastaNodo(
             m_raiz, 
@@ -98,57 +100,70 @@ CaminoFinalState::CaminoFinalState(sf::RenderWindow* window, Game* game,
         
         if (encontroNivelPadre)
         {
-            // Insertar todos los nodos del camino hasta el nivel padre
             for (const std::string& idNodo : rutaHastaNivelPadre)
             {
                 m_conjuntoHashCamino.insert(idNodo);
             }
-            
-            std::cout << "Camino hasta el nivel padre: ";
-            for (size_t indice = 0; indice < rutaHastaNivelPadre.size(); indice++)
-            {
-                std::cout << rutaHastaNivelPadre[indice];
-                if (indice < rutaHastaNivelPadre.size() - 1)
-                {
-                    std::cout << " -> ";
-                }
-            }
-            std::cout << std::endl;
         }
         
-        // Paso B: Buscar el camino desde el nivel padre hasta el final del centinela
-        // El nivel padre es un nodo normal, su hijo derecho es el centinela
-        // y los hijos del centinela son los finales
+        // Paso B: Encontrar TODOS los centinelas con el mismo id en el arbol
+        // y agregar sus caminos hacia el final especifico
+        // Para cada centinela encontrado, iluminamos el camino desde su nivel padre
+        
+        // Primero, necesitamos saber el id del centinela
+        // Lo obtenemos del nivel padre que el jugador uso
         LevelNode* nodoNivelPadre = game->getLevelTree().findNode(m_nivelPadreCentinela);
         
-        if (nodoNivelPadre != nullptr)
+        if (nodoNivelPadre != nullptr && nodoNivelPadre->right != nullptr)
         {
-            std::vector<std::string> rutaDesdeNivelPadre;
-            bool encontroFinal = buscarCaminoHastaNodo(
-                nodoNivelPadre, 
-                identificadorFinal, 
-                rutaDesdeNivelPadre);
+            std::string idCentinela = nodoNivelPadre->right->id;
+            std::cout << "Buscando todas las ocurrencias del centinela: " 
+                      << idCentinela << std::endl;
             
-            if (encontroFinal)
+            // Ahora buscamos TODOS los niveles que tienen este centinela como hijo derecho
+            // Para cada uno, iluminamos el camino desde la raiz hasta ese nivel,
+            // luego el centinela, luego el final
+            std::vector<LevelNode*> todosLosNivelesPadre;
+            encontrarTodosLosNivelesConCentinela(m_raiz, idCentinela, todosLosNivelesPadre);
+            
+            std::cout << "Se encontraron " << todosLosNivelesPadre.size() 
+                      << " niveles que tienen el centinela " << idCentinela << std::endl;
+            
+            // Para cada nivel padre encontrado, iluminar el camino completo
+            for (LevelNode* nivelPadre : todosLosNivelesPadre)
             {
-                // Insertar los nodos del camino desde el nivel padre hasta el final
-                // El primer nodo es el nivel padre, que ya esta insertado
-                // pero no importa porque la tabla hash evita duplicados
-                for (const std::string& idNodo : rutaDesdeNivelPadre)
-                {
-                    m_conjuntoHashCamino.insert(idNodo);
-                }
+                std::cout << "  Procesando nivel padre: " << nivelPadre->displayName << std::endl;
                 
-                std::cout << "Camino desde el nivel padre hasta el final: ";
-                for (size_t indice = 0; indice < rutaDesdeNivelPadre.size(); indice++)
+                // Buscar el camino desde la raiz hasta este nivel padre
+                std::vector<std::string> rutaAlternativa;
+                bool encontro = buscarCaminoHastaNodo(m_raiz, nivelPadre->id, rutaAlternativa);
+                
+                if (encontro)
                 {
-                    std::cout << rutaDesdeNivelPadre[indice];
-                    if (indice < rutaDesdeNivelPadre.size() - 1)
+                    // Insertar todos los nodos de este camino alternativo
+                    for (const std::string& idNodo : rutaAlternativa)
                     {
-                        std::cout << " -> ";
+                        m_conjuntoHashCamino.insert(idNodo);
+                    }
+                    
+                    // Insertar el centinela (hijo derecho de este nivel padre)
+                    if (nivelPadre->right != nullptr)
+                    {
+                        m_conjuntoHashCamino.insert(nivelPadre->right->id);
+                        
+                        // Insertar el final especifico
+                        if (nivelPadre->right->left != nullptr && 
+                            nivelPadre->right->left->id == identificadorFinal)
+                        {
+                            m_conjuntoHashCamino.insert(nivelPadre->right->left->id);
+                        }
+                        else if (nivelPadre->right->right != nullptr && 
+                                 nivelPadre->right->right->id == identificadorFinal)
+                        {
+                            m_conjuntoHashCamino.insert(nivelPadre->right->right->id);
+                        }
                     }
                 }
-                                std::cout << std::endl;
             }
         }
     }
@@ -697,4 +712,30 @@ void CaminoFinalState::draw()
         m_instructionText->setPosition(sf::Vector2f(640.0f, 690.0f));
         window->draw(*m_instructionText);
     }
+}
+
+// Busca recursivamente todos los nodos que tienen un centinela especifico como hijo derecho
+// Parametros:
+//   nodoActual: nodo que se esta visitando
+//   idCentinela: identificador del centinela que buscamos
+//   resultados: vector donde se guardan los nodos nivel padre encontrados
+void CaminoFinalState::encontrarTodosLosNivelesConCentinela(
+    LevelNode* nodoActual,
+    const std::string& idCentinela,
+    std::vector<LevelNode*>& resultados)
+{
+    if (nodoActual == nullptr)
+    {
+        return;
+    }
+    
+    // Verificar si este nodo tiene un hijo derecho que sea el centinela buscado
+    if (nodoActual->right != nullptr && nodoActual->right->id == idCentinela)
+    {
+        resultados.push_back(nodoActual);
+    }
+    
+    // Buscar recursivamente en los subarboles
+    encontrarTodosLosNivelesConCentinela(nodoActual->left.get(), idCentinela, resultados);
+    encontrarTodosLosNivelesConCentinela(nodoActual->right.get(), idCentinela, resultados);
 }
