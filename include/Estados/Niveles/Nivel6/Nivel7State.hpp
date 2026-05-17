@@ -30,6 +30,7 @@ private:
     bool m_mostrarTutorial;
     bool m_mostrarTutorialPorTecla;
     bool m_fontLoaded;
+    bool m_debugMode = false;
 
     sf::Font m_font;
     std::unique_ptr<sf::Text> m_textoInteraccion;

@@ -10,17 +10,8 @@
 // ============================================================
 // CONSTRUCTOR
 // ============================================================
-CentinelaConductosState::CentinelaConductosState(sf::RenderWindow *window, Game *game, const std::string& nivelOriginalId)
-    : State(window, game)
-    , m_tiempoRestante(45.0f)
-    , m_tiempoAgotado(false)
-    , m_nivelCompletado(false)
-    , m_fontLoaded(false)
-    , m_mensajeTimer(0.f)
-    , m_parpadeoTimer(0.f)
-    , m_parpadeoVisible(true)
-    , m_finalCargado(false)
-    , m_nivelOriginalId(nivelOriginalId)  
+CentinelaConductosState::CentinelaConductosState(sf::RenderWindow *window, Game *game, const std::string &nivelOriginalId)
+    : State(window, game), m_tiempoRestante(45.0f), m_tiempoAgotado(false), m_nivelCompletado(false), m_fontLoaded(false), m_mensajeTimer(0.f), m_parpadeoTimer(0.f), m_parpadeoVisible(true), m_finalCargado(false), m_nivelOriginalId(nivelOriginalId)
 {
     // ============================================================
     // FONDO
@@ -102,7 +93,19 @@ CentinelaConductosState::CentinelaConductosState(sf::RenderWindow *window, Game 
         game->guardarPartidaActual();
     }
 
-    std::cout << "Centinela: Escape por los Conductos inicializado" << std::endl;
+    // ===== CARGAR MÚSICA DEL CENTINELA 1 =====
+    std::ifstream file("assets/sounds/centinela1.ogg");
+    if (file.good())
+    {
+        file.close();
+        game->cambiarMusica("assets/sounds/centinela1.ogg");
+        std::cout << "🎵 Música del Centinela 1 cargada" << std::endl;
+    }
+    else
+    {
+        std::cout << "Archivo de música no encontrado: assets/sounds/centinela1.ogg" << std::endl;
+    }
+
     game->setIsInLevel(true);
 }
 
@@ -361,16 +364,21 @@ bool CentinelaConductosState::verificarColisionHumos()
 // ============================================================
 void CentinelaConductosState::verificarSalida()
 {
-    if (!m_cercaSalida) return;
+    if (!m_cercaSalida)
+        return;
 
     static bool fPresionado = false;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F)) {
-        if (!fPresionado) {
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F))
+    {
+        if (!fPresionado)
+        {
             fPresionado = true;
             m_finalCargado = true;
             cargarFinalBueno();
         }
-    } else {
+    }
+    else
+    {
         fPresionado = false;
     }
 }
@@ -438,25 +446,27 @@ void CentinelaConductosState::mostrarMensaje(const std::string &texto, float dur
 void CentinelaConductosState::cargarGameOver()
 {
     window->setView(window->getDefaultView());
-    
+
     bool modoSupervivencia = false;
-    
-    if (game->tienePartidaActiva()) {
-        GameProgressData& progress = game->getSaveManager().getCurrentProgress();
+
+    if (game->tienePartidaActiva())
+    {
+        GameProgressData &progress = game->getSaveManager().getCurrentProgress();
         modoSupervivencia = (progress.modoElegido == GameProgressData::ModoJuego::CAMINO_CON_CONSECUENCIAS);
     }
-    
+
     // MODO SUPERVIVENCIA: Ir directamente al final malo
-    if (modoSupervivencia) {
+    if (modoSupervivencia)
+    {
         std::cout << "Modo supervivencia - Derrota permanente. Cargando final malo..." << std::endl;
         cargarFinalMalo();
-    } 
+    }
     // MODO HISTORIA: Mostrar menú de opciones (reintentar o aceptar final malo)
-    else {
+    else
+    {
         std::cout << "Modo historia - Mostrando menú de game over del centinela..." << std::endl;
         auto gameOverState = std::make_unique<CentinelaGameOverState>(
-            window, game, false, m_nivelOriginalId
-        );
+            window, game, false, m_nivelOriginalId);
         game->changeState(std::move(gameOverState));
     }
 }
@@ -466,14 +476,17 @@ void CentinelaConductosState::cargarGameOver()
 // ============================================================
 void CentinelaConductosState::update(float dt)
 {
-    if (m_finalCargado) {
+    if (m_finalCargado)
+    {
         return;
     }
 
-    if (m_tiempoAgotado || verificarColisionHumos()) {
-        if (!m_finalCargado) {
+    if (m_tiempoAgotado || verificarColisionHumos())
+    {
+        if (!m_finalCargado)
+        {
             m_finalCargado = true;
-            cargarGameOver();  
+            cargarGameOver();
         }
         return;
     }
@@ -481,9 +494,11 @@ void CentinelaConductosState::update(float dt)
     actualizarCronometro(dt);
     actualizarHumos(dt);
 
-    if (m_mensajeTimer > 0.f) {
+    if (m_mensajeTimer > 0.f)
+    {
         m_mensajeTimer -= dt;
-        if (m_mensajeTimer <= 0.f && m_mensajeText) {
+        if (m_mensajeTimer <= 0.f && m_mensajeText)
+        {
             m_mensajeText->setString("");
         }
     }
@@ -504,7 +519,8 @@ void CentinelaConductosState::update(float dt)
         sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right))
         movimiento.x += 1.f;
 
-    if (movimiento.x != 0.f || movimiento.y != 0.f) {
+    if (movimiento.x != 0.f || movimiento.y != 0.f)
+    {
         float length = std::sqrt(movimiento.x * movimiento.x + movimiento.y * movimiento.y);
         movimiento /= length;
     }
@@ -512,8 +528,10 @@ void CentinelaConductosState::update(float dt)
     m_player.move(movimiento, dt);
     m_player.update(dt);
 
-    for (const auto& wall : m_wallBounds) {
-        if (m_player.getHurtbox().findIntersection(wall).has_value()) {
+    for (const auto &wall : m_wallBounds)
+    {
+        if (m_player.getHurtbox().findIntersection(wall).has_value())
+        {
             m_player.setPosition(posAnterior.x, posAnterior.y);
             break;
         }
@@ -542,12 +560,16 @@ void CentinelaConductosState::update(float dt)
     verificarSalida();
 
     static bool escapeProcesado = false;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape)) {
-        if (!escapeProcesado) {
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape))
+    {
+        if (!escapeProcesado)
+        {
             escapeProcesado = true;
             game->pushState(std::make_unique<PauseState>(window, game));
         }
-    } else {
+    }
+    else
+    {
         escapeProcesado = false;
     }
 }
@@ -557,7 +579,8 @@ void CentinelaConductosState::update(float dt)
 // ============================================================
 void CentinelaConductosState::draw()
 {
-    if (!window) return;
+    if (!window)
+        return;
 
     window->setView(m_camera);
 
@@ -673,12 +696,15 @@ void CentinelaConductosState::draw()
 // ============================================================
 void CentinelaConductosState::cargarFinalBueno()
 {
+    game->detenerMusica();
     window->setView(window->getDefaultView());
-    
-    LevelTree& levelTree = game->getLevelTree();
-    if (levelTree.jumpToNode("final_bueno_centinela1")) {
+
+    LevelTree &levelTree = game->getLevelTree();
+    if (levelTree.jumpToNode("final_bueno_centinela1"))
+    {
         std::unique_ptr<State> newState = levelTree.createCurrentState(window, game);
-        if (newState) {
+        if (newState)
+        {
             game->changeState(std::move(newState));
         }
     }
@@ -689,12 +715,15 @@ void CentinelaConductosState::cargarFinalBueno()
 // ============================================================
 void CentinelaConductosState::cargarFinalMalo()
 {
+    game->detenerMusica();
     window->setView(window->getDefaultView());
-    
-    LevelTree& levelTree = game->getLevelTree();
-    if (levelTree.jumpToNode("final_malo_centinela1")) {
+
+    LevelTree &levelTree = game->getLevelTree();
+    if (levelTree.jumpToNode("final_malo_centinela1"))
+    {
         std::unique_ptr<State> newState = levelTree.createCurrentState(window, game);
-        if (newState) {
+        if (newState)
+        {
             game->changeState(std::move(newState));
         }
     }

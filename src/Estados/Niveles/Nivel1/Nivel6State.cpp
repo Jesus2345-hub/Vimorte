@@ -233,15 +233,15 @@ Nivel6State::Nivel6State(sf::RenderWindow *window, Game *game)
     game->setIsInLevel(true);
 
     // Verificar si el archivo existe antes de cambiarlo
-    std::ifstream file("assets/sounds/nivel6.ogg");
+    std::ifstream file("assets/sounds/nivel1.ogg");
     if (file.good())
     {
         file.close();
-        game->cambiarMusica("assets/sounds/nivel6.ogg");
+        game->cambiarMusica("assets/sounds/nivel1.ogg");
     }
     else
     {
-        std::cout << "⚠️ Archivo de música no encontrado: assets/sounds/nivel6.ogg" << std::endl;
+        std::cout << "⚠️ Archivo de música no encontrado: assets/sounds/nivel1.ogg" << std::endl;
     }
 
     std::cout << "Nivel6State inicializado correctamente" << std::endl;

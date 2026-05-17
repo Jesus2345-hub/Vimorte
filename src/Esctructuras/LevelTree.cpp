@@ -189,7 +189,7 @@ void LevelTree::buildTree()
     
     // nivel6: izquierda = final feliz, derecha = nada
     root->left->left->left->left->left->left = crearFinalFelizNivel6();
-    root->left->left->left->left->left->right = nullptr;  // sin centinela
+    root->left->left->left->left->left->right = crearCentinela1();
 
     currentNode = root.get();
     visitedNodes.push_back(currentNode->id);
