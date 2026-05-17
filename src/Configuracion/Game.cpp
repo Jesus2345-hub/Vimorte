@@ -83,8 +83,6 @@ void Game::cargarConfiguracionAudio()
         volMusica = std::stof(token);
         std::getline(ss, token, ',');
         volEfectos = std::stof(token);
-
-        std::cout << " Configuración de audio cargada" << std::endl;
     }
 }
 
@@ -102,8 +100,6 @@ void Game::guardarConfiguracionAudio()
 
     file << "vol_general,vol_musica,vol_efectos\n";
     file << volGeneral << "," << volMusica << "," << volEfectos << "\n";
-
-    std::cout << " Configuracion de audio guardada" << std::endl;
 }
 
 void Game::cambiarMusica(const std::string &rutaMusica)
@@ -121,7 +117,6 @@ void Game::cambiarMusica(const std::string &rutaMusica)
         m_currentMusic.setLooping(true);
         m_currentMusic.setVolume(getRealMusica());
         m_currentMusic.play();
-        std::cout << " Musica cambiada: " << rutaMusica << std::endl;
     }
     else
     {
@@ -178,7 +173,6 @@ void Game::guardarPartidaActual()
     {
         saveManager.getCurrentProgress().rutaActual = levelTree.getCurrentPath();
         saveManager.guardarProgresoActual();
-        std::cout << " Partida guardada en slot " << saveManager.getCurrentSlotId() << std::endl;
     }
 }
 
@@ -215,7 +209,6 @@ void Game::entrarCentinela()
                 progress.checkpointRutaArbol = levelTree.getCurrentPath();
                 progress.checkpointCentinelaId = levelTree.getCurrentNode()->id;
                 guardarPartidaActual();
-                std::cout << " Checkpoint guardado antes del centinela" << std::endl;
             }
         }
 
@@ -260,10 +253,6 @@ void Game::cargarPartidaYContinuar(int slotId)
         {
             levelTree.restorePath(rutaGuardada);
         }
-
-        std::cout << " Cargando partida del slot " << slotId << " - "
-                  << levelTree.getCurrentNodeInfo() << std::endl;
-
         detenerMusica();
 
         auto newState = levelTree.createCurrentState(window.get(), this);
@@ -326,9 +315,6 @@ void Game::run()
                             menuState->redimensionar(static_cast<float>(newSize.x), static_cast<float>(newSize.y));
                         }
                     }
-
-                    std::cout << "F11: " << newSize.x << "x" << newSize.y
-                              << (m_isInLevel ? " (nivel)" : " (menu)") << std::endl;
                 }
             }
 
@@ -441,12 +427,10 @@ void Game::reintentarCentinela()
         if (newState)
         {
             changeState(std::move(newState));
-            std::cout << "Reintentando desde el checkpoint antes del centinela" << std::endl;
         }
     }
     else
     {
-        std::cout << " Has fallado. Las consecuencias son permanentes." << std::endl;
         returnToMenu();
     }
 }
