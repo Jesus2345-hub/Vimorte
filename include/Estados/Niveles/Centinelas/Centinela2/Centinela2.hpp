@@ -19,6 +19,10 @@ struct BloqueInteractivoCentinela {
 class Centinela2State : public State 
 {
 private:
+    void cargarGameOver();  
+    void cargarFinalMalo(); 
+    void reiniciarCentinela();
+
     Player m_player;
     
     sf::Texture m_backgroundTexture;

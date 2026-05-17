@@ -1,5 +1,6 @@
 #include "Estados/Niveles/Centinelas/Centinela2/Centinela2.hpp"
 #include "Estados/PauseState.hpp"
+#include "Estados/CentinelaGameOverState.hpp"
 #include "Estados/MuerteCentinelaState.hpp"
 #include "Configuracion/CoordenadasDebug.hpp"
 #include <iostream>
@@ -231,14 +232,8 @@ void Centinela2State::actualizarTimer(float dt)
         m_gameOver = true;
         m_juegoActivo = false;
         
-        // GAME OVER - Ir al final malo
-        LevelTree& levelTree = game->getLevelTree();
-        if (levelTree.jumpToNode("final_malo")) {
-            std::unique_ptr<State> newState = levelTree.createCurrentState(window, game);
-            if (newState) {
-                game->changeState(std::move(newState));
-            }
-        }
+        // Usar el nuevo sistema de game over
+        cargarGameOver();
     }
 }
 
@@ -1181,5 +1176,59 @@ void Game::adminVolverAlNivelAnterior()
             changeState(std::move(newState));
             std::cout << "[ADMIN] Saltado a nivel anterior: " << nivelAnteriorId << std::endl;
         }
+    }
+}
+void Centinela2State::cargarGameOver()
+{
+    window->setView(window->getDefaultView());
+    
+    bool modoSupervivencia = false;
+    
+    if (game->tienePartidaActiva()) {
+        GameProgressData& progress = game->getSaveManager().getCurrentProgress();
+        modoSupervivencia = (progress.modoElegido == GameProgressData::ModoJuego::CAMINO_CON_CONSECUENCIAS);
+    }
+    
+    // MODO SUPERVIVENCIA: Ir directamente al final malo
+    if (modoSupervivencia) {
+        std::cout << "Modo supervivencia - Derrota en Centinela 2. Cargando final malo..." << std::endl;
+        cargarFinalMalo();
+    } 
+    // MODO HISTORIA: Mostrar menú de opciones
+    else {
+        std::cout << "Modo historia - Mostrando menú de game over del centinela 2..." << std::endl;
+        auto gameOverState = std::make_unique<CentinelaGameOverState>(
+            window, game, false, "centinela2"
+        );
+        game->changeState(std::move(gameOverState));
+    }
+}
+
+void Centinela2State::cargarFinalMalo()
+{
+    window->setView(window->getDefaultView());
+    
+    LevelTree& levelTree = game->getLevelTree();
+    if (levelTree.jumpToNode("final_malo_centinela2")) {
+        std::unique_ptr<State> newState = levelTree.createCurrentState(window, game);
+        if (newState) {
+            game->changeState(std::move(newState));
+        }
+    } else {
+        std::cerr << "Error: No se pudo cargar final_malo_centinela2" << std::endl;
+        game->returnToMenu();
+    }
+}
+
+void Centinela2State::reiniciarCentinela()
+{
+    std::cout << "Reintentando Centinela 2..." << std::endl;
+    
+    // Simplemente recrear el mismo estado del centinela
+    auto nuevoEstado = std::make_unique<Centinela2State>(window, game);
+    if (nuevoEstado) {
+        game->changeState(std::move(nuevoEstado));
+    } else {
+        game->returnToMenu();
     }
 }
