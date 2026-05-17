@@ -226,7 +226,7 @@ Nivel6State::Nivel6State(sf::RenderWindow *window, Game *game)
 
     if (game->tienePartidaActiva())
     {
-        game->getSaveManager().setNivelActual(6, 6);
+        game->getSaveManager().setNivelActual(1, 1);
         game->guardarPartidaActual();
     }
 
@@ -264,7 +264,6 @@ void Nivel6State::handleEvent(const sf::Event &event)
         {
             // Forzar mostrar el tutorial SIEMPRE al presionar M
             m_mostrarTutorialPorTecla = true;
-            std::cout << "M presionada - Mostrando tutorial del Nivel 6" << std::endl;
         }
         if (keyPressed->code == sf::Keyboard::Key::F3)
         {
@@ -1106,7 +1105,7 @@ void Nivel6State::draw()
         {
             sf::Text tutorialText(m_font);
             tutorialText.setString(
-                "NIVEL 6 - LA BUSQUEDA DE LOS DIENTES\n\n"
+                "NIVEL 1 - LA BUSQUEDA DE LOS DIENTES\n\n"
                 "La abuelita necesita sus dientes.\n\n"
                 "Encuentra el rifle, caza galloss y despierta\n"
                 "al joven para conseguir los dientes.\n\n"
