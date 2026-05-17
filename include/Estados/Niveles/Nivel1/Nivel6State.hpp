@@ -1,0 +1,131 @@
+#pragma once
+#include "Estados/State.hpp"
+#include "Configuracion/Game.hpp"
+#include <SFML/Graphics.hpp>
+#include "Entidades/Player.hpp"
+#include "Entidades/Obstaculo.hpp"
+#include "Componentes/Inventory.hpp"
+#include "Entidades/Gallo.hpp"
+#include <memory>
+#include <vector>
+#include "Estados/Niveles/Nivel1/MinigameRoosterHunt.hpp"
+#include "Estados/Niveles/Nivel1/MiniGameTicTacToe.hpp"
+#include "Entidades/Joven.hpp"
+#include "Entidades/Abuelita.hpp"
+
+class Nivel6State : public State
+{
+private:
+    Player m_player;
+
+    // Fondo del nivel 6
+    sf::Texture m_backgroundTexture;
+    std::unique_ptr<sf::Sprite> m_background;
+    sf::Vector2f m_worldSize;
+
+    bool m_debugMode = false;
+
+    // Sprites para objetos en el mapa
+    sf::Texture m_rifleMapTexture;
+    std::unique_ptr<sf::Sprite> m_rifleMapSprite;
+
+    // Mesas
+    sf::Texture m_mesaTexture;
+    std::vector<std::unique_ptr<sf::Sprite>> m_mesas;
+    std::vector<sf::FloatRect> m_mesasBounds;
+
+    // Cambur
+    sf::Texture m_camburTexture;
+    std::unique_ptr<sf::Sprite> m_camburSprite;
+    sf::FloatRect m_camburArea;
+    bool m_camburRecogido = false;
+    bool m_cercaCambur = false;
+
+    // Destornillador
+    sf::Texture m_destornilladorTexture;
+    std::unique_ptr<sf::Sprite> m_destornilladorSprite;
+    sf::FloatRect m_destornilladorArea;
+    bool m_destornilladorRecogido = false;
+    bool m_cercaDestornillador = false;
+
+    // Entrada centinela
+    sf::Texture m_rejillaTexture;
+    std::unique_ptr<sf::Sprite> m_rejillaSprite;
+    sf::FloatRect m_entradaCentinelaArea;
+    bool m_cercaEntradaCentinela = false;
+
+    // Minijuego RoosterHunt
+    MinigameRoosterHunt m_roosterHuntMinigame;
+
+    // Tic Tac Toe
+    MinigameTicTacToe m_tictactoeMinigame;
+    bool m_gallinaObtenida;
+    bool m_dientesObtenidos;
+
+    // Objeto recogible (rifle)
+    bool m_rifleRecogido;
+    sf::FloatRect m_rifleArea;
+    bool m_cercaRifle;
+
+    // Gallo del gallinero
+    Gallo m_gallo;
+    sf::FloatRect m_galloArea;
+    bool m_cercaGallo;
+
+    // Joven dormido
+    Joven m_joven;
+    sf::FloatRect m_jovenArea;
+    bool m_cercaJoven;
+
+    // Abuelita
+    Abuelita m_abuelita;
+    sf::FloatRect m_abuelitaArea;
+    bool m_cercaAbuelita;
+    bool m_llaveObtenida;
+
+    // Sistema de colisiones
+    std::vector<Obstaculo> m_mapaFisico;
+    void configurarColisiones();
+
+    // Cámara
+    sf::View m_camera;
+    sf::Vector2u m_lastWindowSize;
+
+    // Tutorial
+    bool m_mostrarTutorial;
+    bool m_mostrarTutorialPorTecla;
+    bool m_escapeConsumed;
+    bool m_fontLoaded;
+
+    // Fuente y textos
+    sf::Font m_font;
+    std::unique_ptr<sf::Text> m_textoInteraccion;
+    std::unique_ptr<sf::Text> m_textoMensaje;
+    struct MensajeTemporal
+    {
+        std::string texto;
+        float tiempoRestante;
+        sf::Color color;
+    } m_msjActual;
+    void mostrarMensaje(const std::string &texto, float duracion = 2.0f, sf::Color color = sf::Color::Yellow);
+
+    // Áreas de interacción
+    sf::FloatRect m_puertaSalidaArea;
+    bool m_cercaPuertaSalida;
+    bool m_mostrarPuertaSalida;
+
+    sf::Clock m_tiempoUltimaR;
+    bool m_bloquearR;
+
+    // Métodos
+    void verificarSalidaNivel();
+    void verificarEntradaCentinela();
+    void jugadorHaMuerto();
+
+public:
+    Nivel6State(sf::RenderWindow *window, Game *game);
+    void update(float dt) override;
+    void draw() override;
+    void handleEvent(const sf::Event &event) override;
+    ~Nivel6State() override = default;
+};
