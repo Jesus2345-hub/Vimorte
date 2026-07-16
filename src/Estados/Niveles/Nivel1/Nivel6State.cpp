@@ -251,7 +251,7 @@ void Nivel6State::handleEvent(const sf::Event &event)
 {
     if (const auto *keyPressed = event.getIf<sf::Event::KeyPressed>())
     {
-        if (keyPressed->code == sf::Keyboard::Key::Escape)
+        if (keyPressed->code == sf::Keyboard::Key::M)
         {
             if (m_mostrarTutorial || m_mostrarTutorialPorTecla)
             {
