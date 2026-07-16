@@ -109,7 +109,7 @@ void MinigameBartender::inicializarUI() {
     
     // Instrucciones
     m_textoInstrucciones = std::make_unique<sf::Text>(m_font,
-        "Click en botellas para mezclar | Doble click misma botella = reset | ESC para salir", 12);
+        "Click en botellas para mezclar | Doble click misma botella = reset | F para salir", 12);
     m_textoInstrucciones->setFillColor(sf::Color(180, 180, 180));
     
         // Crear 4 botellas (invisibles, solo áreas clickeables)

@@ -39,7 +39,7 @@ void MinigameRuleta::inicializarUI() {
     // Instrucciones 
     m_instruccionesText = std::make_unique<sf::Text>(m_font, 
         "PASO 1: Elige tipo de apuesta  |  PASO 2: Selecciona  |  PASO 3: GIRA!\n"
-        "Apuesta minima: $5  |  ESC para salir",
+        "Apuesta minima: $5  |  F para salir",
     11);
     m_instruccionesText->setFillColor(sf::Color(200, 180, 150));
     
