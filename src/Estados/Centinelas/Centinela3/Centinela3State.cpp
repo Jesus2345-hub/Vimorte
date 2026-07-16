@@ -430,7 +430,7 @@ void Centinela3State::dibujarMinijuegoHackeo()
     
     // Instrucciones adicionales
     sf::Text instrucciones(m_font);
-    instrucciones.setString("Letras verdes = pistas o aciertos\nAsteriscos (*) = letras por adivinar\n[ESC] Cancelar");
+    instrucciones.setString("Letras verdes = pistas o aciertos\nAsteriscos (*) = letras por adivinar\n[F] Cancelar");
     instrucciones.setCharacterSize(12);
     instrucciones.setFillColor(sf::Color(0, 130, 0));
     instrucciones.setPosition(sf::Vector2f(winW / 2.f - 230.f, winH / 2.f + 105.f));
@@ -621,7 +621,7 @@ void Centinela3State::dibujarMinijuegoInterruptores()
     
     // Instrucciones de control
     sf::Text instrucciones(m_font);
-    instrucciones.setString("[A/D] Mover  [SPACE] Cambiar ON/OFF  [ESC] Cancelar");
+    instrucciones.setString("[A/D] Mover  [SPACE] Cambiar ON/OFF  [F] Cancelar");
     instrucciones.setCharacterSize(14);
     instrucciones.setFillColor(sf::Color(150, 150, 150));
     instrucciones.setPosition(sf::Vector2f(winW / 2.f - 290.f, winH / 2.f + panelH / 2.f - 40.f));
@@ -823,8 +823,8 @@ void Centinela3State::handleEvent(const sf::Event& event)
                     }
                 }
                 
-                // ESC cancela el minijuego
-                if (keyPressed->code == sf::Keyboard::Key::Escape) {
+                // F cancela el minijuego
+                if (keyPressed->code == sf::Keyboard::Key::F) {
                     m_minijuegoActivo = false;
                 }
             }
@@ -853,8 +853,8 @@ void Centinela3State::handleEvent(const sf::Event& event)
                     }
                     if (completo) completarMinijuego();
                 }
-                // ESC cancela el minijuego
-                if (keyPressed->code == sf::Keyboard::Key::Escape) {
+                // F cancela el minijuego
+                if (keyPressed->code == sf::Keyboard::Key::F) {
                     m_minijuegoActivo = false;
                 }
             }
