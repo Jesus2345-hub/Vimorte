@@ -1067,7 +1067,7 @@ void Centinela2State::draw()
         for (size_t i = 0; i < m_ingredientesEstanteActual.size() && i < 9; i++) {
             contenido += std::to_string(i + 1) + ". " + m_ingredientesEstanteActual[i].nombre + "\n";
         }
-        contenido += "\n[ESC] Cerrar";
+        contenido += "\n";
         
         sf::Text mensajeText(m_font);
         mensajeText.setString(contenido);
